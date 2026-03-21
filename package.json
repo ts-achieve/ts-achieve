@@ -29,7 +29,7 @@
         {
           "id": "achievements",
           "title": "Achievements",
-          "icon": "typescript.svg"
+          "icon": "lib/typescript.svg"
         }
       ]
     },
@@ -38,7 +38,7 @@
         {
           "id": "achievementsList",
           "name": "",
-          "icon": "typescript.svg"
+          "icon": "lib/typescript.svg"
         }
       ]
     }
