@@ -6,6 +6,17 @@
     "lib": ["esnext"],
     "sourceMap": true,
     "rootDir": "src",
-    "strict": true
+    "strict": true,
+
+    "erasableSyntaxOnly": true,
+    "exactOptionalPropertyTypes": true,
+
+    "noUnusedLocals": true,
+    "noImplicitReturns": true,
+    "noUnusedParameters": true,
+    "noUncheckedIndexedAccess": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true,
+    "noErrorTruncation": true
   }
 }

@@ -1,63 +1,43 @@
 import vscode from "vscode";
-import { Achievement, Provider, Statistic } from "./achieve";
-import { curl } from "./curl";
-
-const getAchievements = (
-  context: vscode.ExtensionContext,
-): Map<number, Achievement> => {
-  const maybeMap: Map<number, Achievement> | undefined =
-    context.globalState.get("achievements");
-
-  if (maybeMap && Object.keys(maybeMap).length) {
-    return maybeMap;
-  } else {
-    return curl(context);
-  }
-};
+import { Provider } from "./provider";
+import { log } from "./util";
 
 export function activate(context: vscode.ExtensionContext) {
-  console.log("achieve");
+  log("activate");
 
-  const provider = new Provider(getAchievements(context));
-  provider.summary.set(
-    "overall",
-    new Statistic(
-      "overall",
-      (achievements) =>
-        achievements
-          .values()
-          .filter((achievement) => achievement.isAchieved)
-          .toArray().length / achievements.length,
-    ),
-  );
+  const provider = new Provider(context);
 
   vscode.window.registerTreeDataProvider("achievementsList", provider);
 
   vscode.workspace.onDidChangeTextDocument((event) => {
-    console.log("did change text document");
+    log("document change detection");
     const diagnostics = vscode.languages.getDiagnostics(event.document.uri);
     if (diagnostics.length > 0) {
-      console.log("diagnostics length > 0");
       for (let i = 0; i < diagnostics.length; i++) {
-        const diagnostic = diagnostics[i];
+        const diagnostic = diagnostics[i]!;
         const code = diagnostic.code;
         if (typeof code === "number") {
-          console.log('typeof code === "number"');
           if (!provider.achievements.get(code)?.isAchieved) {
-            console.log("!provider.achievements.has(code)");
+            log("achievement");
             vscode.window.showInformationMessage(
               `Achievement unlocked!\n${diagnostic.code}: ${diagnostic.message}`,
             );
             provider.achievements.get(code)!.achieve();
             provider.refresh();
+          } else {
+            log("repeated achievement");
           }
+        } else {
+          log("bad error code");
         }
       }
+    } else {
+      log("no error, quitting");
     }
   });
 
   vscode.commands.registerCommand("achievements.refresh", () => {
-    console.log("refreshing");
+    log("refreshing");
     provider.refresh();
   });
 }
