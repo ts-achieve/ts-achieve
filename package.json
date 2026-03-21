@@ -16,28 +16,44 @@
   "contributes": {
     "commands": [
       {
-        "command": "achievements.show",
+        "command": "tsAchieve.show",
         "title": "Show Achievements"
       },
       {
-        "command": "achievements.refresh",
+        "command": "tsAchieve.refresh",
         "title": "Refresh Achievements"
       }
     ],
+    "configuration": {
+      "title": "ts-achieve",
+      "type": "object",
+      "properties": {
+        "tsAchieve.config.doesShowDescription": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether a locked achievement should reveal its description."
+        }
+      }
+    },
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "achievements",
+          "id": "achieves",
           "title": "Achievements",
           "icon": "lib/typescript.svg"
         }
       ]
     },
     "views": {
-      "achievements": [
+      "achieves": [
         {
-          "id": "achievementsList",
-          "name": "",
+          "id": "tsAchieve.view.list",
+          "name": "List",
+          "icon": "lib/typescript.svg"
+        },
+        {
+          "id": "tsAchieve.view.speedrun",
+          "name": "Speedrun",
           "icon": "lib/typescript.svg"
         }
       ]
@@ -48,7 +64,7 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "pretest": "pnpm run compile",
-    "test": "vitest --run && vscode-test"
+    "test": "vitest --run && vscode-test --run"
   },
   "devDependencies": {
     "@types/node": "22.x",
