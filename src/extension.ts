@@ -7,7 +7,7 @@ const getAchievements = (
 ): Map<number, Achievement> => {
   const maybeMap: Map<number, Achievement> | undefined =
     context.globalState.get("achievements");
-  console.log("maybeMap", maybeMap);
+
   if (maybeMap && Object.keys(maybeMap).length) {
     return maybeMap;
   } else {

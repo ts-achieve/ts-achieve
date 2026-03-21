@@ -1,4 +1,3 @@
-import fs from "fs";
 import child from "child_process";
 import vscode from "vscode";
 import { Achievement, categories, DiagnosticMessage } from "./achieve";
