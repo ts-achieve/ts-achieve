@@ -18,7 +18,7 @@ const commands = {
 } as const;
 
 const config = {
-  doesShowDescription: `${ex}.config.doesShowDescription`,
+  revealDescription: `config.revealDescription`,
 } as const;
 
 const views = {

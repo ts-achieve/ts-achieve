@@ -16,8 +16,8 @@ const makeExConfig = (): ExtensionConfig => {
   const wsConfig = vscode.workspace.getConfiguration(names.ex);
 
   return {
-    doesShowDescription:
-      wsConfig.get(names.config.doesShowDescription) ?? false,
+    revealDescription:
+      wsConfig.get(names.config.revealDescription) ?? false,
   };
 };
 

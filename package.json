@@ -25,13 +25,35 @@
       }
     ],
     "configuration": {
-      "title": "ts-achieve",
+      "title": "TS Achieve",
       "type": "object",
       "properties": {
-        "tsAchieve.config.doesShowDescription": {
+        "tsAchieve.config.revealDescription": {
           "type": "boolean",
           "default": false,
           "description": "Whether a locked achievement should reveal its description."
+        },
+        "tsAchieve.config.sort": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "kind (errors first)",
+              "kind (errors last)",
+              "locked first",
+              "unlocked first",
+              "code (ascending)",
+              "code (descending)",
+              "alphabetic (forwards)",
+              "alphabetic (backwards)"
+            ]
+          },
+          "default": [
+            "kind (errors last)",
+            "locked first",
+            "code (ascending)"
+          ],
+          "description": "The ordered list of properties by which to sort."
         }
       }
     },

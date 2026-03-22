@@ -143,7 +143,7 @@ type Timestamp = {
 };
 
 export type ExtensionConfig = {
-  doesShowDescription: boolean;
+  revealDescription: boolean;
 };
 
 export class AchieveProvision
@@ -152,20 +152,15 @@ export class AchieveProvision
 {
   static defaultDescription = "?" as const;
 
-  doesShowDescription: boolean = false;
-  isUnlocked: boolean = false;
+  private _errorMessage: string;
+
+  revealDescription = false;
+  isUnlocked = false;
   timestamp: Maybe<Timestamp> = undefined;
-  _lifetime: number = 0;
-
-  get lifetime(): number {
-    return this._lifetime;
-  }
-
+  _lifetime = 0;
   code: number;
   category: TsDiagnosticCategory;
   configuration: ExtensionConfig;
-
-  private _errorMessage: string;
 
   constructor(
     message: string,
@@ -186,8 +181,13 @@ export class AchieveProvision
     this.refresh();
   }
 
+  get lifetime(): number {
+    return this._lifetime;
+  }
+
   reconfigure(config: ExtensionConfig): void {
-    this.doesShowDescription = config.doesShowDescription;
+    log(this.revealDescription, config.revealDescription);
+    this.revealDescription = config.revealDescription;
     this.refresh();
   }
 
@@ -241,7 +241,7 @@ Lifetime encounters: ${++this._lifetime}, most recently on ${last.time.toLocaleS
   refresh(): void {
     this.label = this.computeLabel();
     this.description =
-      this.isUnlocked || this.doesShowDescription
+      this.isUnlocked || this.revealDescription
         ? this._errorMessage
         : AchieveProvision.defaultDescription;
   }
