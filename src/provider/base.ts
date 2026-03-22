@@ -22,7 +22,7 @@ export abstract class ProviderBase
   implements vscode.TreeDataProvider<Provision>, Configurable
 {
   paths: PathRecord;
-  achieves: AchieveMap;
+  achieveMap: AchieveMap;
   config: ExtensionConfig;
 
   protected _emitter: vscode.EventEmitter<MaybeProvision>;
@@ -32,7 +32,7 @@ export abstract class ProviderBase
   constructor(config: ExtensionConfig, ...loadArgs: any[]) {
     this.config = config;
 
-    this.achieves = this.loadAchieves(...loadArgs);
+    this.achieveMap = this.loadAchieves(...loadArgs);
 
     this.paths = Object.fromEntries(
       achieveKinds.map((kind) => [
@@ -40,7 +40,7 @@ export abstract class ProviderBase
         new PathProvision(
           kind,
           (achieve) => achieve.kind === kind,
-          this.achieves,
+          this.achieveMap,
         ),
       ]),
     ) as PathRecord;
@@ -58,7 +58,7 @@ export abstract class ProviderBase
   }
 
   get allProvisions(): Provision[] {
-    return this.topProvisions.concat(this.achieves.values().toArray());
+    return this.topProvisions.concat(this.achieveMap.values().toArray());
   }
 
   get topProvisions(): Provision[] {
@@ -74,7 +74,7 @@ export abstract class ProviderBase
     this.refresh();
   }
 
-  refresh(): void {
+  refresh(..._args: any[]): void {
     this._emitter.fire();
   }
 
@@ -83,7 +83,7 @@ export abstract class ProviderBase
 
     if (element) {
       if (element instanceof PathProvision) {
-        return this.achieves
+        return this.achieveMap
           .values()
           .filter((achievement) => achievement.kind === element.kind)
           .toArray();

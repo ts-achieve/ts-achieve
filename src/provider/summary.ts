@@ -1,77 +1,50 @@
 import { log } from "console";
 import { ExtensionConfig } from "../config";
 import { ProviderBase } from "./base";
-import {
-  SummaryProvision,
-  Provision,
-  StatisticType,
-  AchieveProvision,
-} from "../provision";
-import { capitalize } from "../util";
+import { SummaryProvision, Provision, AchieveMap } from "../provision";
 
 export type SummaryRecord = Record<string, SummaryProvision>;
 
 export class SummaryProvider extends ProviderBase {
   summary: SummaryRecord;
 
-  constructor(configuration: ExtensionConfig) {
-    super(configuration);
+  constructor(configuration: ExtensionConfig, achieveMap: AchieveMap) {
+    super(configuration, achieveMap);
 
-    this.summary = {};
-    this.setAchievementProportionSummary("overall", () =>
-      this.achieves.values().toArray(),
-    );
-    this.setAchievementProportionSummary("messages", () =>
-      this.achieves
-        .values()
-        .filter((achievement) => achievement.category === "Message")
-        .toArray(),
-    );
-    this.setAchievementProportionSummary("suggestions", () =>
-      this.achieves
-        .values()
-        .filter((achievement) => achievement.category === "Suggestion")
-        .toArray(),
-    );
-    this.setAchievementProportionSummary("errors", () =>
-      this.achieves
-        .values()
-        .filter((achievement) => achievement.category === "Error")
-        .toArray(),
-    );
+    this.summary = {
+      overall: new SummaryProvision("Overall"),
+      messages: new SummaryProvision(
+        "Messages",
+        (achieve) => achieve.category === "Message",
+      ),
+      suggestions: new SummaryProvision(
+        "Suggestions",
+        (achieve) => achieve.category === "Suggestion",
+      ),
+      errors: new SummaryProvision(
+        "Errors",
+        (achieve) => achieve.category === "Error",
+      ),
+    };
+  }
+
+  loadAchieves(achieveMap: AchieveMap): AchieveMap {
+    return achieveMap;
+  }
+
+  get allProvisions(): Provision[] {
+    return this.topProvisions;
   }
 
   get topProvisions(): Provision[] {
-    return ([] as Provision[]).concat(
-      Object.values(this.summary),
-      Object.values(this.paths),
-    );
+    return Object.values(this.summary);
   }
 
-  refresh(): void {
-    log("fire");
-    Object.values(this.summary).forEach((statistic) =>
-      statistic.compute(this.achieves.values().toArray()),
-    );
-    this._emitter.fire();
-  }
-
-  setAchievementProportionSummary(
-    key: StatisticType,
-    collection: () => AchieveProvision[],
-    label?: string,
-  ) {
-    Object.assign(this.summary, {
-      [key]: new SummaryProvision(() => {
-        const achieved = collection().filter(
-          (achievement) => achievement.isUnlocked,
-        ).length;
-        const total = collection().length;
-        return {
-          label: `${label ?? capitalize(key)}: ${((achieved / total) * 100).toFixed(2)}%`,
-          description: `(${achieved} of ${total})`,
-        };
-      }),
+  refresh(achieveMap: AchieveMap): void {
+    log("refresh summzzzzzary", this.summary, "wah");
+    Object.values(this.summary).forEach((provision) => {
+      provision.refresh(achieveMap);
     });
+    this._emitter.fire();
   }
 }

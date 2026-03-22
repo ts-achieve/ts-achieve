@@ -31,15 +31,15 @@
       "title": "TS Achieve",
       "type": "object",
       "properties": {
-        "tsAchieve.config.notifyRepeatedAchievements": {
-          "type": "boolean",
-          "default": false,
-          "description": "Whether to show information message on achievements that are already earned."
-        },
         "tsAchieve.config.revealDescription": {
           "type": "boolean",
           "default": false,
-          "description": "Whether a locked achievement should reveal its description."
+          "description": "Whether a locked achievement should reveal its description. (default: false)"
+        },
+        "tsAchieve.config.notifyRepeatedAchievements": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether to show information message on achievements that are already earned. (default: false)"
         },
         "tsAchieve.config.sort": {
           "type": "array",
@@ -68,14 +68,19 @@
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "achieves",
+          "id": "view-achieve",
           "title": "Achievements",
           "icon": "lib/typescript.svg"
         }
       ]
     },
     "views": {
-      "achieves": [
+      "view-achieve": [
+        {
+          "id": "tsAchieve.view.summary",
+          "name": "Summary",
+          "icon": "lib/typescript.svg"
+        },
         {
           "id": "tsAchieve.view.list",
           "name": "List",

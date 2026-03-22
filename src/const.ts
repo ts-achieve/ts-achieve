@@ -55,6 +55,7 @@ const config = {
 
 const views = {
   list: `${ex}.view.list`,
+  summary: `${ex}.view.summary`,
   speedrun: `${ex}.view.speedrun`,
 } as const;
 

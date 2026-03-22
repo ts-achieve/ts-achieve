@@ -16,6 +16,7 @@ export type AchieveMap = Map<number, AchieveProvision>;
 // region constants
 
 // region type TsDiagnostic
+
 export type StatisticType = (typeof statistics)[number];
 
 export type TsDiagnosticCategory = (typeof tsDiagnosticCategories)[number];
@@ -57,7 +58,7 @@ export type Provision = PathProvision | SummaryProvision | AchieveProvision;
 export type MaybeProvision = Provision | undefined | null | void;
 
 export type Refreshable = {
-  refresh(): void;
+  refresh(...args: any[]): void;
 };
 
 export type Configurable = Refreshable & {
@@ -75,22 +76,37 @@ type LabelComputation = {
   description: string;
 };
 
-type Compute = (achievements: AchieveProvision[]) => LabelComputation;
+export type Condition = (achieve: AchieveProvision) => boolean;
 
 export class SummaryProvision extends vscode.TreeItem implements Configurable {
-  private _compute: Compute;
+  denominator: Condition;
+  title: string;
 
-  constructor(compute: Compute) {
+  constructor(title: string, denominator: Condition = () => true) {
     super(loadingText);
-    this._compute = compute;
-  }
-  compute(achievements: AchieveProvision[]) {
-    const { label, description } = this._compute(achievements);
-    this.label = label;
-    this.description = description;
+    this.title = title;
+    this.denominator = denominator;
   }
 
-  refresh() {}
+  summarize(achieves: AchieveProvision[]): LabelComputation {
+    const achieved = achieves.filter((achieve) => achieve.isUnlocked).length;
+    const total = achieves.length;
+    return {
+      label: `${this.title}: ${((achieved / total) * 100).toFixed(2)}%`,
+      description: `(${achieved} of ${total})`,
+    };
+  }
+
+  refresh(achieveMap?: AchieveMap) {
+    log("refrest provison");
+    if (achieveMap) {
+      const { label, description } = this.summarize(
+        achieveMap.values().filter(this.denominator).toArray(),
+      );
+      this.label = label;
+      this.description = description;
+    }
+  }
 
   reconfigure(_config: ExtensionConfig): void {
     this.refresh();
@@ -231,14 +247,10 @@ Lifetime encounters: ${++this._lifetime}, most recently on ${last.time.toLocaleS
   }
 
   refresh(): void {
-    this.label = this.computeLabel();
+    this.label = this.code.toString();
     this.description =
       this.isUnlocked || this.revealDescription
         ? this._errorMessage
         : AchieveProvision.defaultDescription;
-  }
-
-  computeLabel(): string {
-    return this.code.toString();
   }
 }

@@ -1,18 +1,28 @@
 import vscode from "vscode";
 
 import { log } from "./util";
+import { names } from "./const";
 import { getConfigSection, withConfig } from "./config";
 import { AchievedProvider } from "./provider/achieved";
 import { DecorationProvider } from "./provider/decorate";
-import { names } from "./const";
+import { SummaryProvider } from "./provider/summary";
 
 export function activate(context: vscode.ExtensionContext) {
   log("activate");
 
   withConfig((config) => {
-    const achievesProvider = new AchievedProvider(config, context);
+    const achievedProvider = new AchievedProvider(config, context);
 
-    vscode.window.registerTreeDataProvider(names.views.list, achievesProvider);
+    const summaryProvider = new SummaryProvider(
+      config,
+      achievedProvider.achieveMap,
+    );
+    vscode.window.registerTreeDataProvider(
+      names.views.summary,
+      summaryProvider,
+    );
+
+    vscode.window.registerTreeDataProvider(names.views.list, achievedProvider);
 
     // const speedrunProvider = new SpeedrunProvider(context, config);
     // vscode.window.registerTreeDataProvider(
@@ -30,12 +40,12 @@ export function activate(context: vscode.ExtensionContext) {
           const diagnostic = diagnostics[i]!;
 
           if (typeof diagnostic.code === "number") {
-            const achieve = achievesProvider.achieves.get(diagnostic.code);
+            const achieve = achievedProvider.achieveMap.get(diagnostic.code);
 
             if (achieve) {
               if (achieve.isUnlocked) {
                 achieve.encounter(event, diagnostic);
-                log("provider config", achievesProvider.config);
+                log("provider config", achievedProvider.config);
                 if (getConfigSection(names.config.notifyRepeatedAchievements)) {
                   vscode.window.showInformationMessage(
                     `Achievement found again!\n${diagnostic.code}: ${diagnostic.message}`,
@@ -46,25 +56,26 @@ export function activate(context: vscode.ExtensionContext) {
                 vscode.window.showInformationMessage(
                   `Achievement unlocked!\n${diagnostic.code}: ${diagnostic.message}`,
                 );
-                achievesProvider.refresh();
+                achievedProvider.refresh();
+                summaryProvider.refresh(achievedProvider.achieveMap);
               }
             }
           }
         }
 
-        context.globalState.update("achieves", achievesProvider.achieves);
+        context.globalState.update("achieves", achievedProvider.achieveMap);
       }
     });
 
     vscode.commands.registerCommand(names.commands.refresh, () => {
       log("refresh");
-      achievesProvider.refresh();
+      achievedProvider.refresh();
     });
 
-    context.globalState.update("achieves", achievesProvider.achieves);
+    context.globalState.update("achieves", achievedProvider.achieveMap);
 
     return {
-      achieves: achievesProvider,
+      achieves: achievedProvider,
       // speedrun: speedrunProvider,
       decoration: decorationProvider,
     };
