@@ -1,33 +1,29 @@
 import vscode, { MarkdownString } from "vscode";
 
 import { Maybe } from "./type";
-import { loadingText, names } from "./const";
+import {
+  loadingText,
+  names,
+  statistics,
+  tsDiagnosticCategories,
+} from "./const";
 import { capitalize, isObject, log, uncapitalize } from "./util";
 import { ExtensionConfig } from "./config";
+import { AchieveKind } from "./provider/base";
 
 export type AchieveMap = Map<number, AchieveProvision>;
 
 // region constants
 
-const tsDiagnosticCategories = ["Error", "Suggestion", "Message"] as const;
-type TsDiagnosticCategory = (typeof tsDiagnosticCategories)[number];
-
-export const achieveKinds = [
-  "meta",
-  "message",
-  "suggestion",
-  "syntax",
-  "type",
-  "tsconfig",
-  "strict",
-] as const;
-export type AchieveKind = (typeof achieveKinds)[number];
-
 // region type TsDiagnostic
+export type StatisticType = (typeof statistics)[number];
+
+export type TsDiagnosticCategory = (typeof tsDiagnosticCategories)[number];
 
 export type TsDiagnostic = {
   code: number;
   category: TsDiagnosticCategory;
+  reportsUnnecessary?: boolean;
 };
 
 export const isTsDiagnostic = (x: unknown): x is TsDiagnostic => {
@@ -40,12 +36,14 @@ export const isTsDiagnostic = (x: unknown): x is TsDiagnostic => {
   );
 };
 
-export const classify = (dm: TsDiagnostic): AchieveKind => {
-  if (dm.category !== "Error") {
-    return uncapitalize(dm.category);
-  } else if (dm.code < 2000) {
+const classify = (diagnostic: TsDiagnostic): AchieveKind => {
+  if (diagnostic.category !== "Error") {
+    return uncapitalize(diagnostic.category);
+  } else if (diagnostic.reportsUnnecessary) {
+    return "warning";
+  } else if (diagnostic.code < 2000) {
     return "syntax";
-  } else if (dm.code < 5000) {
+  } else if (diagnostic.code < 5000) {
     return "type";
   } else {
     return "tsconfig";
@@ -55,6 +53,8 @@ export const classify = (dm: TsDiagnostic): AchieveKind => {
 // region type Provision
 
 export type Provision = PathProvision | SummaryProvision | AchieveProvision;
+
+export type MaybeProvision = Provision | undefined | null | void;
 
 export type Refreshable = {
   refresh(): void;
@@ -99,7 +99,7 @@ export class SummaryProvision extends vscode.TreeItem implements Configurable {
 
 // region PathProvision
 
-type KindFilter = (diagnostic: TsDiagnostic) => boolean;
+type KindFilter = (achieve: Achieve) => boolean;
 
 export class PathProvision extends vscode.TreeItem implements Refreshable {
   kind: AchieveKind;
@@ -126,7 +126,8 @@ export class PathProvision extends vscode.TreeItem implements Refreshable {
 
 // region achievement
 
-type Achievement = TsDiagnostic & {
+type Achieve = TsDiagnostic & {
+  kind: AchieveKind;
   isUnlocked: boolean;
   timestamp: Maybe<Timestamp>;
   lifetime: number;
@@ -141,10 +142,7 @@ type Timestamp = {
 
 export class AchieveProvision
   extends vscode.TreeItem
-  implements
-    Achievement,
-    Configurable,
-    Pick<ExtensionConfig, "revealDescription">
+  implements Achieve, Configurable, Pick<ExtensionConfig, "revealDescription">
 {
   static defaultDescription = "?" as const;
 
@@ -154,20 +152,18 @@ export class AchieveProvision
   isUnlocked = false;
   timestamp: Maybe<Timestamp> = undefined;
   _lifetime = 0;
-  code: number;
-  category: TsDiagnosticCategory;
-  configuration: ExtensionConfig;
 
-  constructor(
-    message: string,
-    diagnostic: TsDiagnostic,
-    configuration: ExtensionConfig,
-  ) {
+  code;
+  kind;
+  category;
+
+  constructor(message: string, diagnostic: TsDiagnostic) {
     super(loadingText);
 
     this.code = diagnostic.code;
     this.category = diagnostic.category;
-    this.configuration = configuration;
+    this.kind = classify(diagnostic);
+
     this._errorMessage = message;
     this.iconPath = new vscode.ThemeIcon(
       "lock",

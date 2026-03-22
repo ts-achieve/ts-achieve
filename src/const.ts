@@ -2,13 +2,43 @@ export const loadingText = "Loading…";
 export const diagnosticMessagesUrl =
   "https://raw.githubusercontent.com/microsoft/TypeScript/refs/heads/main/src/compiler/diagnosticMessages.json" as const;
 
+export const tsDiagnosticCategories = [
+  "Error",
+  "Suggestion",
+  "Message",
+] as const;
+
+export const achieveKinds = [
+  "meta",
+  "message",
+  "warning",
+  "suggestion",
+  "syntax",
+  "type",
+  "tsconfig",
+  "strict",
+] as const;
+
 export const statistics = [
   "overall",
   "errors",
+  "warnings",
   "suggestions",
   "messages",
 ] as const;
-export type StatisticType = (typeof statistics)[number];
+
+export const configOptions = [
+  "kind (errors first)",
+  "kind (errors last)",
+  "locked first",
+  "unlocked first",
+  "code (ascending)",
+  "code (descending)",
+  "alphabetic (forwards)",
+  "alphabetic (backwards)",
+] as const;
+
+// region names
 
 const ex = "tsAchieve" as const;
 
@@ -20,6 +50,7 @@ const commands = {
 const config = {
   revealDescription: `config.revealDescription`,
   notifyRepeatedAchievements: `config.notifyRepeatedAchievements`,
+  sort: `config.sort`,
 } as const;
 
 const views = {

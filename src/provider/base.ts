@@ -1,23 +1,22 @@
-import child from "child_process";
 import vscode from "vscode";
 
-import { Maybe } from "./type";
-import { log } from "./util";
-import { diagnosticMessagesUrl } from "./const";
-import { PathRecord, MaybeNode } from "./achieve";
+import { log } from "../util";
+import { achieveKinds } from "../const";
 import {
   Provision,
   Configurable,
   AchieveMap,
-  achieveKinds,
   PathProvision,
-  classify,
   isConfigurable,
   AchieveProvision,
-  TsDiagnostic,
-  isTsDiagnostic,
-} from "./provision";
-import { ExtensionConfig } from "./config";
+  MaybeProvision,
+} from "../provision";
+import { ExtensionConfig } from "../config";
+import { diagnosticMessages } from "../diagnosticMessages";
+
+export type AchieveKind = (typeof achieveKinds)[number];
+
+export type PathRecord = Record<AchieveKind, PathProvision>;
 
 export abstract class ProviderBase
   implements vscode.TreeDataProvider<Provision>, Configurable
@@ -26,28 +25,36 @@ export abstract class ProviderBase
   achieves: AchieveMap;
   config: ExtensionConfig;
 
-  protected _emitter: vscode.EventEmitter<MaybeNode>;
+  protected _emitter: vscode.EventEmitter<MaybeProvision>;
 
-  readonly onDidChangeTreeData: vscode.Event<MaybeNode>;
+  readonly onDidChangeTreeData: vscode.Event<MaybeProvision>;
 
-  constructor(context: vscode.ExtensionContext, config: ExtensionConfig) {
+  constructor(config: ExtensionConfig, ...loadArgs: any[]) {
     this.config = config;
 
-    this.achieves = fetchAchieveMap(context, this.config);
+    this.achieves = this.loadAchieves(...loadArgs);
 
     this.paths = Object.fromEntries(
       achieveKinds.map((kind) => [
         kind,
         new PathProvision(
           kind,
-          (achievement) => classify(achievement) === kind,
+          (achieve) => achieve.kind === kind,
           this.achieves,
         ),
       ]),
     ) as PathRecord;
 
-    this._emitter = new vscode.EventEmitter<MaybeNode>();
+    this._emitter = new vscode.EventEmitter<MaybeProvision>();
     this.onDidChangeTreeData = this._emitter.event;
+  }
+
+  loadAchieves(..._args: any[]): AchieveMap {
+    return new Map(
+      Object.entries(diagnosticMessages).map(([key, value]) => {
+        return [value.code, new AchieveProvision(key, value)];
+      }),
+    );
   }
 
   get allProvisions(): Provision[] {
@@ -78,7 +85,7 @@ export abstract class ProviderBase
       if (element instanceof PathProvision) {
         return this.achieves
           .values()
-          .filter((achievement) => classify(achievement) === element.kind)
+          .filter((achievement) => achievement.kind === element.kind)
           .toArray();
       } else {
         return [];
@@ -92,28 +99,3 @@ export abstract class ProviderBase
     return element;
   }
 }
-
-const fetchAchieveMap = (
-  context: vscode.ExtensionContext,
-  config: ExtensionConfig,
-): AchieveMap => {
-  const maybeMap: Maybe<Map<number, AchieveProvision>> =
-    context.globalState.get("achieves");
-
-  return maybeMap && Object.keys(maybeMap).length ? maybeMap : curl(config);
-};
-
-const curl = (config: ExtensionConfig): AchieveMap => {
-  const parse: Record<string, TsDiagnostic> = JSON.parse(
-    child.execSync(`curl ${diagnosticMessagesUrl}`, { encoding: "utf8" }),
-  );
-
-  const map = new Map<number, AchieveProvision>();
-  for (const [key, value] of Object.entries(parse)) {
-    if (isTsDiagnostic(value)) {
-      map.set(value.code, new AchieveProvision(key, value, config));
-    }
-  }
-
-  return map;
-};

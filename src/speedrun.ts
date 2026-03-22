@@ -1,7 +1,7 @@
-import vscode from "vscode";
+// import vscode from "vscode";
 
 import { Maybe } from "./type";
-import { ProviderBase } from "./provide";
+import { ProviderBase } from "./provider/base";
 import { ExtensionConfig } from "./config";
 
 type Speedrun = {
@@ -17,8 +17,8 @@ export class SpeedrunProvider extends ProviderBase {
   history: Speedrun[];
   current: Maybe<Speedrun>;
 
-  constructor(context: vscode.ExtensionContext, config: ExtensionConfig) {
-    super(context, config);
+  constructor(config: ExtensionConfig) {
+    super(config);
     this.history = [];
   }
 }

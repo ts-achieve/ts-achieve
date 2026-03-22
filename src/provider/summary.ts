@@ -1,30 +1,21 @@
-import vscode from "vscode";
-
-import { StatisticType } from "./const";
-import { capitalize, log } from "./util";
+import { log } from "console";
+import { ExtensionConfig } from "../config";
+import { ProviderBase } from "./base";
 import {
   SummaryProvision,
-  AchieveProvision,
   Provision,
-  PathProvision,
-  AchieveKind,
-} from "./provision";
-import { ProviderBase } from "./provide";
-import { ExtensionConfig } from "./config";
+  StatisticType,
+  AchieveProvision,
+} from "../provision";
+import { capitalize } from "../util";
 
-export type MaybeNode = Provision | undefined | null | void;
-
-export type PathRecord = Record<AchieveKind, PathProvision>;
 export type SummaryRecord = Record<string, SummaryProvision>;
 
-export class AchieveProvider extends ProviderBase {
+export class SummaryProvider extends ProviderBase {
   summary: SummaryRecord;
 
-  constructor(
-    context: vscode.ExtensionContext,
-    configuration: ExtensionConfig,
-  ) {
-    super(context, configuration);
+  constructor(configuration: ExtensionConfig) {
+    super(configuration);
 
     this.summary = {};
     this.setAchievementProportionSummary("overall", () =>

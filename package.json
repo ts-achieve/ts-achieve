@@ -1,5 +1,8 @@
 {
   "name": "ts-achieve",
+  "repository": {
+    "url": "https://github.com/ts-achieve/ts-achieve.git"
+  },
   "displayName": "ts-achieve",
   "description": "TypeScript errors as achievements",
   "version": "0.0.1",
@@ -91,14 +94,16 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "pretest": "pnpm run compile",
-    "test": "vitest --run && vscode-test --run"
+    "test": "vitest --run && vscode-test --run",
+    "p": "pnpm exec vsce-pnpm"
   },
   "devDependencies": {
     "@types/node": "22.x",
     "@types/vscode": "^1.110.0",
     "@vscode/test-cli": "^0.0.12",
     "@vscode/test-electron": "^2.5.2",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vsce-pnpm": "^0.1.0"
   },
   "dependencies": {
     "vitest": "^4.1.0"

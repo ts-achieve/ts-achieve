@@ -1,16 +1,16 @@
 import vscode from "vscode";
 
 import { log } from "./util";
-import { withConfig } from "./config";
-import { AchieveProvider } from "./achieve";
-import { DecorationProvider } from "./decorate";
+import { getConfigSection, withConfig } from "./config";
+import { AchievedProvider } from "./provider/achieved";
+import { DecorationProvider } from "./provider/decorate";
 import { names } from "./const";
 
 export function activate(context: vscode.ExtensionContext) {
   log("activate");
 
   withConfig((config) => {
-    const achievesProvider = new AchieveProvider(context, config);
+    const achievesProvider = new AchievedProvider(config, context);
 
     vscode.window.registerTreeDataProvider(names.views.list, achievesProvider);
 
@@ -35,10 +35,11 @@ export function activate(context: vscode.ExtensionContext) {
             if (achieve) {
               if (achieve.isUnlocked) {
                 achieve.encounter(event, diagnostic);
-                if (achievesProvider.config.notifyRepeatedAchievements) {
-                vscode.window.showInformationMessage(
-                  `Achievement found again!\n${diagnostic.code}: ${diagnostic.message}`,
-                );
+                log("provider config", achievesProvider.config);
+                if (getConfigSection(names.config.notifyRepeatedAchievements)) {
+                  vscode.window.showInformationMessage(
+                    `Achievement found again!\n${diagnostic.code}: ${diagnostic.message}`,
+                  );
                 }
               } else {
                 achieve.unlock(event, diagnostic);

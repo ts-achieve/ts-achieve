@@ -1,4 +1,4 @@
-{
+export const diagnosticMessages = {
     "Unterminated string literal.": {
         "category": "Error",
         "code": 1002
@@ -8556,4 +8556,4 @@
         "category": "Error",
         "code": 18061
     }
-}
+} as const
