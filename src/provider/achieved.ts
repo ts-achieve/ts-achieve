@@ -6,6 +6,7 @@ import { AchieveProvision, AchieveMap, isTsDiagnostic } from "../provision";
 import { ProviderBase } from "./base";
 import { ExtensionConfig } from "../config";
 import { Maybe } from "../type";
+import { trace } from "../util";
 
 export class AchievedProvider extends ProviderBase {
   constructor(config: ExtensionConfig, context: vscode.ExtensionContext) {
@@ -16,6 +17,7 @@ export class AchievedProvider extends ProviderBase {
     const maybeMap: Maybe<Map<number, AchieveProvision>> =
       context.globalState.get("achieves");
 
+    trace("mappy", maybeMap ?? "no achieves in global state");
     return maybeMap && Object.keys(maybeMap).length ? maybeMap : curl();
   }
 }

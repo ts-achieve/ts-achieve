@@ -1,4 +1,4 @@
-export const log = (...messages: any[]) => {
+export const trace = (...messages: any[]) => {
   console.log(`achieved on ${new Date().toLocaleTimeString()}:`, ...messages);
 };
 

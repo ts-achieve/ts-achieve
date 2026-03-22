@@ -2,14 +2,22 @@ import vscode, { MarkdownString } from "vscode";
 
 import { Maybe } from "./type";
 import {
+  nonErrorKinds,
+  errorKinds,
   loadingText,
   names,
   statistics,
   tsDiagnosticCategories,
+  pathKinds,
 } from "./const";
-import { capitalize, isObject, log, uncapitalize } from "./util";
+import { capitalize, isObject, trace, uncapitalize } from "./util";
 import { ExtensionConfig } from "./config";
-import { AchieveKind } from "./provider/base";
+
+export type NonErrorKind = (typeof nonErrorKinds)[number];
+
+export type ErrorKind = (typeof errorKinds)[number];
+
+export type AchieveKind = NonErrorKind | ErrorKind;
 
 export type AchieveMap = Map<number, AchieveProvision>;
 
@@ -21,11 +29,15 @@ export type StatisticType = (typeof statistics)[number];
 
 export type TsDiagnosticCategory = (typeof tsDiagnosticCategories)[number];
 
-export type TsDiagnostic = {
-  code: number;
-  category: TsDiagnosticCategory;
-  reportsUnnecessary?: boolean;
-};
+export type TsDiagnostic<
+  C extends TsDiagnosticCategory = TsDiagnosticCategory,
+> = C extends any
+  ? {
+      code: number;
+      category: C;
+      reportsUnnecessary?: boolean;
+    }
+  : never;
 
 export const isTsDiagnostic = (x: unknown): x is TsDiagnostic => {
   return (
@@ -37,12 +49,22 @@ export const isTsDiagnostic = (x: unknown): x is TsDiagnostic => {
   );
 };
 
-const classify = (diagnostic: TsDiagnostic): AchieveKind => {
-  if (diagnostic.category !== "Error") {
+export const classify = (diagnostic: TsDiagnostic): AchieveKind => {
+  if (diagnostic.category === "Error") {
+    if ("reportsUnnecessary" in diagnostic) {
+      return "warning";
+    } else {
+      return classifyError(diagnostic);
+    }
+  } else {
     return uncapitalize(diagnostic.category);
-  } else if (diagnostic.reportsUnnecessary) {
-    return "warning";
-  } else if (diagnostic.code < 2000) {
+  }
+};
+
+const classifyError = (
+  diagnostic: Omit<TsDiagnostic<"Error">, "reportsUnnecessary">,
+): ErrorKind => {
+  if (diagnostic.code < 2000) {
     return "syntax";
   } else if (diagnostic.code < 5000) {
     return "type";
@@ -52,10 +74,6 @@ const classify = (diagnostic: TsDiagnostic): AchieveKind => {
 };
 
 // region type Provision
-
-export type Provision = PathProvision | SummaryProvision | AchieveProvision;
-
-export type MaybeProvision = Provision | undefined | null | void;
 
 export type Refreshable = {
   refresh(...args: any[]): void;
@@ -71,78 +89,65 @@ export const isConfigurable = (x: unknown): x is Configurable => {
   );
 };
 
-type LabelComputation = {
-  label: string;
-  description: string;
-};
-
-export type Condition = (achieve: AchieveProvision) => boolean;
-
-export class SummaryProvision extends vscode.TreeItem implements Configurable {
-  denominator: Condition;
-  title: string;
-
-  constructor(title: string, denominator: Condition = () => true) {
-    super(loadingText);
-    this.title = title;
-    this.denominator = denominator;
-  }
-
-  summarize(achieves: AchieveProvision[]): LabelComputation {
-    const achieved = achieves.filter((achieve) => achieve.isUnlocked).length;
-    const total = achieves.length;
-    return {
-      label: `${this.title}: ${((achieved / total) * 100).toFixed(2)}%`,
-      description: `(${achieved} of ${total})`,
-    };
-  }
-
-  refresh(achieveMap?: AchieveMap) {
-    log("refrest provison");
-    if (achieveMap) {
-      const { label, description } = this.summarize(
-        achieveMap.values().filter(this.denominator).toArray(),
-      );
-      this.label = label;
-      this.description = description;
-    }
-  }
-
-  reconfigure(_config: ExtensionConfig): void {
-    this.refresh();
-  }
-}
-
 // region PathProvision
 
-type KindFilter = (achieve: Achieve) => boolean;
+export type PathKind = (typeof pathKinds)[number];
+type PathFilter = (achieve: Achieve) => boolean;
+type PathTitle =
+  | `${Capitalize<Extract<PathKind, "special">>} achievements`
+  | `${Capitalize<Extract<PathKind, "message" | "suggestion" | "warning" | "error">>}s`
+  | `${Capitalize<Extract<PathKind, "strict" | "syntax" | "tsconfig" | "type">>} errors`;
 
 export class PathProvision extends vscode.TreeItem implements Refreshable {
-  kind: AchieveKind;
-  filter: KindFilter;
-  achievements: AchieveMap;
+  kind: PathKind;
+  filter: PathFilter;
+  achieveMap: AchieveMap;
   cache: AchieveProvision[];
 
-  constructor(kind: AchieveKind, filter: KindFilter, achievements: AchieveMap) {
-    super(
-      `${capitalize(kind)}${kind === "message" ? "" : kind === "meta" ? " Achievement" : " Error"}s`,
-      vscode.TreeItemCollapsibleState.Collapsed,
-    );
+  static toPathTitle(kind: PathKind): PathTitle {
+    switch (kind) {
+      case "special":
+        return "Special achievements";
+      case "message":
+      case "suggestion":
+      case "warning":
+      case "error":
+        return `${capitalize(kind)}s`;
+      case "strict":
+      case "syntax":
+      case "tsconfig":
+      case "type":
+        return `${capitalize(kind)} errors`;
+    }
+    kind satisfies never;
+  }
+
+  constructor(kind: PathKind, filter: PathFilter, achieveMap: AchieveMap) {
+    super(loadingText, vscode.TreeItemCollapsibleState.Collapsed);
     this.kind = kind;
     this.filter = filter;
-    this.achievements = achievements;
+    this.achieveMap = achieveMap;
     this.cache = this.refresh();
   }
 
   refresh(): AchieveProvision[] {
-    this.cache = this.achievements.values().filter(this.filter).toArray();
+    this.cache = this.achieveMap.values().filter(this.filter).toArray();
+
+    const achieved = this.cache.filter((achieve) => achieve.isUnlocked).length;
+    const total = this.cache.length;
+    this.label = `${capitalize(
+      PathProvision.toPathTitle(this.kind),
+    )}: ${((achieved / total) * 100).toFixed(2)}%`;
+    this.description = `(${achieved} of ${total})`;
+
     return this.cache;
   }
 }
 
 // region achievement
 
-type Achieve = TsDiagnostic & {
+type Achieve = {
+  diagnostic: TsDiagnostic;
   kind: AchieveKind;
   isUnlocked: boolean;
   timestamp: Maybe<Timestamp>;
@@ -167,17 +172,15 @@ export class AchieveProvision
   revealDescription = false;
   isUnlocked = false;
   timestamp: Maybe<Timestamp> = undefined;
-  _lifetime = 0;
+  lifetime = 0;
 
-  code;
   kind;
-  category;
+  diagnostic;
 
   constructor(message: string, diagnostic: TsDiagnostic) {
     super(loadingText);
 
-    this.code = diagnostic.code;
-    this.category = diagnostic.category;
+    this.diagnostic = diagnostic;
     this.kind = classify(diagnostic);
 
     this._errorMessage = message;
@@ -185,16 +188,12 @@ export class AchieveProvision
       "lock",
       new vscode.ThemeColor(names.colors.lockedAchievement),
     );
-    this.resourceUri = vscode.Uri.parse("tsAchieve.colors.achievement.locked");
+    this.resourceUri = vscode.Uri.parse(names.colors.lockedAchievement);
     this.refresh();
   }
 
-  get lifetime(): number {
-    return this._lifetime;
-  }
-
   reconfigure(config: ExtensionConfig): void {
-    log(this.revealDescription, config.revealDescription);
+    trace(this.revealDescription, config.revealDescription);
     this.revealDescription = config.revealDescription;
     this.refresh();
   }
@@ -203,7 +202,7 @@ export class AchieveProvision
     event: vscode.TextDocumentChangeEvent,
     diagnostic: vscode.Diagnostic,
   ): Timestamp {
-    log("encounter", this, event, diagnostic);
+    trace("encounter", this, event, diagnostic);
 
     const last = {
       time: new Date(),
@@ -222,7 +221,7 @@ ${first.text}
 \`\`\`
 which triggered the message: "${first.message}"
 
-Lifetime encounters: ${++this._lifetime}, most recently on ${last.time.toLocaleString()}
+Lifetime encounters: ${++this.lifetime}, most recently on ${last.time.toLocaleString()}
     `.trim(),
     );
 
@@ -238,16 +237,14 @@ Lifetime encounters: ${++this._lifetime}, most recently on ${last.time.toLocaleS
       "star-full",
       new vscode.ThemeColor(names.colors.unlockedAchievement),
     );
-    this.resourceUri = vscode.Uri.parse(
-      "tsAchieve.colors.achievement.unlocked",
-    );
+    this.resourceUri = vscode.Uri.parse(names.colors.unlockedAchievement);
     this.timestamp = this.encounter(event, diagnostic);
 
     this.refresh();
   }
 
   refresh(): void {
-    this.label = this.code.toString();
+    this.label = this.diagnostic.code.toString();
     this.description =
       this.isUnlocked || this.revealDescription
         ? this._errorMessage

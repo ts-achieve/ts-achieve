@@ -1,6 +1,6 @@
 import vscode from "vscode";
 
-import { log } from "../util";
+import { trace } from "../util";
 import { Configurable } from "../provision";
 import { names } from "../const";
 import { ExtensionConfig } from "../config";
@@ -24,7 +24,7 @@ export class DecorationProvider
           color: new vscode.ThemeColor(names.colors.unlockedAchievement),
         };
       default:
-        log(`bad path: ${uri.path}`);
+        trace(`bad path: ${uri.path}`);
         return undefined;
     }
   }

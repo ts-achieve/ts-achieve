@@ -1,22 +1,24 @@
 import vscode from "vscode";
 
-import { log } from "../util";
-import { achieveKinds } from "../const";
+import { trace } from "../util";
 import {
-  Provision,
   Configurable,
   AchieveMap,
   PathProvision,
   isConfigurable,
   AchieveProvision,
-  MaybeProvision,
+  PathKind,
 } from "../provision";
 import { ExtensionConfig } from "../config";
 import { diagnosticMessages } from "../diagnosticMessages";
+import { Summary } from "./summary";
+import { errorKinds, topPathKinds } from "../const";
 
-export type AchieveKind = (typeof achieveKinds)[number];
+export type Provision = PathProvision | Summary | AchieveProvision;
 
-export type PathRecord = Record<AchieveKind, PathProvision>;
+export type MaybeProvision = Provision | undefined | null | void;
+
+export type PathRecord = Record<PathKind, PathProvision>;
 
 export abstract class ProviderBase
   implements vscode.TreeDataProvider<Provision>, Configurable
@@ -35,14 +37,19 @@ export abstract class ProviderBase
     this.achieveMap = this.loadAchieves(...loadArgs);
 
     this.paths = Object.fromEntries(
-      achieveKinds.map((kind) => [
-        kind,
-        new PathProvision(
-          kind,
-          (achieve) => achieve.kind === kind,
-          this.achieveMap,
-        ),
-      ]),
+      [...topPathKinds, ...errorKinds].map(
+        (kind) =>
+          [
+            kind,
+            new PathProvision(
+              kind,
+              kind === "error"
+                ? (achieve) => errorKinds.includes(achieve.kind as any)
+                : (achieve) => achieve.kind === kind,
+              this.achieveMap,
+            ),
+          ] as const,
+      ),
     ) as PathRecord;
 
     this._emitter = new vscode.EventEmitter<MaybeProvision>();
@@ -58,11 +65,16 @@ export abstract class ProviderBase
   }
 
   get allProvisions(): Provision[] {
-    return this.topProvisions.concat(this.achieveMap.values().toArray());
+    return ([] as Provision[]).concat(
+      Object.values(this.paths),
+      this.achieveMap.values().toArray(),
+    );
   }
 
   get topProvisions(): Provision[] {
-    return Object.values(this.paths);
+    return Object.values(this.paths).filter((path) =>
+      topPathKinds.includes(path.kind as any),
+    );
   }
 
   reconfigure(config: ExtensionConfig): void {
@@ -75,18 +87,22 @@ export abstract class ProviderBase
   }
 
   refresh(..._args: any[]): void {
+    this.allProvisions.forEach((provision) => provision.refresh());
     this._emitter.fire();
   }
 
   getChildren(element?: Provision): vscode.ProviderResult<Provision[]> {
-    log("parent:", element);
+    trace("parent:", element);
 
     if (element) {
       if (element instanceof PathProvision) {
-        return this.achieveMap
-          .values()
-          .filter((achievement) => achievement.kind === element.kind)
-          .toArray();
+        if (element.kind === "error") {
+          return Object.values(this.paths).filter((path) =>
+            errorKinds.includes(path.kind as any),
+          );
+        } else {
+          return this.achieveMap.values().filter(element.filter).toArray();
+        }
       } else {
         return [];
       }

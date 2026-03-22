@@ -8,16 +8,20 @@ export const tsDiagnosticCategories = [
   "Message",
 ] as const;
 
-export const achieveKinds = [
-  "meta",
+export const nonErrorKinds = [
+  "special",
   "message",
-  "warning",
   "suggestion",
-  "syntax",
-  "type",
-  "tsconfig",
-  "strict",
+  "warning",
 ] as const;
+
+export const errorKinds = ["syntax", "type", "tsconfig", "strict"] as const;
+
+export const topPathKinds = [...nonErrorKinds, "error"] as const;
+
+export const pathKinds = [...topPathKinds, ...errorKinds] as const;
+
+export const achieveKinds = [...nonErrorKinds, ...errorKinds] as const;
 
 export const statistics = [
   "overall",

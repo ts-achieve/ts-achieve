@@ -1,6 +1,6 @@
 import vscode from "vscode";
 
-import { log } from "./util";
+import { trace } from "./util";
 import { names } from "./const";
 import { getConfigSection, withConfig } from "./config";
 import { AchievedProvider } from "./provider/achieved";
@@ -8,7 +8,7 @@ import { DecorationProvider } from "./provider/decorate";
 import { SummaryProvider } from "./provider/summary";
 
 export function activate(context: vscode.ExtensionContext) {
-  log("activate");
+  trace("activate");
 
   withConfig((config) => {
     const achievedProvider = new AchievedProvider(config, context);
@@ -45,7 +45,7 @@ export function activate(context: vscode.ExtensionContext) {
             if (achieve) {
               if (achieve.isUnlocked) {
                 achieve.encounter(event, diagnostic);
-                log("provider config", achievedProvider.config);
+
                 if (getConfigSection(names.config.notifyRepeatedAchievements)) {
                   vscode.window.showInformationMessage(
                     `Achievement found again!\n${diagnostic.code}: ${diagnostic.message}`,
@@ -68,10 +68,12 @@ export function activate(context: vscode.ExtensionContext) {
     });
 
     vscode.commands.registerCommand(names.commands.refresh, () => {
-      log("refresh");
+      trace("refresh");
       achievedProvider.refresh();
     });
 
+    achievedProvider.refresh();
+    summaryProvider.refresh(achievedProvider.achieveMap);
     context.globalState.update("achieves", achievedProvider.achieveMap);
 
     return {
