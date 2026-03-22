@@ -1,8 +1,10 @@
-// import vscode from "vscode";
+import vscode from "vscode";
 
-import { Maybe } from "./type";
-import { ProviderBase } from "./provider/base";
+import { Maybe } from "./util/type";
 import { ExtensionConfig } from "./config";
+import { Tracer } from "./util/tracer";
+import { ProviderBase } from "./provider/base";
+import { Refreshable } from "./provider/provision";
 
 type Speedrun = {
   start: Date;
@@ -17,8 +19,12 @@ export class SpeedrunProvider extends ProviderBase {
   history: Speedrun[];
   current: Maybe<Speedrun>;
 
-  constructor(config: ExtensionConfig) {
-    super(config);
+  constructor(config: ExtensionConfig, tracer: Tracer) {
+    super(config, tracer);
     this.history = [];
   }
+}
+
+export class StartDiv extends vscode.TreeItem implements Refreshable {
+  refresh(..._: any[]): void {}
 }

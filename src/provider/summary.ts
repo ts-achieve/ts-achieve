@@ -2,41 +2,51 @@ import vscode from "vscode";
 
 import { ExtensionConfig } from "../config";
 import { ProviderBase } from "./base";
-import { AchieveMap, AchieveProvision, Configurable } from "../provision";
-import { errorKinds, loadingText } from "../const";
+import {
+  AchieveMap,
+  AchieveProvision,
+  Configurable,
+  Provision,
+} from "./provision";
+import { errorKinds, loadingText } from "../util/const";
+import { Tracer } from "../util/tracer";
 
 export type SummaryRecord = Record<string, Summary>;
 
 export class SummaryProvider extends ProviderBase {
   summary: SummaryRecord;
 
-  constructor(configuration: ExtensionConfig, achieveMap: AchieveMap) {
-    super(configuration, achieveMap);
+  constructor(config: ExtensionConfig, tracer: Tracer, achieveMap: AchieveMap) {
+    super(config, tracer, achieveMap);
 
     this.summary = {
-      overall: new UnlockedSummary("Overall"),
-      lifetimeMessages: new TallySummary("Lifetime messages", () => {
+      overall: new UnlockedSummary(tracer, "Overall"),
+      lifetimeMessages: new TallySummary(tracer, "Lifetime messages", () => {
         return achieveMap
           .values()
           .filter((achieve) => achieve.kind === "message")
           .map((achieve) => achieve.lifetime)
           .reduce((xs, x) => xs + x, 0);
       }),
-      lifetimeSuggestions: new TallySummary("Lifetime suggestions", () => {
-        return achieveMap
-          .values()
-          .filter((achieve) => achieve.kind === "suggestion")
-          .map((achieve) => achieve.lifetime)
-          .reduce((xs, x) => xs + x, 0);
-      }),
-      lifetimeWarnings: new TallySummary("Lifetime warnings", () => {
+      lifetimeSuggestions: new TallySummary(
+        tracer,
+        "Lifetime suggestions",
+        () => {
+          return achieveMap
+            .values()
+            .filter((achieve) => achieve.kind === "suggestion")
+            .map((achieve) => achieve.lifetime)
+            .reduce((xs, x) => xs + x, 0);
+        },
+      ),
+      lifetimeWarnings: new TallySummary(tracer, "Lifetime warnings", () => {
         return achieveMap
           .values()
           .filter((achieve) => achieve.kind === "warning")
           .map((achieve) => achieve.lifetime)
           .reduce((xs, x) => xs + x, 0);
       }),
-      lifetimeErrors: new TallySummary("Lifetime errors", () => {
+      lifetimeErrors: new TallySummary(tracer, "Lifetime errors", () => {
         return achieveMap
           .values()
           .filter((achieve) => errorKinds.includes(achieve.kind as any))
@@ -71,11 +81,15 @@ type ComputedLabel = {
   description?: string;
 };
 
-export abstract class Summary extends vscode.TreeItem implements Configurable {
+export abstract class Summary extends Provision implements Configurable {
   title: string;
 
-  constructor(label: string | vscode.TreeItemLabel, title: string) {
-    super(label);
+  constructor(
+    tracer: Tracer,
+    label: string | vscode.TreeItemLabel,
+    title: string,
+  ) {
+    super(tracer, label);
     this.title = title;
   }
 
@@ -102,8 +116,8 @@ type Tally = () => number;
 export class TallySummary extends Summary {
   tally: Tally;
 
-  constructor(title: string, tally: Tally) {
-    super(loadingText, title);
+  constructor(tracer: Tracer, title: string, tally: Tally) {
+    super(tracer, loadingText, title);
     this.tally = tally;
   }
 
@@ -119,8 +133,12 @@ type Condition = (achieve: AchieveProvision) => boolean;
 export class UnlockedSummary extends Summary {
   denominator: Condition;
 
-  constructor(title: string, denominator: Condition = () => true) {
-    super(loadingText, title);
+  constructor(
+    tracer: Tracer,
+    title: string,
+    denominator: Condition = () => true,
+  ) {
+    super(tracer, loadingText, title);
     this.denominator = denominator;
   }
 

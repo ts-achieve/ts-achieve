@@ -61,7 +61,7 @@
             "locked first",
             "code (ascending)"
           ],
-          "description": "The ordered list of properties by which to sort."
+          "description": "The ordered list of properties by which to sort. (experimental)"
         }
       }
     },
@@ -92,7 +92,13 @@
           "icon": "lib/typescript.svg"
         }
       ]
-    }
+    },
+    "viewsWelcome": [
+      {
+        "view": "tsAchieve.view.speedrun",
+        "contents": "huh\n[Button](command:button)\nwhat"
+      }
+    ]
   },
   "scripts": {
     "r": "rm -rf node_modules && pnpm install",

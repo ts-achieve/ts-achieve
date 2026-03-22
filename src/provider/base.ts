@@ -1,6 +1,5 @@
 import vscode from "vscode";
 
-import { trace } from "../util";
 import {
   Configurable,
   AchieveMap,
@@ -8,31 +7,35 @@ import {
   isConfigurable,
   AchieveProvision,
   PathKind,
-} from "../provision";
+} from "./provision";
 import { ExtensionConfig } from "../config";
-import { diagnosticMessages } from "../diagnosticMessages";
+import { diagnosticMessages } from "../util/diagnosticMessages";
 import { Summary } from "./summary";
-import { errorKinds, topPathKinds } from "../const";
+import { errorKinds, topPathKinds } from "../util/const";
+import { StartDiv } from "../speedrun";
+import { Tracer, Tracing } from "../util/tracer";
 
-export type Provision = PathProvision | Summary | AchieveProvision;
+export type Provision = PathProvision | Summary | AchieveProvision | StartDiv;
 
 export type MaybeProvision = Provision | undefined | null | void;
 
 export type PathRecord = Record<PathKind, PathProvision>;
 
 export abstract class ProviderBase
-  implements vscode.TreeDataProvider<Provision>, Configurable
+  implements vscode.TreeDataProvider<Provision>, Tracing, Configurable
 {
   paths: PathRecord;
   achieveMap: AchieveMap;
   config: ExtensionConfig;
+  tracer: Tracer;
 
   protected _emitter: vscode.EventEmitter<MaybeProvision>;
 
   readonly onDidChangeTreeData: vscode.Event<MaybeProvision>;
 
-  constructor(config: ExtensionConfig, ...loadArgs: any[]) {
+  constructor(config: ExtensionConfig, tracer: Tracer, ...loadArgs: any[]) {
     this.config = config;
+    this.tracer = tracer;
 
     this.achieveMap = this.loadAchieves(...loadArgs);
 
@@ -42,6 +45,7 @@ export abstract class ProviderBase
           [
             kind,
             new PathProvision(
+              tracer,
               kind,
               kind === "error"
                 ? (achieve) => errorKinds.includes(achieve.kind as any)
@@ -59,7 +63,7 @@ export abstract class ProviderBase
   loadAchieves(..._args: any[]): AchieveMap {
     return new Map(
       Object.entries(diagnosticMessages).map(([key, value]) => {
-        return [value.code, new AchieveProvision(key, value)];
+        return [value.code, new AchieveProvision(this.tracer, key, value)];
       }),
     );
   }
@@ -92,7 +96,7 @@ export abstract class ProviderBase
   }
 
   getChildren(element?: Provision): vscode.ProviderResult<Provision[]> {
-    trace("parent:", element);
+    this.tracer.trace("parent:", element);
 
     if (element) {
       if (element instanceof PathProvision) {

@@ -1,7 +1,3 @@
-export const trace = (...messages: any[]) => {
-  console.log(`achieved on ${new Date().toLocaleTimeString()}:`, ...messages);
-};
-
 export const isObject = (x: unknown): x is object => {
   return typeof x === "object" && !!x;
 };

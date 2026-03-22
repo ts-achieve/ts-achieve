@@ -1,7 +1,7 @@
 import vscode from "vscode";
 
-import { Maybe } from "./type";
-import { names } from "./const";
+import { Maybe } from "./util/type";
+import { names } from "./util/const";
 import { AchievedProvider } from "./provider/achieved";
 import { DecorationProvider } from "./provider/decorate";
 

@@ -1,20 +1,23 @@
 import vscode from "vscode";
 
-import { trace } from "./util";
-import { names } from "./const";
+import { names } from "./util/const";
 import { getConfigSection, withConfig } from "./config";
 import { AchievedProvider } from "./provider/achieved";
 import { DecorationProvider } from "./provider/decorate";
 import { SummaryProvider } from "./provider/summary";
+import { makeTracer } from "./util/tracer";
 
 export function activate(context: vscode.ExtensionContext) {
-  trace("activate");
+  const tracer = makeTracer("ts-achieve");
+
+  tracer.trace("activate");
 
   withConfig((config) => {
-    const achievedProvider = new AchievedProvider(config, context);
+    const achievedProvider = new AchievedProvider(config, tracer, context);
 
     const summaryProvider = new SummaryProvider(
       config,
+      tracer,
       achievedProvider.achieveMap,
     );
     vscode.window.registerTreeDataProvider(
@@ -24,13 +27,13 @@ export function activate(context: vscode.ExtensionContext) {
 
     vscode.window.registerTreeDataProvider(names.views.list, achievedProvider);
 
-    // const speedrunProvider = new SpeedrunProvider(context, config);
+    // const speedrunProvider = new SpeedrunProvider(config);
     // vscode.window.registerTreeDataProvider(
     //   names.views.speedrun,
     //   speedrunProvider,
     // );
 
-    const decorationProvider = new DecorationProvider();
+    const decorationProvider = new DecorationProvider(tracer);
     vscode.window.registerFileDecorationProvider(decorationProvider);
 
     vscode.workspace.onDidChangeTextDocument((event) => {
@@ -68,7 +71,7 @@ export function activate(context: vscode.ExtensionContext) {
     });
 
     vscode.commands.registerCommand(names.commands.refresh, () => {
-      trace("refresh");
+      tracer.trace("refresh");
       achievedProvider.refresh();
     });
 

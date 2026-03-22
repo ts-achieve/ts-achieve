@@ -1,6 +1,6 @@
 import vscode, { MarkdownString } from "vscode";
 
-import { Maybe } from "./type";
+import { Maybe } from "../util/type";
 import {
   nonErrorKinds,
   errorKinds,
@@ -9,9 +9,10 @@ import {
   statistics,
   tsDiagnosticCategories,
   pathKinds,
-} from "./const";
-import { capitalize, isObject, trace, uncapitalize } from "./util";
-import { ExtensionConfig } from "./config";
+} from "../util/const";
+import { capitalize, isObject, uncapitalize } from "../util/util";
+import { ExtensionConfig } from "../config";
+import { Tracer, Tracing } from "../util/tracer";
 
 export type NonErrorKind = (typeof nonErrorKinds)[number];
 
@@ -89,6 +90,25 @@ export const isConfigurable = (x: unknown): x is Configurable => {
   );
 };
 
+export abstract class Provision
+  extends vscode.TreeItem
+  implements Tracing, Refreshable
+{
+  tracer: Tracer;
+
+  constructor(
+    tracer: Tracer,
+    label: string | vscode.TreeItemLabel = loadingText,
+    collapsibleState: vscode.TreeItemCollapsibleState = vscode
+      .TreeItemCollapsibleState.None,
+  ) {
+    super(label, collapsibleState);
+    this.tracer = tracer;
+  }
+
+  abstract refresh(...args: any[]): void;
+}
+
 // region PathProvision
 
 export type PathKind = (typeof pathKinds)[number];
@@ -98,7 +118,7 @@ type PathTitle =
   | `${Capitalize<Extract<PathKind, "message" | "suggestion" | "warning" | "error">>}s`
   | `${Capitalize<Extract<PathKind, "strict" | "syntax" | "tsconfig" | "type">>} errors`;
 
-export class PathProvision extends vscode.TreeItem implements Refreshable {
+export class PathProvision extends Provision {
   kind: PathKind;
   filter: PathFilter;
   achieveMap: AchieveMap;
@@ -122,15 +142,21 @@ export class PathProvision extends vscode.TreeItem implements Refreshable {
     kind satisfies never;
   }
 
-  constructor(kind: PathKind, filter: PathFilter, achieveMap: AchieveMap) {
-    super(loadingText, vscode.TreeItemCollapsibleState.Collapsed);
+  constructor(
+    tracer: Tracer,
+    kind: PathKind,
+    filter: PathFilter,
+    achieveMap: AchieveMap,
+  ) {
+    super(tracer, loadingText, vscode.TreeItemCollapsibleState.Collapsed);
     this.kind = kind;
+    this.tracer = tracer;
     this.filter = filter;
     this.achieveMap = achieveMap;
     this.cache = this.refresh();
   }
 
-  refresh(): AchieveProvision[] {
+  override refresh(): AchieveProvision[] {
     this.cache = this.achieveMap.values().filter(this.filter).toArray();
 
     const achieved = this.cache.filter((achieve) => achieve.isUnlocked).length;
@@ -162,7 +188,7 @@ type Timestamp = {
 };
 
 export class AchieveProvision
-  extends vscode.TreeItem
+  extends Provision
   implements Achieve, Configurable, Pick<ExtensionConfig, "revealDescription">
 {
   static defaultDescription = "?" as const;
@@ -177,8 +203,8 @@ export class AchieveProvision
   kind;
   diagnostic;
 
-  constructor(message: string, diagnostic: TsDiagnostic) {
-    super(loadingText);
+  constructor(tracer: Tracer, message: string, diagnostic: TsDiagnostic) {
+    super(tracer, loadingText);
 
     this.diagnostic = diagnostic;
     this.kind = classify(diagnostic);
@@ -193,7 +219,7 @@ export class AchieveProvision
   }
 
   reconfigure(config: ExtensionConfig): void {
-    trace(this.revealDescription, config.revealDescription);
+    this.tracer.trace(this.revealDescription, config.revealDescription);
     this.revealDescription = config.revealDescription;
     this.refresh();
   }
@@ -202,7 +228,7 @@ export class AchieveProvision
     event: vscode.TextDocumentChangeEvent,
     diagnostic: vscode.Diagnostic,
   ): Timestamp {
-    trace("encounter", this, event, diagnostic);
+    this.tracer.trace("encounter", this, event, diagnostic);
 
     const last = {
       time: new Date(),
@@ -243,7 +269,7 @@ Lifetime encounters: ${++this.lifetime}, most recently on ${last.time.toLocaleSt
     this.refresh();
   }
 
-  refresh(): void {
+  override refresh(): void {
     this.label = this.diagnostic.code.toString();
     this.description =
       this.isUnlocked || this.revealDescription
