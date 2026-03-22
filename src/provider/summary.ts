@@ -3,7 +3,7 @@ import vscode from "vscode";
 import { ExtensionConfig } from "../config";
 import { ProviderBase } from "./base";
 import { AchieveMap, AchieveProvision, Configurable } from "../provision";
-import { loadingText } from "../const";
+import { errorKinds, loadingText } from "../const";
 
 export type SummaryRecord = Record<string, Summary>;
 
@@ -15,21 +15,31 @@ export class SummaryProvider extends ProviderBase {
 
     this.summary = {
       overall: new UnlockedSummary("Overall"),
-      messages: new UnlockedSummary(
-        "Messages",
-        (achieve) => achieve.diagnostic.category === "Message",
-      ),
-      suggestions: new UnlockedSummary(
-        "Suggestions",
-        (achieve) => achieve.diagnostic.category === "Suggestion",
-      ),
-      errors: new UnlockedSummary(
-        "Errors",
-        (achieve) => achieve.diagnostic.category === "Error",
-      ),
-      lifetime: new TallySummary("Lifetime errors", () => {
+      lifetimeMessages: new TallySummary("Lifetime messages", () => {
         return achieveMap
           .values()
+          .filter((achieve) => achieve.kind === "message")
+          .map((achieve) => achieve.lifetime)
+          .reduce((xs, x) => xs + x, 0);
+      }),
+      lifetimeSuggestions: new TallySummary("Lifetime suggestions", () => {
+        return achieveMap
+          .values()
+          .filter((achieve) => achieve.kind === "suggestion")
+          .map((achieve) => achieve.lifetime)
+          .reduce((xs, x) => xs + x, 0);
+      }),
+      lifetimeWarnings: new TallySummary("Lifetime warnings", () => {
+        return achieveMap
+          .values()
+          .filter((achieve) => achieve.kind === "warning")
+          .map((achieve) => achieve.lifetime)
+          .reduce((xs, x) => xs + x, 0);
+      }),
+      lifetimeErrors: new TallySummary("Lifetime errors", () => {
+        return achieveMap
+          .values()
+          .filter((achieve) => errorKinds.includes(achieve.kind as any))
           .map((achieve) => achieve.lifetime)
           .reduce((xs, x) => xs + x, 0);
       }),
