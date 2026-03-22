@@ -2,6 +2,8 @@ export const loadingText = "Loading…";
 export const diagnosticMessagesUrl =
   "https://raw.githubusercontent.com/microsoft/TypeScript/refs/heads/main/src/compiler/diagnosticMessages.json" as const;
 
+// const strict = [4114];
+
 export const tsDiagnosticCategories = [
   "Error",
   "Suggestion",

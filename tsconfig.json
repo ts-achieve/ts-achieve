@@ -7,16 +7,19 @@
     "sourceMap": true,
     "rootDir": "src",
     "strict": true,
+    "skipLibCheck": true,
 
     "erasableSyntaxOnly": true,
     "exactOptionalPropertyTypes": true,
 
     "noUnusedLocals": true,
-    "noImplicitReturns": true,
     "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noImplicitOverride": true,
     "noUncheckedIndexedAccess": true,
-    "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
+    "noFallthroughCasesInSwitch": true,
+    "noPropertyAccessFromIndexSignature": true,
     "noErrorTruncation": true
   }
 }

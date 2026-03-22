@@ -13,7 +13,7 @@ export class AchievedProvider extends ProviderBase {
     super(config, context);
   }
 
-  loadAchieves(context: vscode.ExtensionContext) {
+  override loadAchieves(context: vscode.ExtensionContext) {
     const maybeMap: Maybe<Map<number, AchieveProvision>> =
       context.globalState.get("achieves");
 

@@ -46,19 +46,19 @@ export class SummaryProvider extends ProviderBase {
     };
   }
 
-  loadAchieves(achieveMap: AchieveMap): AchieveMap {
+  override loadAchieves(achieveMap: AchieveMap): AchieveMap {
     return achieveMap;
   }
 
-  get allProvisions() {
+  override get allProvisions() {
     return this.topProvisions;
   }
 
-  get topProvisions() {
+  override get topProvisions() {
     return Object.values(this.summary);
   }
 
-  refresh(achieveMap: AchieveMap): void {
+  override refresh(achieveMap: AchieveMap): void {
     Object.values(this.summary).forEach((provision) => {
       provision.refresh(achieveMap.values().toArray());
     });

@@ -95,6 +95,7 @@
     }
   },
   "scripts": {
+    "r": "rm -rf node_modules && pnpm install",
     "vscode:prepublish": "pnpm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
