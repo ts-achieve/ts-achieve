@@ -1,8 +1,9 @@
 import vscode from "vscode";
 
 import { log } from "./util";
-import { Configurable, ExtensionConfig } from "./provision";
+import { Configurable } from "./provision";
 import { names } from "./const";
+import { ExtensionConfig } from "./config";
 
 export class DecorationProvider
   implements vscode.FileDecorationProvider, Configurable

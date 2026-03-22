@@ -8,9 +8,9 @@ import {
   Provision,
   PathProvision,
   AchieveKind,
-  ExtensionConfig,
 } from "./provision";
 import { ProviderBase } from "./provide";
+import { ExtensionConfig } from "./config";
 
 export type MaybeNode = Provision | undefined | null | void;
 

@@ -2,7 +2,7 @@ import vscode from "vscode";
 
 import { Maybe } from "./type";
 import { ProviderBase } from "./provide";
-import { ExtensionConfig } from "./provision";
+import { ExtensionConfig } from "./config";
 
 type Speedrun = {
   start: Date;

@@ -19,6 +19,7 @@ const commands = {
 
 const config = {
   revealDescription: `config.revealDescription`,
+  notifyRepeatedAchievements: `config.notifyRepeatedAchievements`,
 } as const;
 
 const views = {

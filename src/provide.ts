@@ -9,7 +9,6 @@ import {
   Provision,
   Configurable,
   AchieveMap,
-  ExtensionConfig,
   achieveKinds,
   PathProvision,
   classify,
@@ -18,6 +17,7 @@ import {
   TsDiagnostic,
   isTsDiagnostic,
 } from "./provision";
+import { ExtensionConfig } from "./config";
 
 export abstract class ProviderBase
   implements vscode.TreeDataProvider<Provision>, Configurable
@@ -73,6 +73,7 @@ export abstract class ProviderBase
 
   getChildren(element?: Provision): vscode.ProviderResult<Provision[]> {
     log("parent:", element);
+
     if (element) {
       if (element instanceof PathProvision) {
         return this.achieves

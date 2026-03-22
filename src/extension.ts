@@ -4,7 +4,6 @@ import { log } from "./util";
 import { withConfig } from "./config";
 import { AchieveProvider } from "./achieve";
 import { DecorationProvider } from "./decorate";
-import { SpeedrunProvider } from "./speedrun";
 import { names } from "./const";
 
 export function activate(context: vscode.ExtensionContext) {
@@ -15,11 +14,11 @@ export function activate(context: vscode.ExtensionContext) {
 
     vscode.window.registerTreeDataProvider(names.views.list, achievesProvider);
 
-    const speedrunProvider = new SpeedrunProvider(context, config);
-    vscode.window.registerTreeDataProvider(
-      names.views.speedrun,
-      speedrunProvider,
-    );
+    // const speedrunProvider = new SpeedrunProvider(context, config);
+    // vscode.window.registerTreeDataProvider(
+    //   names.views.speedrun,
+    //   speedrunProvider,
+    // );
 
     const decorationProvider = new DecorationProvider();
     vscode.window.registerFileDecorationProvider(decorationProvider);
@@ -36,6 +35,11 @@ export function activate(context: vscode.ExtensionContext) {
             if (achieve) {
               if (achieve.isUnlocked) {
                 achieve.encounter(event, diagnostic);
+                if (achievesProvider.config.notifyRepeatedAchievements) {
+                vscode.window.showInformationMessage(
+                  `Achievement found again!\n${diagnostic.code}: ${diagnostic.message}`,
+                );
+                }
               } else {
                 achieve.unlock(event, diagnostic);
                 vscode.window.showInformationMessage(
@@ -60,7 +64,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     return {
       achieves: achievesProvider,
-      speedrun: speedrunProvider,
+      // speedrun: speedrunProvider,
       decoration: decorationProvider,
     };
   });

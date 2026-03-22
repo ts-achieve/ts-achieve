@@ -28,6 +28,11 @@
       "title": "TS Achieve",
       "type": "object",
       "properties": {
+        "tsAchieve.config.notifyRepeatedAchievements": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether to show information message on achievements that are already earned."
+        },
         "tsAchieve.config.revealDescription": {
           "type": "boolean",
           "default": false,

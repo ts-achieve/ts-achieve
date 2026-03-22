@@ -2,13 +2,16 @@ import vscode from "vscode";
 
 import { names } from "./const";
 import { AchieveProvider } from "./achieve";
-import { ExtensionConfig } from "./provision";
 import { DecorationProvider } from "./decorate";
-import { SpeedrunProvider } from "./speedrun";
+
+export type ExtensionConfig = {
+  revealDescription: boolean;
+  notifyRepeatedAchievements: boolean;
+};
 
 type Providers = {
   achieves: AchieveProvider;
-  speedrun: SpeedrunProvider;
+  // speedrun: SpeedrunProvider;
   decoration: DecorationProvider;
 };
 
@@ -16,8 +19,9 @@ const makeExConfig = (): ExtensionConfig => {
   const wsConfig = vscode.workspace.getConfiguration(names.ex);
 
   return {
-    revealDescription:
-      wsConfig.get(names.config.revealDescription) ?? false,
+    revealDescription: wsConfig.get(names.config.revealDescription) ?? false,
+    notifyRepeatedAchievements:
+      wsConfig.get(names.config.notifyRepeatedAchievements) ?? false,
   };
 };
 

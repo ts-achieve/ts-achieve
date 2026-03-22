@@ -3,6 +3,7 @@ import vscode, { MarkdownString } from "vscode";
 import { Maybe } from "./type";
 import { loadingText, names } from "./const";
 import { capitalize, isObject, log, uncapitalize } from "./util";
+import { ExtensionConfig } from "./config";
 
 export type AchieveMap = Map<number, AchieveProvision>;
 
@@ -53,11 +54,7 @@ export const classify = (dm: TsDiagnostic): AchieveKind => {
 
 // region type Provision
 
-export type Provision =
-  | PathProvision
-  | SummaryProvision
-  | AchieveProvision
-  | ButtonProvision;
+export type Provision = PathProvision | SummaryProvision | AchieveProvision;
 
 export type Refreshable = {
   refresh(): void;
@@ -142,13 +139,12 @@ type Timestamp = {
   message: string;
 };
 
-export type ExtensionConfig = {
-  revealDescription: boolean;
-};
-
 export class AchieveProvision
   extends vscode.TreeItem
-  implements Achievement, Configurable, ExtensionConfig
+  implements
+    Achievement,
+    Configurable,
+    Pick<ExtensionConfig, "revealDescription">
 {
   static defaultDescription = "?" as const;
 
@@ -248,12 +244,5 @@ Lifetime encounters: ${++this._lifetime}, most recently on ${last.time.toLocaleS
 
   computeLabel(): string {
     return this.code.toString();
-  }
-}
-
-export class ButtonProvision extends vscode.TreeItem {
-  constructor(label: string | vscode.TreeItemLabel) {
-    super(label);
-    this.checkboxState = 1;
   }
 }
