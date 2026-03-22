@@ -95,7 +95,7 @@
     "watch": "tsc -watch -p ./",
     "pretest": "pnpm run compile",
     "test": "vitest --run && vscode-test --run",
-    "p": "pnpm exec vsce-pnpm"
+    "p": "pnpm exec vsce-pnpm patch"
   },
   "devDependencies": {
     "@types/node": "22.x",
