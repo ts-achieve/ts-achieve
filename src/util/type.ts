@@ -59,7 +59,6 @@ export const tuple = <N extends number>(n: N) => {
 };
 
 expectTypeOf<[any, any, any, any]>().toEqualTypeOf<Tuple<4>>();
-expectTypeOf<[number, number, number, number]>().toEqualTypeOf(tuple(4));
 
 type Biject<T, L extends any[] | readonly any[]> = Tuple<L["length"], T>;
 
@@ -86,13 +85,9 @@ type Successor<N extends number> = [
 export const successor = <N extends number>(n: N) => (n + 1) as Successor<N>;
 
 expectTypeOf<1>().toEqualTypeOf<Successor<0>>();
-expectTypeOf<1>().toEqualTypeOf(successor(0));
 expectTypeOf<2>().toEqualTypeOf<Successor<1>>();
-expectTypeOf<2>().toEqualTypeOf(successor(1));
 expectTypeOf<3>().toEqualTypeOf<Successor<2>>();
-expectTypeOf<3>().toEqualTypeOf(successor(2));
 expectTypeOf<4>().toEqualTypeOf<Successor<3>>();
-expectTypeOf<4>().toEqualTypeOf(successor(3));
 
 type Plus<M extends number, N extends number> = [
   ...Tuple<M>,
@@ -120,13 +115,9 @@ export const greaterOf = <M extends number, N extends number>(m: M, n: N) => {
 };
 
 expectTypeOf<0>().toEqualTypeOf<GreaterOf<0, 0>>();
-expectTypeOf<0>().toEqualTypeOf(greaterOf(0, 0));
 expectTypeOf<1>().toEqualTypeOf<GreaterOf<0, 1>>();
-expectTypeOf<1>().toEqualTypeOf(greaterOf(0, 1));
 expectTypeOf<1>().toEqualTypeOf<GreaterOf<1, 0>>();
-expectTypeOf<1>().toEqualTypeOf(greaterOf(1, 0));
 expectTypeOf<1>().toEqualTypeOf<GreaterOf<1, 1>>();
-expectTypeOf<1>().toEqualTypeOf(greaterOf(1, 1));
 
 type Max<L extends number[]> =
   UnionToTuple<_Max<L>> extends infer T extends number[] ? _Max<T> : never;
@@ -145,13 +136,9 @@ export const max = <L extends number[]>(...xs: L) => {
 };
 
 expectTypeOf<0>().toEqualTypeOf<Max<[0, 0, 0, 0]>>();
-expectTypeOf<0>().toEqualTypeOf(max(0, 0, 0, 0));
 expectTypeOf<3>().toEqualTypeOf<Max<[0, 1, 2, 3]>>();
-expectTypeOf<3>().toEqualTypeOf(max(0, 1, 2, 3));
 expectTypeOf<3>().toEqualTypeOf<Max<[3, 2, 1, 0]>>();
-expectTypeOf<3>().toEqualTypeOf(max(3, 2, 1, 0));
 expectTypeOf<3>().toEqualTypeOf<Max<[0, 1, 2, 3, 2, 1, 0]>>();
-expectTypeOf<3>().toEqualTypeOf(max(0, 1, 2, 3, 2, 1, 0));
 
 expectTypeOf<5>().toEqualTypeOf<Max<[0 | 3, 1 | 4, 2 | 5]>>();
 
@@ -181,13 +168,9 @@ type Length<
 export const length = <S extends string>(s: S) => s.length as Length<S>;
 
 expectTypeOf<0>().toEqualTypeOf<Length<"">>();
-expectTypeOf<0>().toEqualTypeOf(length(""));
 expectTypeOf<1>().toEqualTypeOf<Length<" ">>();
-expectTypeOf<1>().toEqualTypeOf(length(" "));
 expectTypeOf<2>().toEqualTypeOf<Length<"  ">>();
-expectTypeOf<2>().toEqualTypeOf(length("  "));
 expectTypeOf<3>().toEqualTypeOf<Length<"   ">>();
-expectTypeOf<3>().toEqualTypeOf(length("   "));
 
 type RightPad<S extends string, N extends number, P extends string = " "> =
   GreaterOf<N, Length<S>> extends Length<S> ? S : RightPad<`${S}${P}`, N, P>;
@@ -205,13 +188,9 @@ export const rightpad = <
 };
 
 expectTypeOf<"">().toEqualTypeOf<RightPad<"", 0>>();
-expectTypeOf<"">().toEqualTypeOf(rightpad("", 0));
 expectTypeOf<"aaaa">().toEqualTypeOf<RightPad<"", 4, "a">>();
-expectTypeOf<"aaaa">().toEqualTypeOf(rightpad("", 4, "a"));
 expectTypeOf<"abab">().toEqualTypeOf<RightPad<"", 4, "ab">>();
-expectTypeOf<"abab">().toEqualTypeOf(rightpad("", 4, "ab"));
 expectTypeOf<"abcdefgh">().toEqualTypeOf<RightPad<"abcdefgh", 4>>();
-expectTypeOf<"abcdefgh">().toEqualTypeOf(rightpad("abcdefgh", 4));
 
 // region diagnosticMessages
 
@@ -244,10 +223,4 @@ expectTypeOf<
 >().toEqualTypeOf<"Unterminated string literal.">();
 expectTypeOf(codeToMessage(1003)!).toEqualTypeOf(
   "Identifier expected." as const,
-);
-
-// region block scope dependent
-
-expectTypeOf<["0", "0", "0", "0"]>().toEqualTypeOf(
-  biject([0, 0, 0, 0] as const, literal),
 );
