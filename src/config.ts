@@ -14,7 +14,7 @@ export type ExtensionConfig = {
   sort: any[];
 };
 
-type Providers = {
+export type Providers = {
   achievedProvider: AchievedProvider;
   summaryProvider: SummaryProvider;
   speedrunProvider: SpeedrunProvider;
@@ -49,11 +49,6 @@ export const withConfig = (
 
   const { achievedProvider, summaryProvider, decorationProvider } =
     makeProviders(getConfig(), tracer);
-
-  vscode.commands.registerCommand(names.commands.refresh, () => {
-    tracer.log(names.commands.refresh);
-    achievedProvider.refresh();
-  });
 
   vscode.workspace.onDidChangeConfiguration(() => {
     const exConfig = getConfig();

@@ -10,27 +10,33 @@ import { setAchieveMap } from "./globalState";
 
 export function activate(context: vscode.ExtensionContext) {
   withConfig((config, tracer) => {
+    const decorationProvider = new DecorationProvider(tracer);
     const achievedProvider = new AchievedProvider(config, tracer, context);
-
     const summaryProvider = new SummaryProvider(
       config,
       tracer,
       achievedProvider.achieveMap,
     );
-    vscode.window.registerTreeDataProvider(
-      names.views.summary,
-      summaryProvider,
-    );
-
-    vscode.window.registerTreeDataProvider(names.views.list, achievedProvider);
-
-    const decorationProvider = new DecorationProvider(tracer);
-    vscode.window.registerFileDecorationProvider(decorationProvider);
-
     const speedrunProvider = new SpeedrunProvider(config, tracer);
-    vscode.window.registerTreeDataProvider(
-      names.views.speedrun,
-      speedrunProvider,
+
+    context.subscriptions.push(
+      vscode.commands.registerCommand(names.commands.refresh, () => {
+        tracer.log(names.commands.refresh);
+        achievedProvider.refresh();
+      }),
+      vscode.window.registerFileDecorationProvider(decorationProvider),
+      vscode.window.registerTreeDataProvider(
+        names.views.summary,
+        summaryProvider,
+      ),
+      vscode.window.registerTreeDataProvider(
+        names.views.list,
+        achievedProvider,
+      ),
+      vscode.window.registerTreeDataProvider(
+        names.views.speedrun,
+        speedrunProvider,
+      ),
     );
 
     vscode.workspace.onDidChangeTextDocument((event) => {
@@ -70,7 +76,6 @@ export function activate(context: vscode.ExtensionContext) {
     setAchieveMap(context, tracer, achievedProvider.achieveMap);
 
     return {
-      context,
       achievedProvider,
       summaryProvider,
       speedrunProvider,

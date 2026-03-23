@@ -93,6 +93,11 @@
           "id": "tsAchieve.view.list",
           "name": "List",
           "icon": "lib/typescript.svg"
+        },
+        {
+          "id": "tsAchieve.view.speedrun",
+          "name": "Speedrun",
+          "icon": "lib/typescript.svg"
         }
       ]
     }
