@@ -6,7 +6,7 @@ import { Tracer } from "../util/tracer";
 import { AchieveProvision, AchieveMap, isTsDiagnostic } from "./provision";
 import { ProviderBase } from "./base";
 import { ExtensionConfig } from "../config";
-import { getAchieveMap } from "../globalState";
+// import { getAchieveMap } from "../globalState";
 
 export class AchievedProvider extends ProviderBase {
   constructor(
@@ -22,7 +22,7 @@ export class AchievedProvider extends ProviderBase {
   // }
 }
 
-const curl = (tracer: Tracer): AchieveMap => {
+export const curl = (tracer: Tracer): AchieveMap => {
   const parse = JSON.parse(
     child.execSync(`curl ${diagnosticMessagesUrl}`, { encoding: "utf8" }),
   );
