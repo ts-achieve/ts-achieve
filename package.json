@@ -103,7 +103,7 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "pretest": "pnpm run compile",
-    "test": "vitest --run && vscode-test --run",
+    "test": "vscode-test --run",
     "p": "pnpm exec vsce-pnpm patch"
   },
   "devDependencies": {

@@ -9,8 +9,6 @@ import { SpeedrunProvider } from "./provider/speedrun";
 import { setAchieveMap } from "./globalState";
 
 export function activate(context: vscode.ExtensionContext) {
-  vscode.window.showInformationMessage("achieve");
-
   withConfig((config, tracer) => {
     const achievedProvider = new AchievedProvider(config, tracer, context);
 
