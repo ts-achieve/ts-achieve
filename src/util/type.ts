@@ -1,4 +1,7 @@
+import { expectTypeOf } from "expect-type";
 import { diagnosticMessages } from "./diagnosticMessages";
+
+expectTypeOf().toEqualTypeOf();
 
 // region shared
 /**
