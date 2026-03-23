@@ -41,37 +41,26 @@ const getConfig = (): ExtensionConfig => {
 };
 
 export const withConfig = (
-  makeProviders: (
-    config: ExtensionConfig,
-    tracer: Tracer,
-    disposables: vscode.Disposable[],
-  ) => Providers,
-): vscode.Disposable[] => {
+  makeProviders: (config: ExtensionConfig, tracer: Tracer) => Providers,
+): void => {
   const tracer = makeTracer("ts-achieve");
-  const disposables: vscode.Disposable[] = [];
 
   tracer.log("extension activation");
 
   const { achievedProvider, summaryProvider, decorationProvider } =
-    makeProviders(getConfig(), tracer, disposables);
+    makeProviders(getConfig(), tracer);
 
-  disposables.push(
-    vscode.commands.registerCommand(names.commands.refresh, () => {
-      tracer.log(names.commands.refresh);
-      achievedProvider.refresh();
-    }),
-  );
+  vscode.commands.registerCommand(names.commands.refresh, () => {
+    tracer.log(names.commands.refresh);
+    achievedProvider.refresh();
+  });
 
-  disposables.push(
-    vscode.workspace.onDidChangeConfiguration(() => {
-      const exConfig = getConfig();
-      achievedProvider.reconfigure(exConfig);
-      decorationProvider.reconfigure(exConfig);
-    }),
-  );
+  vscode.workspace.onDidChangeConfiguration(() => {
+    const exConfig = getConfig();
+    achievedProvider.reconfigure(exConfig);
+    decorationProvider.reconfigure(exConfig);
+  });
 
   achievedProvider.refresh();
   summaryProvider.refresh(achievedProvider.achieveMap);
-
-  return disposables;
 };
