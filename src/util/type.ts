@@ -1,7 +1,41 @@
-import { expectTypeOf, UnionToTuple } from "expect-type";
+import { expectTypeOf } from "expect-type";
 import { diagnosticMessages } from "./diagnosticMessages";
 
 // region shared
+/**
+ * Convert a union to an intersection.
+ * `A | B | C` -\> `A & B & C`
+ */
+export type UnionToIntersection<Union> = (
+  Union extends any ? (distributedUnion: Union) => void : never
+) extends (mergedIntersection: infer Intersection) => void
+  ? Intersection
+  : never;
+/**
+ * Get the last element of a union.
+ * First, converts to a union of `() => T` functions,
+ * then uses {@linkcode UnionToIntersection} to get the last one.
+ */
+export type LastOf<Union> =
+  UnionToIntersection<
+    Union extends any ? () => Union : never
+  > extends () => infer R
+    ? R
+    : never;
+/**
+ * Intermediate type for {@linkcode UnionToTuple} which pushes the
+ * "last" union member to the end of a tuple, and recursively prepends
+ * the remainder of the union.
+ */
+export type TuplifyUnion<Union, LastElement = LastOf<Union>> =
+  IsNever<Union> extends true
+    ? []
+    : [...TuplifyUnion<Exclude<Union, LastElement>>, LastElement];
+/**
+ * Convert a union like `1 | 2 | 3` to a tuple like `[1, 2, 3]`.
+ */
+export type UnionToTuple<Union> = TuplifyUnion<Union>;
+export type IsNever<T> = [T] extends [never] ? true : false;
 
 export type Maybe<T> = T | undefined;
 
