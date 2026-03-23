@@ -9,11 +9,15 @@ import { SpeedrunProvider } from "./provider/speedrun";
 import { setAchieveMap } from "./globalState";
 
 export function activate(context: vscode.ExtensionContext) {
-  context.globalState.update("achieves", undefined);
-  vscode.window.showInformationMessage(
-    context.globalState.get("achieves") ?? "deleted gobal state",
-  );
+  try {
+    vscode.window.showInformationMessage(
+      context.globalState.get("achieves") ?? "deleted gobal state",
+    );
 
+    return;
+  } catch (e: any) {
+    console.log("wah", e);
+  }
   withConfig((config, tracer, disposables) => {
     const achievedProvider = new AchievedProvider(config, tracer, context);
 
