@@ -2,11 +2,11 @@ import vscode from "vscode";
 
 import { Maybe } from "./util/type";
 import { names } from "./util/const";
-import { AchievedProvider } from "./provider/achieved";
 import { DecorationProvider } from "./provider/decorate";
-import { makeTracer, Tracer } from "./util/tracer";
 import { SpeedrunProvider } from "./provider/speedrun";
 import { SummaryProvider } from "./provider/summary";
+import { StarlistProvider } from "./provider/provider";
+import { logger } from "./util/logger";
 
 export type ExtensionConfig = {
   revealDescription: boolean;
@@ -15,7 +15,7 @@ export type ExtensionConfig = {
 };
 
 export type Providers = {
-  achievedProvider: AchievedProvider;
+  starlistProvider: StarlistProvider;
   summaryProvider: SummaryProvider;
   speedrunProvider: SpeedrunProvider;
   decorationProvider: DecorationProvider;
@@ -41,21 +41,16 @@ const getConfig = (): ExtensionConfig => {
 };
 
 export const withConfig = (
-  makeProviders: (config: ExtensionConfig, tracer: Tracer) => Providers,
+  makeProviders: (config: ExtensionConfig) => Providers,
 ): void => {
-  const tracer = makeTracer("ts-achieve");
+  logger("extension activation");
 
-  tracer.log("extension activation");
-
-  const { achievedProvider, summaryProvider, decorationProvider } =
-    makeProviders(getConfig(), tracer);
+  const providers = makeProviders(getConfig());
 
   vscode.workspace.onDidChangeConfiguration(() => {
     const exConfig = getConfig();
-    achievedProvider.reconfigure(exConfig);
-    decorationProvider.reconfigure(exConfig);
+    Object.values(providers).forEach((provider) =>
+      provider.reconfigure(exConfig),
+    );
   });
-
-  achievedProvider.refresh();
-  summaryProvider.refresh(achievedProvider.achieveMap);
 };

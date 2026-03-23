@@ -1,17 +1,17 @@
 import vscode from "vscode";
 
-import { Configurable } from "./provision";
 import { names } from "../util/const";
+import { logger } from "../util/logger";
+import { Configurable } from "./provider";
 import { ExtensionConfig } from "../config";
-import { Tracer, Tracing } from "../util/tracer";
 
 export class DecorationProvider
-  implements vscode.FileDecorationProvider, Tracing, Configurable
+  implements vscode.FileDecorationProvider, Configurable
 {
-  tracer: Tracer;
+  config: ExtensionConfig;
 
-  constructor(tracer: Tracer) {
-    this.tracer = tracer;
+  constructor(config: ExtensionConfig) {
+    this.config = config;
   }
 
   provideFileDecoration(
@@ -30,14 +30,11 @@ export class DecorationProvider
           color: new vscode.ThemeColor(names.colors.unlockedAchievement),
         };
       default:
-        this.tracer.log(`bad path: ${uri.path}`);
+        logger(`bad path: ${uri.path}`);
         return undefined;
     }
   }
 
-  reconfigure(_config: ExtensionConfig): void {
-    this.refresh();
-  }
-
+  reconfigure(): void {}
   refresh(): void {}
 }

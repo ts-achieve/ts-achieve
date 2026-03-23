@@ -1,40 +1,36 @@
 import vscode from "vscode";
 
 import { Maybe } from "./util/type";
-import { Tracer } from "./util/tracer";
-import { AchieveMap, AchieveProvision } from "./provider/provision";
+import { Star, Starmap } from "./provider/star";
+import { logger } from "./util/logger";
 
-export const getAchieveMap = (
+export const getStarmap = (
   context: vscode.ExtensionContext,
-  tracer: Tracer,
-): Maybe<AchieveMap> => {
-  const x = getGlobalState(context, tracer, "achieves");
-  tracer.log(x);
-  if (Array.isArray(x)) {
-    return new Map(x as [number, AchieveProvision][]);
+): Maybe<Starmap> => {
+  const maybeStarmap = getGlobalState(context, "starmap");
+  if (Array.isArray(maybeStarmap)) {
+    return new Map(maybeStarmap as [number, Star][]);
   } else {
     return undefined;
   }
 };
 
-export const setAchieveMap = (
+export const setStarmap = (
   context: vscode.ExtensionContext,
-  tracer: Tracer,
-  achieveMap: AchieveMap,
+  starmap: Starmap,
 ): void => {
-  setGlobalState(context, tracer, "achieves", achieveMap.entries().toArray());
+  setGlobalState(context, "starmap", starmap.entries().toArray());
 };
 
 export const getGlobalState = (
   context: vscode.ExtensionContext,
-  tracer: Tracer,
   key: string,
 ): Maybe<unknown> => {
   const serialization = context.globalState.get(key);
 
   if (serialization && typeof serialization === "string") {
     const value = JSON.parse(serialization);
-    tracer.log("global state access", `${key}: ${serialization}`);
+    logger("global state access", `${key}: ${serialization}`);
 
     return value;
   } else {
@@ -44,7 +40,6 @@ export const getGlobalState = (
 
 export const setGlobalState = (
   context: vscode.ExtensionContext,
-  _tracer: Tracer,
   key: string,
   value: unknown,
 ): string => {

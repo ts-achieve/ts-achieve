@@ -1,5 +1,4 @@
 import { expectTypeOf, UnionToTuple } from "expect-type";
-import { diagnosticMessages } from "./diagnosticMessages";
 
 // region shared
 
@@ -7,6 +6,10 @@ export type Maybe<T> = T | undefined;
 
 export type Writable<T> = { -readonly [K in keyof T]: T[K] };
 export type ReadWrite<T> = T | Readonly<T> | Writable<T>;
+
+export const isObject = (x: unknown): x is object => {
+  return typeof x === "object" && !!x;
+};
 
 // region tuple
 
@@ -139,6 +142,18 @@ export const show = (x: unknown): string => {
   }
 };
 
+export const capitalize = <S extends string>(string: S): Capitalize<S> => {
+  return (
+    string.length ? string[0]!.toLocaleUpperCase() + string.slice(1) : ""
+  ) as Capitalize<S>;
+};
+
+export const uncapitalize = <S extends string>(string: S): Uncapitalize<S> => {
+  return (
+    string.length ? string[0]!.toLocaleLowerCase() + string.slice(1) : ""
+  ) as Uncapitalize<S>;
+};
+
 type Length<
   S extends string,
   A extends number = 0,
@@ -178,39 +193,6 @@ expectTypeOf<"abab">().toEqualTypeOf<RightPad<"", 4, "ab">>();
 expectTypeOf<"abab">().toEqualTypeOf(rightpad("", 4, "ab"));
 expectTypeOf<"abcdefgh">().toEqualTypeOf<RightPad<"abcdefgh", 4>>();
 expectTypeOf<"abcdefgh">().toEqualTypeOf(rightpad("abcdefgh", 4));
-
-// region diagnosticMessages
-
-type Dictionary = {
-  -readonly [K in keyof typeof diagnosticMessages]: {
-    -readonly [L in keyof (typeof diagnosticMessages)[K]]: (typeof diagnosticMessages)[K][L];
-  };
-};
-
-type Message = keyof Dictionary;
-
-type CodeToMessage<N extends number> = Message extends infer U extends Message
-  ? U extends any
-    ? Dictionary[U] extends { code: N }
-      ? U
-      : never
-    : never
-  : never;
-
-export const codeToMessage = <N extends number>(
-  code: N,
-): Maybe<CodeToMessage<N>> => {
-  return Object.values(diagnosticMessages).find((value) => {
-    return value.code === code;
-  }) as Maybe<CodeToMessage<N>>;
-};
-
-expectTypeOf<
-  CodeToMessage<1002>
->().toEqualTypeOf<"Unterminated string literal.">();
-expectTypeOf(codeToMessage(1003)!).toEqualTypeOf(
-  "Identifier expected." as const,
-);
 
 // region block scope dependent
 

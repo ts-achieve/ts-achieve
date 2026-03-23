@@ -1,0 +1,71 @@
+import vscode from "vscode";
+
+import { errorKinds, nonErrorKinds } from "../util/const";
+import { isObject } from "../util/type";
+
+export type NonErrorKind = (typeof nonErrorKinds)[number];
+export type ErrorKind = (typeof errorKinds)[number];
+export type StarKind = NonErrorKind | ErrorKind;
+
+export const isErrorKind = (x: string): x is ErrorKind => {
+  return errorKinds.includes(x as any);
+};
+
+export const isNonErrorKind = (x: string): x is NonErrorKind => {
+  return nonErrorKinds.includes(x as any);
+};
+
+export type Starmap = Map<number, Star>;
+
+type LockedStar = {
+  code: number;
+  kind: StarKind;
+  messageTemplate: string;
+};
+
+export type Encounter = LockedStar & {
+  time: number;
+  triggerText: string;
+  fileName: string;
+  messageText: string;
+};
+
+export type UnlockedStar = Encounter & {
+  lifetime: number;
+  lastEncounter: number;
+};
+
+export type Star = LockedStar | UnlockedStar;
+
+export const isUnlocked = (x: LockedStar): x is UnlockedStar => {
+  return (
+    isObject(x) &&
+    "time" in x &&
+    typeof x.time === "number" &&
+    "triggerText" in x &&
+    typeof x.triggerText === "string" &&
+    "fileName" in x &&
+    typeof x.fileName === "string" &&
+    "messageText" in x &&
+    typeof x.messageText === "string" &&
+    "lifetime" in x &&
+    typeof x.lifetime === "number"
+  );
+};
+export const unlock = (
+  star: Star,
+  event: vscode.TextDocumentChangeEvent,
+  diagnostic: vscode.Diagnostic,
+): UnlockedStar => {
+  return {
+    code: star.code,
+    kind: star.kind,
+    messageTemplate: star.messageTemplate,
+    time: Date.now(),
+    triggerText: event.document.lineAt(diagnostic.range.start.line).text,
+    fileName: event.document.fileName,
+    messageText: diagnostic.message,
+    lifetime: isUnlocked(star) ? star.lifetime + 1 : 1,
+    lastEncounter: Date.now(),
+  };
+};

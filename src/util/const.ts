@@ -23,15 +23,7 @@ export const topPathKinds = [...nonErrorKinds, "error"] as const;
 
 export const pathKinds = [...topPathKinds, ...errorKinds] as const;
 
-export const achieveKinds = [...nonErrorKinds, ...errorKinds] as const;
-
-export const statistics = [
-  "overall",
-  "errors",
-  "warnings",
-  "suggestions",
-  "messages",
-] as const;
+export const starKinds = [...nonErrorKinds, ...errorKinds] as const;
 
 export const configOptions = [
   "kind (errors first)",
