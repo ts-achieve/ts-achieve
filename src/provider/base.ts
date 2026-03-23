@@ -12,10 +12,10 @@ import { ExtensionConfig } from "../config";
 import { diagnosticMessages } from "../util/diagnosticMessages";
 import { Summary } from "./summary";
 import { errorKinds, topPathKinds } from "../util/const";
-import { StartDiv } from "../speedrun";
+import { Runner } from "./speedrun";
 import { Tracer, Tracing } from "../util/tracer";
 
-export type Provision = PathProvision | Summary | AchieveProvision | StartDiv;
+type Provision = PathProvision | Summary | AchieveProvision | Runner;
 
 export type MaybeProvision = Provision | undefined | null | void;
 
@@ -91,12 +91,16 @@ export abstract class ProviderBase
   }
 
   refresh(..._args: any[]): void {
-    this.allProvisions.forEach((provision) => provision.refresh());
-    this._emitter.fire();
+    try {
+      this.allProvisions.forEach((provision) => provision.refresh());
+      this._emitter.fire();
+    } catch (e) {
+      this.tracer.error(e);
+    }
   }
 
   getChildren(element?: Provision): vscode.ProviderResult<Provision[]> {
-    this.tracer.trace("parent:", element);
+    this.tracer.log("parent:", element);
 
     if (element) {
       if (element instanceof PathProvision) {

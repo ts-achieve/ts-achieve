@@ -6,7 +6,7 @@ import {
   AchieveMap,
   AchieveProvision,
   Configurable,
-  Provision,
+  ProvisionBase,
 } from "./provision";
 import { errorKinds, loadingText } from "../util/const";
 import { Tracer } from "../util/tracer";
@@ -81,7 +81,7 @@ type ComputedLabel = {
   description?: string;
 };
 
-export abstract class Summary extends Provision implements Configurable {
+export abstract class Summary extends ProvisionBase implements Configurable {
   title: string;
 
   constructor(
@@ -95,7 +95,7 @@ export abstract class Summary extends Provision implements Configurable {
 
   abstract summarize(achieves?: AchieveProvision[]): ComputedLabel;
 
-  refresh(achieves?: AchieveProvision[]) {
+  override refresh(achieves?: AchieveProvision[]) {
     if (achieves) {
       const { label, description } = this.summarize(achieves);
 

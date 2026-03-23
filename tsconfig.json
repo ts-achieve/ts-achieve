@@ -13,13 +13,13 @@
     "exactOptionalPropertyTypes": true,
 
     "noUnusedLocals": true,
-    "noUnusedParameters": true,
+    "noErrorTruncation": true,
     "noImplicitReturns": true,
+    "noUnusedParameters": true,
     "noImplicitOverride": true,
     "noUncheckedIndexedAccess": true,
-    "noUncheckedSideEffectImports": true,
     "noFallthroughCasesInSwitch": true,
-    "noPropertyAccessFromIndexSignature": true,
-    "noErrorTruncation": true
+    "noUncheckedSideEffectImports": true,
+    "noPropertyAccessFromIndexSignature": true
   }
 }

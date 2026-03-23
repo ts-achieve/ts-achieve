@@ -90,7 +90,7 @@ export const isConfigurable = (x: unknown): x is Configurable => {
   );
 };
 
-export abstract class Provision
+export abstract class ProvisionBase
   extends vscode.TreeItem
   implements Tracing, Refreshable
 {
@@ -106,7 +106,7 @@ export abstract class Provision
     this.tracer = tracer;
   }
 
-  abstract refresh(...args: any[]): void;
+  refresh(..._: any[]): void {}
 }
 
 // region PathProvision
@@ -118,7 +118,7 @@ type PathTitle =
   | `${Capitalize<Extract<PathKind, "message" | "suggestion" | "warning" | "error">>}s`
   | `${Capitalize<Extract<PathKind, "strict" | "syntax" | "tsconfig" | "type">>} errors`;
 
-export class PathProvision extends Provision {
+export class PathProvision extends ProvisionBase {
   kind: PathKind;
   filter: PathFilter;
   achieveMap: AchieveMap;
@@ -188,7 +188,7 @@ type Timestamp = {
 };
 
 export class AchieveProvision
-  extends Provision
+  extends ProvisionBase
   implements Achieve, Configurable, Pick<ExtensionConfig, "revealDescription">
 {
   static defaultDescription = "?" as const;
@@ -219,7 +219,6 @@ export class AchieveProvision
   }
 
   reconfigure(config: ExtensionConfig): void {
-    this.tracer.trace(this.revealDescription, config.revealDescription);
     this.revealDescription = config.revealDescription;
     this.refresh();
   }
@@ -228,7 +227,7 @@ export class AchieveProvision
     event: vscode.TextDocumentChangeEvent,
     diagnostic: vscode.Diagnostic,
   ): Timestamp {
-    this.tracer.trace("encounter", this, event, diagnostic);
+    this.tracer.log("encounter", this, event, diagnostic);
 
     const last = {
       time: new Date(),

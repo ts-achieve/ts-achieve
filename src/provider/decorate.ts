@@ -30,7 +30,7 @@ export class DecorationProvider
           color: new vscode.ThemeColor(names.colors.unlockedAchievement),
         };
       default:
-        this.tracer.trace(`bad path: ${uri.path}`);
+        this.tracer.log(`bad path: ${uri.path}`);
         return undefined;
     }
   }

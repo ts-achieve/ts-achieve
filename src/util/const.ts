@@ -49,14 +49,21 @@ export const configOptions = [
 const ex = "tsAchieve" as const;
 
 const commands = {
-  show: `${ex}.show`,
-  refresh: `${ex}.refresh`,
+  show: `${ex}.command.show`,
+  refresh: `${ex}.command.refresh`,
+  startrun: `${ex}.command.startrun`,
+  stoprun: `${ex}.command.stoprun`,
+  setContext: "setContext",
 } as const;
 
 const config = {
   revealDescription: `config.revealDescription`,
   notifyRepeatedAchievements: `config.notifyRepeatedAchievements`,
   sort: `config.sort`,
+} as const;
+
+const context = {
+  isRunStarted: `${ex}.context.isRunStarted`,
 } as const;
 
 const views = {
@@ -70,4 +77,4 @@ const colors = {
   unlockedAchievement: "icon.foreground",
 } as const;
 
-export const names = { ex, colors, commands, config, views } as const;
+export const names = { ex, colors, commands, config, context, views } as const;

@@ -4,6 +4,9 @@ import { Maybe } from "./util/type";
 import { names } from "./util/const";
 import { AchievedProvider } from "./provider/achieved";
 import { DecorationProvider } from "./provider/decorate";
+import { makeTracer, Tracer } from "./util/tracer";
+import { SpeedrunProvider } from "./provider/speedrun";
+import { SummaryProvider } from "./provider/summary";
 
 export type ExtensionConfig = {
   revealDescription: boolean;
@@ -12,9 +15,10 @@ export type ExtensionConfig = {
 };
 
 type Providers = {
-  achieves: AchievedProvider;
-  // speedrun: SpeedrunProvider;
-  decoration: DecorationProvider;
+  achievedProvider: AchievedProvider;
+  summaryProvider: SummaryProvider;
+  speedrunProvider: SpeedrunProvider;
+  decorationProvider: DecorationProvider;
 };
 
 export const getConfigSection = (
@@ -37,13 +41,37 @@ const getConfig = (): ExtensionConfig => {
 };
 
 export const withConfig = (
-  makeProviders: (config: ExtensionConfig) => Providers,
-) => {
-  const { achieves, decoration } = makeProviders(getConfig());
+  makeProviders: (
+    config: ExtensionConfig,
+    tracer: Tracer,
+    disposables: vscode.Disposable[],
+  ) => Providers,
+): vscode.Disposable[] => {
+  const tracer = makeTracer("ts-achieve");
+  const disposables: vscode.Disposable[] = [];
 
-  vscode.workspace.onDidChangeConfiguration(() => {
-    const exConfig = getConfig();
-    achieves.reconfigure(exConfig);
-    decoration.reconfigure(exConfig);
-  });
+  tracer.log("extension activation");
+
+  const { achievedProvider, summaryProvider, decorationProvider } =
+    makeProviders(getConfig(), tracer, disposables);
+
+  disposables.push(
+    vscode.commands.registerCommand(names.commands.refresh, () => {
+      tracer.log(names.commands.refresh);
+      achievedProvider.refresh();
+    }),
+  );
+
+  disposables.push(
+    vscode.workspace.onDidChangeConfiguration(() => {
+      const exConfig = getConfig();
+      achievedProvider.reconfigure(exConfig);
+      decorationProvider.reconfigure(exConfig);
+    }),
+  );
+
+  achievedProvider.refresh();
+  summaryProvider.refresh(achievedProvider.achieveMap);
+
+  return disposables;
 };
