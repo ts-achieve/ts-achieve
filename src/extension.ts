@@ -11,6 +11,9 @@ import { setAchieveMap } from "./globalState";
 export function activate(context: vscode.ExtensionContext) {
   console.log("ugh");
   context.globalState.update("achieves", undefined);
+  vscode.window.showInformationMessage(
+    context.globalState.get("achieves") ?? "deleted gobal state",
+  );
 
   context.subscriptions.push(
     ...withConfig((config, tracer, disposables) => {
