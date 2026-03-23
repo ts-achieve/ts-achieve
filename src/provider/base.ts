@@ -91,12 +91,8 @@ export abstract class ProviderBase
   }
 
   refresh(..._args: any[]): void {
-    try {
-      this.allProvisions.forEach((provision) => provision.refresh());
-      this._emitter.fire();
-    } catch (e) {
-      this.tracer.error(e);
-    }
+    this.allProvisions.forEach((provision) => provision.refresh());
+    this._emitter.fire();
   }
 
   getChildren(element?: Provision): vscode.ProviderResult<Provision[]> {
