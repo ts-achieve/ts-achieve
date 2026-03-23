@@ -17,9 +17,9 @@ export class AchievedProvider extends ProviderBase {
     super(config, tracer, context);
   }
 
-  override loadAchieves(context: vscode.ExtensionContext) {
-    return getAchieveMap(context, this.tracer) ?? curl(this.tracer);
-  }
+  // override loadAchieves(context: vscode.ExtensionContext) {
+  //   return getAchieveMap(context, this.tracer) ?? curl(this.tracer);
+  // }
 }
 
 const curl = (tracer: Tracer): AchieveMap => {
