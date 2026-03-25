@@ -5,7 +5,7 @@ import { names } from "./util/const";
 import { Decorator } from "./provider/decorate";
 import { Speedrunner } from "./provider/speedrun";
 import { Summarizer } from "./provider/summary";
-import { Starlister } from "./provider/provider";
+import { Starlister } from "./provider/starlister";
 
 export type ExtensionConfig = {
   revealDescription: boolean;
