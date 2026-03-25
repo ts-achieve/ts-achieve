@@ -2,11 +2,10 @@ import vscode from "vscode";
 
 import { Maybe } from "./util/type";
 import { names } from "./util/const";
-import { DecorationProvider } from "./provider/decorate";
-import { SpeedrunProvider } from "./provider/speedrun";
-import { SummaryProvider } from "./provider/summary";
-import { StarlistProvider } from "./provider/provider";
-import { logger } from "./util/logger";
+import { Decorator } from "./provider/decorate";
+import { Speedrunner } from "./provider/speedrun";
+import { Summarizer } from "./provider/summary";
+import { Starlister } from "./provider/provider";
 
 export type ExtensionConfig = {
   revealDescription: boolean;
@@ -15,10 +14,10 @@ export type ExtensionConfig = {
 };
 
 export type Providers = {
-  starlistProvider: StarlistProvider;
-  summaryProvider: SummaryProvider;
-  speedrunProvider: SpeedrunProvider;
-  decorationProvider: DecorationProvider;
+  starlistProvider: Starlister;
+  summaryProvider: Summarizer;
+  speedrunProvider: Speedrunner;
+  decorationProvider: Decorator;
 };
 
 export const getConfigSection = (
@@ -27,7 +26,7 @@ export const getConfigSection = (
   return vscode.workspace.getConfiguration(names.ex).get(section);
 };
 
-const getConfig = (): ExtensionConfig => {
+export const getConfig = (): ExtensionConfig => {
   const wsConfig = vscode.workspace.getConfiguration(names.ex);
 
   const exConfig: ExtensionConfig = {
@@ -38,19 +37,4 @@ const getConfig = (): ExtensionConfig => {
   };
 
   return exConfig;
-};
-
-export const withConfig = (
-  makeProviders: (config: ExtensionConfig) => Providers,
-): void => {
-  logger("extension activation");
-
-  const providers = makeProviders(getConfig());
-
-  vscode.workspace.onDidChangeConfiguration(() => {
-    const exConfig = getConfig();
-    Object.values(providers).forEach((provider) =>
-      provider.reconfigure(exConfig),
-    );
-  });
 };

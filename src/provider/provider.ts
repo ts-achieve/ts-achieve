@@ -1,20 +1,25 @@
-import vscode from "vscode";
+import vscode, { TreeItem } from "vscode";
 
 import { ExtensionConfig } from "../config";
 import { diagnosticMessages } from "../util/diagnosticMessages";
-import { errorKinds, names, pathKinds, topPathKinds } from "../util/const";
-import { isUnlocked, Star, Starmap, UnlockedStar } from "./star";
+import {
+  errorKinds,
+  loadingText,
+  names,
+  pathKinds,
+  topPathKinds,
+} from "../util/const";
+import { isStar, isUnlocked, Star, Starmap, UnlockedStar } from "./star";
 import { diagnosticToStar, Message } from "./diagnostic";
-import { capitalize } from "../util/type";
+import { biject, capitalize } from "../util/type";
 import { getStarmap } from "../globalState";
+import { logger } from "../util/logger";
 
 export type Eventable<T> = T | undefined | null | void;
 
 export type Configurable = {
   config: ExtensionConfig;
-
   reconfigure(config: ExtensionConfig): void;
-  refresh(..._args: any[]): void;
 };
 
 export abstract class StarProviderBase<T>
@@ -23,9 +28,10 @@ export abstract class StarProviderBase<T>
   config: ExtensionConfig;
   starmap: Starmap;
 
-  protected _emitter: vscode.EventEmitter<Eventable<T>> =
-    new vscode.EventEmitter<Eventable<T>>();
-  readonly event: vscode.Event<Eventable<T>> = this._emitter.event;
+  protected _onDidChangeTreeData: vscode.EventEmitter<Eventable<T>> =
+    new vscode.EventEmitter();
+  readonly onDidChangeTreeData: vscode.Event<Eventable<T>> =
+    this._onDidChangeTreeData.event;
 
   constructor(config: ExtensionConfig, ...args: any[]) {
     this.config = config;
@@ -38,111 +44,15 @@ export abstract class StarProviderBase<T>
 
   abstract loadStarmap(..._: any[]): Starmap;
 
+  abstract update(..._: any[]): void;
+
   reconfigure(config: ExtensionConfig): void {
     this.config = config;
     this.refresh();
   }
 
-  refresh(..._args: any[]): void {
-    this._emitter.fire();
-  }
-}
-
-export class StarlistProvider extends StarProviderBase<Star | PathKind> {
-  override refresh(unlockedStar?: UnlockedStar): void {
-    if (unlockedStar) {
-      this.starmap.set(unlockedStar.code, unlockedStar);
-    }
-
-    this._emitter.fire();
-  }
-
-  loadStarmap(context: vscode.ExtensionContext): Starmap {
-    return (
-      getStarmap(context) ??
-      new Map(
-        Object.entries(diagnosticMessages).map(([key, value]) => {
-          return [value.code, diagnosticToStar(value, key as Message)];
-        }),
-      )
-    );
-  }
-
-  getChildren(
-    element?: Star | PathKind,
-  ): vscode.ProviderResult<(Star | PathKind)[]> {
-    if (!element) {
-      return topPathKinds.slice(0);
-    } else if (typeof element === "object") {
-      return [];
-    } else if (element === "error") {
-      return errorKinds.slice(0);
-    } else {
-      return this.starmap
-        .values()
-        .filter((star) => star.kind === element)
-        .toArray();
-    }
-  }
-
-  getTreeItem(providable: Star | PathKind): vscode.TreeItem {
-    if (typeof providable === "object") {
-      const star = providable;
-      const label = star.code.toString();
-
-      if (isUnlocked(star)) {
-        return {
-          label,
-          description: star.messageTemplate,
-          resourceUri: vscode.Uri.parse(names.colors.unlockedAchievement),
-          iconPath: new vscode.ThemeIcon(
-            "star-full",
-            new vscode.ThemeColor(names.colors.unlockedAchievement),
-          ),
-
-          tooltip: new vscode.MarkdownString(
-            `
-Unlocked on ${new Date(star.time)} in file "${star.fileName}" with line
-\`\`\`ts
-${star.triggerText}
-\`\`\`
-which triggered the message: "${star.messageText}"
-
-Lifetime encounters: ${++star.lifetime}, most recently on ${new Date(star.lastEncounter)}
-    `.trim(),
-          ),
-        };
-      } else {
-        return {
-          label,
-          description: vscode.workspace
-            .getConfiguration(names.ex)
-            .get(names.config.revealDescription)
-            ? star.messageTemplate
-            : "?",
-          resourceUri: vscode.Uri.parse(names.colors.lockedAchievement),
-          iconPath: new vscode.ThemeIcon(
-            "lock",
-            new vscode.ThemeColor(names.colors.lockedAchievement),
-          ),
-        };
-      }
-    } else {
-      const stars = this.starmap
-        .values()
-        .toArray()
-        .filter((star) => star.kind === providable);
-      const achieved = stars.filter(isUnlocked).length;
-      const total = stars.length;
-
-      return {
-        label: `${capitalize(
-          toPathTitle(providable),
-        )}: ${((achieved / total) * 100).toFixed(2)}%`,
-        description: `(${achieved} of ${total})`,
-        collapsibleState: vscode.TreeItemCollapsibleState.Collapsed,
-      };
-    }
+  refresh(): void {
+    this._onDidChangeTreeData.fire();
   }
 }
 
@@ -170,3 +80,129 @@ const toPathTitle = (kind: PathKind): PathTitle => {
   }
   kind satisfies never;
 };
+
+type Folder = { kind: PathKind } & vscode.TreeItem;
+
+export class Starlister extends StarProviderBase<Star | Folder> {
+  folders: Record<PathKind, Folder>;
+
+  constructor(config: ExtensionConfig, context: vscode.ExtensionContext) {
+    super(config, context);
+    this.folders = Object.fromEntries(
+      biject(pathKinds, (kind) => {
+        const folder = Object.assign(
+          new TreeItem(loadingText, vscode.TreeItemCollapsibleState.Expanded),
+          { kind },
+        );
+        return [kind, folder];
+      }),
+    ) as Record<PathKind, Folder>;
+  }
+
+  update(unlockedStar?: UnlockedStar): void {
+    if (unlockedStar) {
+      this.starmap.set(unlockedStar.code, unlockedStar);
+    }
+  }
+
+  loadStarmap(context: vscode.ExtensionContext): Starmap {
+    return (
+      getStarmap(context) ??
+      new Map(
+        Object.entries(diagnosticMessages).map(([key, value]) => {
+          return [value.code, diagnosticToStar(value, key as Message)];
+        }),
+      )
+    );
+  }
+
+  getChildren(
+    providable?: Star | Folder,
+  ): vscode.ProviderResult<(Star | Folder)[]> {
+    if (!providable) {
+      return Object.values(this.folders).filter((folder) =>
+        topPathKinds.includes(folder.kind as any),
+      );
+    } else if (isStar(providable)) {
+      return [];
+    } else if (providable.kind === "error") {
+      return Object.values(this.folders).filter((folder) =>
+        errorKinds.includes(folder.kind as any),
+      );
+    } else {
+      return this.starmap
+        .values()
+        .filter((star) => star.kind === providable.kind)
+        .toArray();
+    }
+  }
+
+  getTreeItem(providable: Star | Folder): vscode.TreeItem {
+    if (isStar(providable)) {
+      const star = providable;
+
+      const label = star.code.toString();
+
+      if (isUnlocked(star)) {
+        return {
+          label,
+          description: star.messageTemplate,
+          resourceUri: vscode.Uri.parse(names.colors.unlocked),
+          iconPath: new vscode.ThemeIcon(
+            "star-full",
+            new vscode.ThemeColor(names.colors.unlocked),
+          ),
+          tooltip: new vscode.MarkdownString(
+            `
+Unlocked on ${new Date(star.time)} in file "${star.fileName}" with line
+\`\`\`ts
+${star.triggerText}
+\`\`\`
+which triggered the message: "${star.messageText}"
+
+Lifetime encounters: ${++star.lifetime}, most recently on ${new Date(star.lastEncounter)}
+    `.trim(),
+          ),
+        };
+      } else {
+        return {
+          label,
+          description: vscode.workspace
+            .getConfiguration(names.ex)
+            .get(names.config.revealDescription)
+            ? star.messageTemplate
+            : "?",
+          resourceUri: vscode.Uri.parse(names.colors.locked),
+          iconPath: new vscode.ThemeIcon(
+            "lock",
+            new vscode.ThemeColor(names.colors.locked),
+          ),
+        };
+      }
+    } else {
+      const stars = this.starmap
+        .values()
+        .toArray()
+        .filter((star) =>
+          providable.kind === "error"
+            ? errorKinds.includes(star.kind as any)
+            : star.kind === providable.kind,
+        );
+
+      const achieved = stars.filter(isUnlocked).length;
+      const total = stars.length;
+
+      const newFolder = new TreeItem(
+        `${capitalize(
+          toPathTitle(providable.kind),
+        )}: ${((achieved / total) * 100).toFixed(2)}%`,
+        providable.collapsibleState,
+      );
+      newFolder.description = `(${achieved} of ${total})`;
+
+      logger(providable.collapsibleState, newFolder.collapsibleState);
+
+      return newFolder;
+    }
+  }
+}

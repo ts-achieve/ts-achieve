@@ -41,11 +41,11 @@ export const configOptions = [
 const ex = "tsAchieve" as const;
 
 const commands = {
-  show: `${ex}.command.show`,
   refresh: `${ex}.command.refresh`,
   startrun: `${ex}.command.startrun`,
   stoprun: `${ex}.command.stoprun`,
   setContext: "setContext",
+  hardReset: `${ex}.command.hardReset`,
 } as const;
 
 const config = {
@@ -65,8 +65,8 @@ const views = {
 } as const;
 
 const colors = {
-  lockedAchievement: "disabledForeground",
-  unlockedAchievement: "icon.foreground",
+  locked: "disabledForeground",
+  unlocked: "icon.foreground",
 } as const;
 
 export const names = { ex, colors, commands, config, context, views } as const;

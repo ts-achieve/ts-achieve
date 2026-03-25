@@ -2,7 +2,6 @@ import vscode from "vscode";
 
 import { Maybe } from "./util/type";
 import { Star, Starmap } from "./provider/star";
-import { logger } from "./util/logger";
 
 export const getStarmap = (
   context: vscode.ExtensionContext,
@@ -17,9 +16,9 @@ export const getStarmap = (
 
 export const setStarmap = (
   context: vscode.ExtensionContext,
-  starmap: Starmap,
+  starmap: Maybe<Starmap>,
 ): void => {
-  setGlobalState(context, "starmap", starmap.entries().toArray());
+  setGlobalState(context, "starmap", starmap?.entries().toArray());
 };
 
 export const getGlobalState = (
@@ -30,7 +29,6 @@ export const getGlobalState = (
 
   if (serialization && typeof serialization === "string") {
     const value = JSON.parse(serialization);
-    logger("global state access", `${key}: ${serialization}`);
 
     return value;
   } else {

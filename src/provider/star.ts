@@ -1,6 +1,6 @@
 import vscode from "vscode";
 
-import { errorKinds, nonErrorKinds } from "../util/const";
+import { errorKinds, nonErrorKinds, starKinds } from "../util/const";
 import { isObject } from "../util/type";
 
 export type NonErrorKind = (typeof nonErrorKinds)[number];
@@ -21,6 +21,18 @@ type LockedStar = {
   code: number;
   kind: StarKind;
   messageTemplate: string;
+};
+
+export const isStar = (x: unknown): x is Star => {
+  return (
+    isObject(x) &&
+    "code" in x &&
+    typeof x.code === "number" &&
+    "kind" in x &&
+    starKinds.includes(x.kind as any) &&
+    "messageTemplate" in x &&
+    typeof x.messageTemplate === "string"
+  );
 };
 
 export type Encounter = LockedStar & {

@@ -1,10 +1,10 @@
 import vscode from "vscode";
 import { Maybe } from "../util/type";
 import { ExtensionConfig } from "../config";
-import { StarlistProvider } from "./provider";
+import { Starlister } from "./provider";
 import { Starmap } from "./star";
 
-export class SpeedrunProvider extends StarlistProvider {
+export class Speedrunner extends Starlister {
   history: Speedrun[];
   current: Maybe<Speedrun>;
 

@@ -2,44 +2,46 @@ import vscode from "vscode";
 
 import { names } from "./util/const";
 import { logger } from "./util/logger";
-import { getConfigSection, withConfig } from "./config";
+import { getConfig, getConfigSection } from "./config";
 import { setStarmap } from "./globalState";
-import { DecorationProvider } from "./provider/decorate";
-import { SummaryProvider } from "./provider/summary";
-import { SpeedrunProvider } from "./provider/speedrun";
+import { Decorator } from "./provider/decorate";
+import { Summarizer } from "./provider/summary";
 import { unlock } from "./provider/star";
-import { StarlistProvider } from "./provider/provider";
+import { Starlister } from "./provider/provider";
 
 export function activate(context: vscode.ExtensionContext) {
   try {
-    withConfig((config) => {
-      const decorationProvider = new DecorationProvider(config);
-      const starlistProvider = new StarlistProvider(config, context);
-      const summaryProvider = new SummaryProvider(
-        config,
-        starlistProvider.starmap,
-      );
-      const speedrunProvider = new SpeedrunProvider(config, context);
+    const config = getConfig();
+    const decorator = new Decorator(config);
+    const starlister = new Starlister(config, context);
+    const summarizer = new Summarizer(config, starlister.starmap);
+    // const speedrunner = new Speedrunner(config, context);
 
-      context.subscriptions.push(
-        vscode.commands.registerCommand(names.commands.refresh, () => {
-          logger(names.commands.refresh);
-          starlistProvider.refresh();
-        }),
-        vscode.window.registerFileDecorationProvider(decorationProvider),
-        vscode.window.registerTreeDataProvider(
-          names.views.summary,
-          summaryProvider,
-        ),
-        vscode.window.registerTreeDataProvider(
-          names.views.list,
-          starlistProvider,
-        ),
-        vscode.window.registerTreeDataProvider(
-          names.views.speedrun,
-          speedrunProvider,
-        ),
-      );
+    context.subscriptions.push(
+      vscode.commands.registerCommand(names.commands.refresh, () => {
+        starlister.refresh();
+        summarizer.refresh();
+      }),
+
+      vscode.commands.registerCommand(names.commands.hardReset, () => {
+        setStarmap(context, undefined);
+        starlister.starmap = starlister.loadStarmap(context);
+        summarizer.update(starlister.starmap);
+        starlister.refresh();
+        summarizer.refresh();
+      }),
+
+      vscode.window.registerFileDecorationProvider(decorator),
+      vscode.window.registerTreeDataProvider(names.views.summary, summarizer),
+      vscode.window.registerTreeDataProvider(names.views.list, starlister),
+      // vscode.window.registerTreeDataProvider(names.views.speedrun, speedrunner),
+
+      vscode.workspace.onDidChangeConfiguration(() => {
+        const exConfig = getConfig();
+        // speedrunner.reconfigure(exConfig);
+        starlister.reconfigure(exConfig);
+        summarizer.reconfigure(exConfig);
+      }),
 
       vscode.workspace.onDidChangeTextDocument((event) => {
         const diagnostics = vscode.languages.getDiagnostics(event.document.uri);
@@ -48,7 +50,7 @@ export function activate(context: vscode.ExtensionContext) {
             const diagnostic = diagnostics[i]!;
 
             if (typeof diagnostic.code === "number") {
-              const star = starlistProvider.starmap.get(diagnostic.code);
+              const star = starlister.starmap.get(diagnostic.code);
 
               if (star) {
                 const unlockedStar = unlock(star, event, diagnostic);
@@ -64,26 +66,21 @@ export function activate(context: vscode.ExtensionContext) {
                     `Achievement unlocked!\n${diagnostic.code}: ${diagnostic.message}`,
                   );
                 }
-                setStarmap(context, starlistProvider.starmap);
-                starlistProvider.refresh(unlockedStar);
-                summaryProvider.refresh(starlistProvider.starmap);
+                setStarmap(context, starlister.starmap);
+                starlister.update(unlockedStar);
+                summarizer.update(starlister.starmap);
+                starlister.refresh();
+                summarizer.refresh();
               }
             }
           }
 
-          setStarmap(context, starlistProvider.starmap);
+          setStarmap(context, starlister.starmap);
         }
-      });
+      }),
+    );
 
-      setStarmap(context, starlistProvider.starmap);
-
-      return {
-        starlistProvider,
-        summaryProvider,
-        speedrunProvider,
-        decorationProvider,
-      };
-    });
+    setStarmap(context, starlister.starmap);
   } catch (e: any) {
     logger(e.stack);
   }

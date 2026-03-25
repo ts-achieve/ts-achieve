@@ -2,12 +2,9 @@ import vscode from "vscode";
 
 import { names } from "../util/const";
 import { logger } from "../util/logger";
-import { Configurable } from "./provider";
 import { ExtensionConfig } from "../config";
 
-export class DecorationProvider
-  implements vscode.FileDecorationProvider, Configurable
-{
+export class Decorator implements vscode.FileDecorationProvider {
   config: ExtensionConfig;
 
   constructor(config: ExtensionConfig) {
@@ -18,23 +15,20 @@ export class DecorationProvider
     uri: vscode.Uri,
     _token: vscode.CancellationToken,
   ): vscode.ProviderResult<vscode.FileDecoration> {
-    switch (uri.path) {
-      case "/tsAchieve.colors.achievement.locked":
+    switch (uri.path.slice(1)) {
+      case names.colors.locked:
         return {
           propagate: false,
-          color: new vscode.ThemeColor(names.colors.lockedAchievement),
+          color: new vscode.ThemeColor(names.colors.locked),
         };
-      case "/tsAchieve.colors.achievement.unlocked":
+      case names.colors.unlocked:
         return {
           propagate: false,
-          color: new vscode.ThemeColor(names.colors.unlockedAchievement),
+          color: new vscode.ThemeColor(names.colors.unlocked),
         };
       default:
         logger(`bad path: ${uri.path}`);
         return undefined;
     }
   }
-
-  reconfigure(): void {}
-  refresh(): void {}
 }

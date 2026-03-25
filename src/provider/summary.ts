@@ -7,7 +7,7 @@ import { isErrorKind, isUnlocked, Starmap, UnlockedStar } from "./star";
 const summaryKinds = ["overall", "lifetime"] as const;
 type SummaryKind = (typeof summaryKinds)[number];
 
-export class SummaryProvider extends StarProviderBase<SummaryKind> {
+export class Summarizer extends StarProviderBase<SummaryKind> {
   kinds: SummaryKind[];
 
   constructor(
@@ -19,7 +19,11 @@ export class SummaryProvider extends StarProviderBase<SummaryKind> {
     this.kinds = kinds ?? summaryKinds.slice(0);
   }
 
-  override loadStarmap(starmap: Starmap): Starmap {
+  update(newMap: Starmap): void {
+    this.starmap = newMap;
+  }
+
+  loadStarmap(starmap: Starmap): Starmap {
     return starmap;
   }
 
@@ -48,9 +52,7 @@ export class SummaryProvider extends StarProviderBase<SummaryKind> {
     }
   }
 
-  override getChildren(
-    kind?: SummaryKind,
-  ): vscode.ProviderResult<SummaryKind[]> {
+  getChildren(kind?: SummaryKind): vscode.ProviderResult<SummaryKind[]> {
     return kind ? [] : this.kinds;
   }
 }

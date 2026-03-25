@@ -19,22 +19,32 @@
   "contributes": {
     "commands": [
       {
-        "command": "tsAchieve.command.show",
-        "title": "Show achievements"
-      },
-      {
         "command": "tsAchieve.command.refresh",
-        "title": "Refresh achievements"
+        "title": "Refresh Achievements"
       },
       {
         "command": "tsAchieve.command.startrun",
-        "title": "Start new run"
+        "title": "Start New Run"
       },
       {
         "command": "tsAchieve.command.stoprun",
-        "title": "Stop current run"
+        "title": "Stop Current Run"
+      },
+      {
+        "command": "tsAchieve.command.hardReset",
+        "title": "Hard Reset",
+        "icon": "lib/typescript.svg"
       }
     ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "tsAchieve.command.hardReset",
+          "when": "view == tsAchieve",
+          "group": "navigation"
+        }
+      ]
+    },
     "configuration": {
       "title": "TS Achieve",
       "type": "object",
@@ -76,14 +86,14 @@
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "view-achieve",
+          "id": "tsAchieve",
           "title": "Achievements",
           "icon": "lib/typescript.svg"
         }
       ]
     },
     "views": {
-      "view-achieve": [
+      "tsAchieve": [
         {
           "id": "tsAchieve.view.summary",
           "name": "Summary",
