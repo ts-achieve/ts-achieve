@@ -1,5 +1,7 @@
 import { expectTypeOf, UnionToTuple } from "expect-type";
 
+export { UnionToTuple };
+
 // region shared
 
 export type Maybe<T> = T | undefined;
@@ -8,8 +10,23 @@ export type Writable<T> = { -readonly [K in keyof T]: T[K] };
 export type ReadWrite<T> = T | Readonly<T> | Writable<T>;
 
 export const isObject = (x: unknown): x is object => {
-  return typeof x === "object" && !!x;
+  return typeof x === "object" && !!x && !Array.isArray(x);
 };
+
+export type DeepKeys<T, K extends keyof T = keyof T> =
+  | keyof T
+  | (K extends any ? keyof T[K] : never);
+
+export const testObject = {
+  a: 0,
+  b: {
+    c: 1,
+    d: {
+      e: 2,
+      f: {},
+    },
+  },
+} as const;
 
 // region tuple
 
@@ -193,6 +210,12 @@ expectTypeOf<"abab">().toEqualTypeOf<RightPad<"", 4, "ab">>();
 expectTypeOf<"abab">().toEqualTypeOf(rightpad("", 4, "ab"));
 expectTypeOf<"abcdefgh">().toEqualTypeOf<RightPad<"abcdefgh", 4>>();
 expectTypeOf<"abcdefgh">().toEqualTypeOf(rightpad("abcdefgh", 4));
+
+export type Split<
+  S extends string,
+  C extends string = "",
+  A extends string[] = [],
+> = S extends `${infer F}${C}${infer R}` ? Split<R, C, [...A, F]> : [...A, S];
 
 // region block scope dependent
 

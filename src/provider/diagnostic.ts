@@ -1,9 +1,9 @@
 import { expectTypeOf } from "expect-type";
 
-import { tsDiagnosticCategories } from "../util/const";
+import { StarKind, tsDiagnosticCategories } from "../util/const";
 import { diagnosticMessages } from "../util/diagnosticMessages";
-import { isObject, Maybe, uncapitalize } from "../util/type";
-import { StarKind } from "./star";
+import { isObject, Maybe } from "../util/type";
+import { taxonomy } from "./taxonomy";
 
 type Dictionary = {
   -readonly [K in keyof typeof diagnosticMessages]: {
@@ -63,20 +63,40 @@ export const isTsDiagnostic = (x: unknown): x is TsDiagnostic => {
 };
 
 export const kindOf = (diagnostic: TsDiagnostic): StarKind => {
-  if (diagnostic.category === "Error") {
+  if (diagnostic.category === "Suggestion") {
+    if (taxonomy.suggestion.type.includes(diagnostic.code as any)) {
+      return "type-suggestion";
+    } else if (taxonomy.suggestion.language.includes(diagnostic.code as any)) {
+      return "language";
+    } else {
+      return "other";
+    }
+  } else if (diagnostic.category === "Error") {
     if ("reportsUnnecessary" in diagnostic) {
       return "warning";
     } else {
-      if (diagnostic.code < 2000) {
-        return "syntax";
+      if (taxonomy.error.strict.includes(diagnostic.code as any)) {
+        return "strict";
+      } else if (taxonomy.error.syntax.async.includes(diagnostic.code as any)) {
+        return "async";
+      } else if (taxonomy.error.syntax.class.includes(diagnostic.code as any)) {
+        return "class";
+      } else if (
+        taxonomy.error.syntax["control-flow"].includes(diagnostic.code as any)
+      ) {
+        return "control-flow";
+      } else if (
+        taxonomy.error.syntax.function.includes(diagnostic.code as any)
+      ) {
+        return "function";
       } else if (diagnostic.code < 5000) {
-        return "type";
+        return "type-error";
       } else {
         return "tsconfig";
       }
     }
   } else {
-    return uncapitalize(diagnostic.category);
+    return "message";
   }
 };
 

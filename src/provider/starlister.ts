@@ -2,21 +2,37 @@ import vscode from "vscode";
 
 import { ExtensionConfig } from "../config";
 import { getStarmap } from "../globalState";
-import { pathKinds, topPathKinds, errorKinds, names } from "../util/const";
+import {
+  pathKinds,
+  topKinds,
+  errorKinds,
+  names,
+  suggestionKinds,
+  ErrorKind,
+  PathKind,
+  SuggestionKind,
+  TopKind,
+  SyntaxErrorKind,
+  syntaxErrorKinds,
+} from "../util/const";
 import { diagnosticMessages } from "../util/diagnosticMessages";
-import { capitalize, biject } from "../util/type";
+import { capitalize, biject, Split } from "../util/type";
 import { diagnosticToStar, Message } from "./diagnostic";
 import { StarProviderBase } from "./provider";
 import { Star, UnlockedStar, Starmap, isStar, isUnlocked } from "./star";
 
-export type PathKind = (typeof pathKinds)[number];
-
 type PathTitle =
   | `${Capitalize<Extract<PathKind, "special">>} achievements`
-  | `${Capitalize<Extract<PathKind, "message" | "suggestion" | "warning" | "error">>}s`
-  | `${Capitalize<Extract<PathKind, "strict" | "syntax" | "tsconfig" | "type">>} errors`;
+  | `${Capitalize<Exclude<TopKind, "special">>}s`
+  | SuggestionTitle
+  | ErrorTitle;
 
-const toPathTitle = (kind: PathKind): PathTitle => {
+type SuggestionTitle =
+  `${Capitalize<Split<SuggestionKind, "-">[0]>} suggestions`;
+type ErrorTitle =
+  `${Capitalize<Split<ErrorKind | SyntaxErrorKind, "-">[0]>} errors`;
+
+export const toPathTitle = (kind: PathKind): PathTitle => {
   switch (kind) {
     case "special":
       return `${capitalize(kind)} achievements`;
@@ -25,16 +41,29 @@ const toPathTitle = (kind: PathKind): PathTitle => {
     case "warning":
     case "error":
       return `${capitalize(kind)}s`;
+    case "type-suggestion":
+      return `Type suggestions` as const;
+    case "language":
+    case "other":
+      return `${capitalize(kind)} suggestions`;
+    case "type-error":
+      return `Type errors` as const;
+    case "control-flow":
+      return `Control errors` as const;
     case "strict":
     case "syntax":
+    case "async":
+    case "class":
+    case "function":
     case "tsconfig":
-    case "type":
       return `${capitalize(kind)} errors`;
   }
   kind satisfies never;
 };
 
-type Folder = { kind: PathKind } & vscode.TreeItem;
+type Folder<K extends PathKind = PathKind> = K extends any
+  ? { kind: K } & vscode.TreeItem
+  : never;
 
 export class Starlister extends StarProviderBase<Star | Folder> {
   folders: Record<PathKind, Folder>;
@@ -77,13 +106,21 @@ export class Starlister extends StarProviderBase<Star | Folder> {
   ): vscode.ProviderResult<(Star | Folder)[]> {
     if (!providable) {
       return Object.values(this.folders).filter((folder) =>
-        topPathKinds.includes(folder.kind as any),
+        topKinds.includes(folder.kind as any),
       );
     } else if (isStar(providable)) {
       return [];
+    } else if (providable.kind === "suggestion") {
+      return Object.values(this.folders).filter((folder) =>
+        suggestionKinds.includes(folder.kind as any),
+      );
     } else if (providable.kind === "error") {
       return Object.values(this.folders).filter((folder) =>
         errorKinds.includes(folder.kind as any),
+      );
+    } else if (providable.kind === "syntax") {
+      return Object.values(this.folders).filter((folder) =>
+        syntaxErrorKinds.includes(folder.kind as any),
       );
     } else {
       return this.starmap
@@ -140,9 +177,11 @@ Lifetime encounters: ${++star.lifetime}, most recently on ${new Date(star.lastEn
         .values()
         .toArray()
         .filter((star) =>
-          providable.kind === "error"
-            ? errorKinds.includes(star.kind as any)
-            : star.kind === providable.kind,
+          providable.kind === "suggestion"
+            ? suggestionKinds.includes(star.kind as any)
+            : providable.kind === "error"
+              ? errorKinds.includes(star.kind as any)
+              : star.kind === providable.kind,
         );
 
       const achieved = stars.filter(isUnlocked).length;

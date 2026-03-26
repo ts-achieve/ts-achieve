@@ -2,9 +2,9 @@ import vscode from "vscode";
 
 import { Maybe } from "./util/type";
 import { names } from "./util/const";
-import { Decorator } from "./provider/decorate";
-import { Speedrunner } from "./provider/speedrun";
-import { Summarizer } from "./provider/summary";
+import { Decorator } from "./provider/decorator";
+import { Speedrunner } from "./provider/speedrunner";
+import { Summarizer } from "./provider/summarizer";
 import { Starlister } from "./provider/starlister";
 
 export type ExtensionConfig = {

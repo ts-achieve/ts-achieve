@@ -1,19 +1,7 @@
 import vscode from "vscode";
 
-import { errorKinds, nonErrorKinds, starKinds } from "../util/const";
+import { StarKind, starKinds } from "../util/const";
 import { isObject } from "../util/type";
-
-export type NonErrorKind = (typeof nonErrorKinds)[number];
-export type ErrorKind = (typeof errorKinds)[number];
-export type StarKind = NonErrorKind | ErrorKind;
-
-export const isErrorKind = (x: string): x is ErrorKind => {
-  return errorKinds.includes(x as any);
-};
-
-export const isNonErrorKind = (x: string): x is NonErrorKind => {
-  return nonErrorKinds.includes(x as any);
-};
 
 export type Starmap = Map<number, Star>;
 

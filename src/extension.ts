@@ -4,11 +4,13 @@ import { names } from "./util/const";
 import { getConfig, getConfigSection } from "./config";
 import { setStarmap } from "./globalState";
 import { unlock } from "./provider/star";
-import { Decorator } from "./provider/decorate";
-import { Summarizer } from "./provider/summary";
+import { Decorator } from "./provider/decorator";
+import { Summarizer } from "./provider/summarizer";
 import { Starlister } from "./provider/starlister";
 
 export function activate(context: vscode.ExtensionContext) {
+  // testsuite();
+
   const config = getConfig();
   const decorator = new Decorator(config);
   const starlister = new Starlister(config, context);
@@ -62,7 +64,8 @@ export function activate(context: vscode.ExtensionContext) {
                 );
               } else if (unlockedStar.lifetime === 1) {
                 vscode.window.showInformationMessage(
-                  `Achievement unlocked!\n${diagnostic.code}: ${diagnostic.message}`,
+                  `Achievement unlocked!
+                  ${diagnostic.code}: ${diagnostic.message}`,
                 );
               }
               setStarmap(context, starlister.starmap);

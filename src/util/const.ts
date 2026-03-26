@@ -17,13 +17,56 @@ export const nonErrorKinds = [
   "warning",
 ] as const;
 
-export const errorKinds = ["syntax", "type", "tsconfig", "strict"] as const;
+export const topKinds = [...nonErrorKinds, "error"] as const;
 
-export const topPathKinds = [...nonErrorKinds, "error"] as const;
+export const suggestionKinds = [
+  "type-suggestion",
+  "language",
+  "other",
+] as const;
 
-export const pathKinds = [...topPathKinds, ...errorKinds] as const;
+export const errorKinds = [
+  "syntax",
+  "type-error",
+  "tsconfig",
+  "strict",
+] as const;
 
-export const starKinds = [...nonErrorKinds, ...errorKinds] as const;
+export const syntaxErrorKinds = [
+  "async",
+  "class",
+  "control-flow",
+  "function",
+] as const;
+
+export const pathKinds = [
+  ...topKinds,
+  ...suggestionKinds,
+  ...errorKinds,
+  ...syntaxErrorKinds,
+] as const;
+
+export const starKinds = [
+  "special",
+  "message",
+  ...suggestionKinds,
+  "warning",
+  ...syntaxErrorKinds,
+  "type-error",
+  "tsconfig",
+  "strict",
+] as const;
+
+export type TopKind = (typeof topKinds)[number];
+export type SuggestionKind = (typeof suggestionKinds)[number];
+export type ErrorKind = (typeof errorKinds)[number];
+export type SyntaxErrorKind = (typeof syntaxErrorKinds)[number];
+export type PathKind = (typeof pathKinds)[number];
+export type StarKind = (typeof starKinds)[number];
+
+export const isErrorKind = (x: string): x is ErrorKind => {
+  return errorKinds.includes(x as any);
+};
 
 export const configOptions = [
   "kind (errors first)",

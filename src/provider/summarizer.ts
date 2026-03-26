@@ -2,9 +2,12 @@ import vscode, { TreeItem } from "vscode";
 
 import { ExtensionConfig } from "../config";
 import { StarProviderBase } from "./provider";
-import { isErrorKind, isUnlocked, Starmap, UnlockedStar } from "./star";
+import { isUnlocked, Star, Starmap, UnlockedStar } from "./star";
+import { isErrorKind, pathKinds } from "../util/const";
+import { uncapitalize } from "../util/type";
+import { toPathTitle } from "./starlister";
 
-const summaryKinds = ["overall", "lifetime"] as const;
+const summaryKinds = ["overall", "encounters", ...pathKinds] as const;
 type SummaryKind = (typeof summaryKinds)[number];
 
 export class Summarizer extends StarProviderBase<SummaryKind> {
@@ -41,11 +44,20 @@ export class Summarizer extends StarProviderBase<SummaryKind> {
         treeItem.description = `(${achieved} of ${total})`;
 
         return treeItem;
-      case "lifetime":
+      default:
+        const statistic =
+          kind === "encounters" ? kind : uncapitalize(toPathTitle(kind));
+        const condition =
+          kind === "encounters"
+            ? () => true
+            : kind === "error"
+              ? (star: Star) => isErrorKind(star.kind as any)
+              : (star: Star) => star.kind === kind;
+
         return new TreeItem(
-          `Lifetime: ${this.starmap
+          `Lifetime ${statistic}: ${this.starmap
             .values()
-            .filter((star) => isUnlocked(star) && isErrorKind(star.kind))
+            .filter((star) => isUnlocked(star) && condition(star))
             .map((star) => (star as UnlockedStar).lifetime)
             .reduce((xs, x) => xs + x, 0)}`,
         );
