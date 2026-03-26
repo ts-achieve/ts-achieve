@@ -15,11 +15,16 @@ import {
   SyntaxErrorKind,
   syntaxErrorKinds,
 } from "../util/const";
-import { diagnosticMessages } from "../util/diagnosticMessages";
 import { capitalize, biject, Split } from "../util/type";
-import { diagnosticToStar, Message } from "./diagnostic";
 import { StarProviderBase } from "./provider";
-import { Star, UnlockedStar, Starmap, isStar, isUnlocked } from "./star";
+import {
+  Star,
+  UnlockedStar,
+  Starmap,
+  isStar,
+  isUnlocked,
+  makeStarmap,
+} from "./star";
 
 type PathTitle =
   | `${Capitalize<Extract<PathKind, "special">>} achievements`
@@ -61,11 +66,11 @@ export const toPathTitle = (kind: PathKind): PathTitle => {
   kind satisfies never;
 };
 
-type Folder<K extends PathKind = PathKind> = K extends any
+export type Folder<K extends PathKind = PathKind> = K extends any
   ? { kind: K } & vscode.TreeItem
   : never;
 
-export class Starlister extends StarProviderBase<Star | Folder> {
+export class Starlister<T = never> extends StarProviderBase<T | Star | Folder> {
   folders: Record<PathKind, Folder>;
 
   constructor(config: ExtensionConfig, context: vscode.ExtensionContext) {
@@ -91,42 +96,39 @@ export class Starlister extends StarProviderBase<Star | Folder> {
   }
 
   loadStarmap(context: vscode.ExtensionContext): Starmap {
-    return (
-      getStarmap(context) ??
-      new Map(
-        Object.entries(diagnosticMessages).map(([key, value]) => {
-          return [value.code, diagnosticToStar(value, key as Message)];
-        }),
-      )
-    );
+    return getStarmap(context) ?? makeStarmap();
   }
 
   getChildren(
-    providable?: Star | Folder,
-  ): vscode.ProviderResult<(Star | Folder)[]> {
+    providable?: T | Star | Folder,
+  ): vscode.ProviderResult<(T | Star | Folder)[]> {
     if (!providable) {
       return Object.values(this.folders).filter((folder) =>
         topKinds.includes(folder.kind as any),
       );
     } else if (isStar(providable)) {
       return [];
-    } else if (providable.kind === "suggestion") {
-      return Object.values(this.folders).filter((folder) =>
-        suggestionKinds.includes(folder.kind as any),
-      );
-    } else if (providable.kind === "error") {
-      return Object.values(this.folders).filter((folder) =>
-        errorKinds.includes(folder.kind as any),
-      );
-    } else if (providable.kind === "syntax") {
-      return Object.values(this.folders).filter((folder) =>
-        syntaxErrorKinds.includes(folder.kind as any),
-      );
+    } else if (typeof providable === "object" && "kind" in providable) {
+      if (providable.kind === "suggestion") {
+        return Object.values(this.folders).filter((folder) =>
+          suggestionKinds.includes(folder.kind as any),
+        );
+      } else if (providable.kind === "error") {
+        return Object.values(this.folders).filter((folder) =>
+          errorKinds.includes(folder.kind as any),
+        );
+      } else if (providable.kind === "syntax") {
+        return Object.values(this.folders).filter((folder) =>
+          syntaxErrorKinds.includes(folder.kind as any),
+        );
+      } else {
+        return this.starmap
+          .values()
+          .filter((star) => star.kind === providable.kind)
+          .toArray();
+      }
     } else {
-      return this.starmap
-        .values()
-        .filter((star) => star.kind === providable.kind)
-        .toArray();
+      return undefined;
     }
   }
 

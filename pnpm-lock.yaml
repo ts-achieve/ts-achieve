@@ -12,6 +12,9 @@ importers:
         specifier: ^1.3.0
         version: 1.3.0
     devDependencies:
+      '@types/mocha':
+        specifier: ^10.0.10
+        version: 10.0.10
       '@types/node':
         specifier: 22.x
         version: 22.19.15

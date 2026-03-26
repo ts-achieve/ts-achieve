@@ -7,15 +7,14 @@ import { unlock } from "./provider/star";
 import { Decorator } from "./provider/decorator";
 import { Summarizer } from "./provider/summarizer";
 import { Starlister } from "./provider/starlister";
+import { Speedrunner } from "./provider/speedrunner";
 
 export function activate(context: vscode.ExtensionContext) {
-  // testsuite();
-
   const config = getConfig();
   const decorator = new Decorator(config);
   const starlister = new Starlister(config, context);
   const summarizer = new Summarizer(config, starlister.starmap);
-  // const speedrunner = new Speedrunner(config, context);
+  const speedrunner = new Speedrunner(config, context);
 
   context.subscriptions.push(
     vscode.commands.registerCommand(names.commands.refresh, () => {
@@ -35,11 +34,11 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.window.registerFileDecorationProvider(decorator),
     vscode.window.registerTreeDataProvider(names.views.summary, summarizer),
     vscode.window.registerTreeDataProvider(names.views.list, starlister),
-    // vscode.window.registerTreeDataProvider(names.views.speedrun, speedrunner),
+    vscode.window.registerTreeDataProvider(names.views.speedrun, speedrunner),
 
     vscode.workspace.onDidChangeConfiguration(() => {
       const exConfig = getConfig();
-      // speedrunner.reconfigure(exConfig);
+      speedrunner.reconfigure(exConfig);
       starlister.reconfigure(exConfig);
       summarizer.reconfigure(exConfig);
     }),

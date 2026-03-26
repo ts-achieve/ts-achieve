@@ -9,7 +9,9 @@ export type Maybe<T> = T | undefined;
 export type Writable<T> = { -readonly [K in keyof T]: T[K] };
 export type ReadWrite<T> = T | Readonly<T> | Writable<T>;
 
-export const isObject = (x: unknown): x is object => {
+export const isObject = (
+  x: unknown,
+): x is Exclude<object, any[] | readonly any[]> => {
   return typeof x === "object" && !!x && !Array.isArray(x);
 };
 

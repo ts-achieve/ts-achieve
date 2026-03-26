@@ -2,8 +2,18 @@ import vscode from "vscode";
 
 import { StarKind, starKinds } from "../util/const";
 import { isObject } from "../util/type";
+import { diagnosticMessages } from "../util/diagnosticMessages";
+import { diagnosticToStar, Message } from "./diagnostic";
 
 export type Starmap = Map<number, Star>;
+
+export const makeStarmap = (): Starmap => {
+  return new Map(
+    Object.entries(diagnosticMessages).map(([key, value]) => {
+      return [value.code, diagnosticToStar(value, key as Message)];
+    }),
+  );
+};
 
 type LockedStar = {
   code: number;
@@ -52,6 +62,7 @@ export const isUnlocked = (x: LockedStar): x is UnlockedStar => {
     typeof x.lifetime === "number"
   );
 };
+
 export const unlock = (
   star: Star,
   event: vscode.TextDocumentChangeEvent,

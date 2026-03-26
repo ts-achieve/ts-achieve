@@ -24,9 +24,10 @@ export const taxonomy = {
       function: [
         1013, 1014, 1015, 1016, 1017, 1018, 1019, 1020, 1021, 1022, 1024, 1025,
       ],
+      expression: [1002, 1005, 1109, 1137],
     },
     type: {},
-    tsconfig: {},
+    tsconfig: [1294],
     strict: [1100, 1101, 1102],
   },
 } as const;
