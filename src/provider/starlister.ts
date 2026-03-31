@@ -149,7 +149,7 @@ export class Starlister<T = never> extends StarProviderBase<T | Star | Folder> {
           ),
           tooltip: new vscode.MarkdownString(
             `
-Unlocked on ${new Date(star.time)} in file "${star.fileName}" with line
+Unlocked on ${new Date(star.time)} in file "${star.fileName}" with region
 \`\`\`ts
 ${star.triggerText}
 \`\`\`

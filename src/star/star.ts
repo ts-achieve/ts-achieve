@@ -73,9 +73,9 @@ export const unlock = (
     kind: star.kind,
     messageTemplate: star.messageTemplate,
     time: Date.now(),
-    triggerText: sequence(3, (n) => {
-      const lineNumber = diagnostic.range.start.line + n;
-      if (lineNumber < event.document.lineCount) {
+    triggerText: sequence(5, (n) => {
+      const lineNumber = diagnostic.range.start.line - 2 + n;
+      if (0 <= lineNumber && lineNumber < event.document.lineCount) {
         return event.document.lineAt(lineNumber).text;
       } else {
         return "";
