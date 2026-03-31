@@ -73,6 +73,26 @@ export const sequence = <N extends number, T>(n: N, f: (x: Upto<N>) => T) => {
     .map(f as any) as Tuple<N, T>;
 };
 
+export type Concat<
+  T extends readonly any[],
+  Us extends readonly (readonly any[])[],
+> = Us extends [
+  infer F extends readonly any[],
+  ...infer R extends readonly (readonly any[])[],
+]
+  ? Concat<[...T, ...F], R>
+  : T;
+
+export const safeConcat = <
+  T extends readonly any[],
+  Us extends readonly (readonly any[])[],
+>(
+  first: T,
+  ...others: Us
+) => {
+  return first.concat(...others) as Concat<T, Us>;
+};
+
 // region number
 
 type Successor<N extends number> = [

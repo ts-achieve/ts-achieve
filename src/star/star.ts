@@ -1,7 +1,7 @@
 import vscode from "vscode";
 
 import { StarKind, starKinds } from "../util/const";
-import { isObject } from "../util/type";
+import { isObject, sequence } from "../util/type";
 import { diagnosticMessages } from "../util/diagnosticMessages";
 import { diagnosticToStar, Message } from "./diagnostic";
 
@@ -73,7 +73,14 @@ export const unlock = (
     kind: star.kind,
     messageTemplate: star.messageTemplate,
     time: Date.now(),
-    triggerText: event.document.lineAt(diagnostic.range.start.line).text,
+    triggerText: sequence(3, (n) => {
+      const lineNumber = diagnostic.range.start.line + n;
+      if (lineNumber < event.document.lineCount) {
+        return event.document.lineAt(lineNumber).text;
+      } else {
+        return "";
+      }
+    }).join("\n"),
     fileName: event.document.fileName,
     messageText: diagnostic.message,
     encounterCount: isUnlocked(star) ? star.encounterCount + 1 : 1,
