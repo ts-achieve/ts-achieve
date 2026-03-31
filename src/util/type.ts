@@ -52,15 +52,26 @@ expectTypeOf<[number, number, number, number]>().toEqualTypeOf(tuple(4));
 type Biject<T, L extends any[] | readonly any[]> = Tuple<L["length"], T>;
 
 export const biject = <U, L extends any[] | readonly any[]>(
-  xs: ReadWrite<L>,
+  xs: L,
   f: (x: L[number]) => U,
 ) => {
-  return xs.map(f) as Biject<U, L>;
+  return xs.map(f) as Biject<U, ReadWrite<L>>;
 };
 
 expectTypeOf<[never, never, never, never]>().toEqualTypeOf<
   Biject<never, Tuple<4>>
 >();
+
+type Upto<N extends number, A extends number = never> = N extends 0
+  ? N | A
+  : Upto<Predecessor<N>, Predecessor<N> | A>;
+
+export const sequence = <N extends number, T>(n: N, f: (x: Upto<N>) => T) => {
+  return Array(n)
+    .keys()
+    .toArray()
+    .map(f as any) as Tuple<N, T>;
+};
 
 // region number
 
@@ -82,6 +93,9 @@ expectTypeOf<3>().toEqualTypeOf(successor(2));
 expectTypeOf<4>().toEqualTypeOf<Successor<3>>();
 expectTypeOf<4>().toEqualTypeOf(successor(3));
 
+export type Predecessor<N extends number> =
+  Tuple<N> extends [any, ...infer L] ? L["length"] : never;
+
 type Plus<M extends number, N extends number> = [
   ...Tuple<M>,
   ...Tuple<N>,
@@ -98,6 +112,30 @@ type Minus<M extends number, N extends number> =
 
 export const minus = <M extends number, N extends number>(m: M, n: N) => {
   return (m - n) as Minus<M, N>;
+};
+
+type Times<
+  M extends number,
+  N extends number,
+  A extends number = 0,
+> = N extends 0 ? A : Times<M, Predecessor<N>, Plus<A, M>>;
+
+type Power<
+  M extends number,
+  N extends number,
+  A extends number = 1,
+> = N extends 0 ? A : Power<M, Predecessor<N>, Times<A, M>>;
+
+type PowerOfTen<N extends number, A extends string = "1"> = N extends 0
+  ? Parse<A>
+  : PowerOfTen<Predecessor<N>, `${A}0`>;
+
+type Parse<S extends string> = S extends `${infer N extends number}`
+  ? N
+  : never;
+
+export const powerOfTen = <N extends number>(exponent: N) => {
+  return (10 ** exponent) as PowerOfTen<N>;
 };
 
 type GreaterOf<M extends number, N extends number> =

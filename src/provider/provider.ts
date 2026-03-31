@@ -1,7 +1,7 @@
 import vscode from "vscode";
 
 import { ExtensionConfig } from "../config";
-import { Starmap } from "./star";
+import { Starmap } from "../star/star";
 
 export type Eventable<T> = T | undefined | null | void;
 

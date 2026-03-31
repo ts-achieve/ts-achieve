@@ -5,8 +5,8 @@ import {
   diagnosticToStar,
   isDiagnosticMessage,
   isTsDiagnostic,
-} from "./diagnostic";
-import { Star, Starmap } from "./star";
+} from "../star/diagnostic";
+import { Star, Starmap } from "../star/star";
 
 export const curl = (): Starmap => {
   const map = new Map<number, Star>();

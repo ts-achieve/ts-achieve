@@ -24,7 +24,7 @@ import {
   isStar,
   isUnlocked,
   makeStarmap,
-} from "./star";
+} from "../star/star";
 
 type PathTitle =
   | `${Capitalize<Extract<PathKind, "special">>} achievements`
@@ -155,7 +155,7 @@ ${star.triggerText}
 \`\`\`
 which triggered the message: "${star.messageText}"
 
-Lifetime encounters: ${++star.lifetime}, most recently on ${new Date(star.lastEncounter)}
+Lifetime encounters: ${++star.encounterCount}, most recently on ${new Date(star.lastEncounter)}
     `.trim(),
           ),
         };

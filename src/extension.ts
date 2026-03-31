@@ -3,7 +3,7 @@ import vscode from "vscode";
 import { names } from "./util/const";
 import { getConfig, getConfigSection } from "./config";
 import { setStarmap } from "./globalState";
-import { unlock } from "./provider/star";
+import { unlock } from "./star/star";
 import { Decorator } from "./provider/decorator";
 import { Summarizer } from "./provider/summarizer";
 import { Starlister } from "./provider/starlister";
@@ -55,13 +55,13 @@ export function activate(context: vscode.ExtensionContext) {
             if (star) {
               const unlockedStar = unlock(star, event, diagnostic);
               if (
-                unlockedStar.lifetime > 1 &&
+                unlockedStar.encounterCount > 1 &&
                 getConfigSection(names.config.notifyRepeatedAchievements)
               ) {
                 vscode.window.showInformationMessage(
                   `Achievement found again!\n${diagnostic.code}: ${diagnostic.message}`,
                 );
-              } else if (unlockedStar.lifetime === 1) {
+              } else if (unlockedStar.encounterCount === 1) {
                 vscode.window.showInformationMessage(
                   `Achievement unlocked!
                   ${diagnostic.code}: ${diagnostic.message}`,

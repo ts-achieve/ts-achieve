@@ -1,7 +1,7 @@
 import vscode from "vscode";
 
 import { Maybe } from "./util/type";
-import { Star, Starmap } from "./provider/star";
+import { Star, Starmap } from "./star/star";
 
 export const getStarmap = (
   context: vscode.ExtensionContext,

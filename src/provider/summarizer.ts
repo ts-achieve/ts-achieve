@@ -2,7 +2,7 @@ import vscode, { TreeItem } from "vscode";
 
 import { ExtensionConfig } from "../config";
 import { StarProviderBase } from "./provider";
-import { isUnlocked, Star, Starmap, UnlockedStar } from "./star";
+import { isUnlocked, Star, Starmap, UnlockedStar } from "../star/star";
 import { isErrorKind, pathKinds } from "../util/const";
 import { uncapitalize } from "../util/type";
 import { toPathTitle } from "./starlister";
@@ -58,7 +58,7 @@ export class Summarizer extends StarProviderBase<SummaryKind> {
           `Lifetime ${statistic}: ${this.starmap
             .values()
             .filter((star) => isUnlocked(star) && condition(star))
-            .map((star) => (star as UnlockedStar).lifetime)
+            .map((star) => (star as UnlockedStar).encounterCount)
             .reduce((xs, x) => xs + x, 0)}`,
         );
     }

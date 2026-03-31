@@ -41,7 +41,7 @@ export type Encounter = LockedStar & {
 };
 
 export type UnlockedStar = Encounter & {
-  lifetime: number;
+  encounterCount: number;
   lastEncounter: number;
 };
 
@@ -76,7 +76,7 @@ export const unlock = (
     triggerText: event.document.lineAt(diagnostic.range.start.line).text,
     fileName: event.document.fileName,
     messageText: diagnostic.message,
-    lifetime: isUnlocked(star) ? star.lifetime + 1 : 1,
+    encounterCount: isUnlocked(star) ? star.encounterCount + 1 : 1,
     lastEncounter: Date.now(),
   };
 };
