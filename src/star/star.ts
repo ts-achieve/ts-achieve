@@ -58,8 +58,8 @@ export const isUnlocked = (x: LockedStar): x is UnlockedStar => {
     typeof x.fileName === "string" &&
     "messageText" in x &&
     typeof x.messageText === "string" &&
-    "lifetime" in x &&
-    typeof x.lifetime === "number"
+    "encounterCount" in x &&
+    typeof x.encounterCount === "number"
   );
 };
 

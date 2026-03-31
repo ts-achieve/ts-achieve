@@ -114,17 +114,17 @@ export const minus = <M extends number, N extends number>(m: M, n: N) => {
   return (m - n) as Minus<M, N>;
 };
 
-type Times<
-  M extends number,
-  N extends number,
-  A extends number = 0,
-> = N extends 0 ? A : Times<M, Predecessor<N>, Plus<A, M>>;
+// type Times<
+//   M extends number,
+//   N extends number,
+//   A extends number = 0,
+// > = N extends 0 ? A : Times<M, Predecessor<N>, Plus<A, M>>;
 
-type Power<
-  M extends number,
-  N extends number,
-  A extends number = 1,
-> = N extends 0 ? A : Power<M, Predecessor<N>, Times<A, M>>;
+// type Power<
+//   M extends number,
+//   N extends number,
+//   A extends number = 1,
+// > = N extends 0 ? A : Power<M, Predecessor<N>, Times<A, M>>;
 
 type PowerOfTen<N extends number, A extends string = "1"> = N extends 0
   ? Parse<A>

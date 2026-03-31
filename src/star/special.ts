@@ -1,4 +1,4 @@
-import { plus, powerOfTen, sequence } from "../util/type";
+import { powerOfTen, sequence } from "../util/type";
 import { isUnlocked, Starmap } from "./star";
 
 type SpecialStar = {
