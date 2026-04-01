@@ -3,7 +3,6 @@ import vscode from "vscode";
 import { ExtensionConfig } from "../config";
 import { getStarmap } from "../globalState";
 import {
-  pathKinds,
   topKinds,
   errorKinds,
   names,
@@ -15,7 +14,7 @@ import {
   SyntaxErrorKind,
   syntaxErrorKinds,
 } from "../util/const";
-import { capitalize, biject, Split, split } from "../util/type";
+import { capitalize, Split, split } from "../util/type";
 import { StarProviderBase } from "./provider";
 import {
   Star,
@@ -66,23 +65,11 @@ export type Folder<K extends PathKind = PathKind> = K extends any
   ? { kind: K } & vscode.TreeItem
   : never;
 
-export class Starlister<T = never> extends StarProviderBase<T | Star | Folder> {
-  folders: Record<PathKind, Folder>;
-
+export class Starlister<T = never> extends StarProviderBase<
+  T | Star | PathKind
+> {
   constructor(config: ExtensionConfig, context: vscode.ExtensionContext) {
     super(config, context);
-    this.folders = Object.fromEntries(
-      biject(pathKinds, (kind) => {
-        const folder = Object.assign(
-          new vscode.TreeItem(
-            toPathTitle(kind),
-            vscode.TreeItemCollapsibleState.Collapsed,
-          ),
-          { kind },
-        );
-        return [kind, folder];
-      }),
-    ) as Record<PathKind, Folder>;
   }
 
   update(unlockedStar?: UnlockedStar): void {
@@ -96,31 +83,23 @@ export class Starlister<T = never> extends StarProviderBase<T | Star | Folder> {
   }
 
   getChildren(
-    providable?: T | Star | Folder,
-  ): vscode.ProviderResult<(T | Star | Folder)[]> {
+    providable?: T | Star | PathKind,
+  ): vscode.ProviderResult<(T | Star | PathKind)[]> {
     if (!providable) {
-      return Object.values(this.folders).filter((folder) =>
-        topKinds.includes(folder.kind as any),
-      );
+      return Array.from(topKinds);
     } else if (isStar(providable)) {
       return [];
-    } else if (typeof providable === "object" && "kind" in providable) {
-      if (providable.kind === "suggestion") {
-        return Object.values(this.folders).filter((folder) =>
-          suggestionKinds.includes(folder.kind as any),
-        );
-      } else if (providable.kind === "error") {
-        return Object.values(this.folders).filter((folder) =>
-          errorKinds.includes(folder.kind as any),
-        );
-      } else if (providable.kind === "syntax") {
-        return Object.values(this.folders).filter((folder) =>
-          syntaxErrorKinds.includes(folder.kind as any),
-        );
+    } else if (typeof providable === "string") {
+      if (providable === "suggestion") {
+        return Array.from(suggestionKinds);
+      } else if (providable === "error") {
+        return Array.from(errorKinds);
+      } else if (providable === "syntax") {
+        return Array.from(syntaxErrorKinds);
       } else {
         return this.starmap
           .values()
-          .filter((star) => star.kind === providable.kind)
+          .filter((star) => star.kind === providable)
           .toArray();
       }
     } else {
@@ -128,7 +107,7 @@ export class Starlister<T = never> extends StarProviderBase<T | Star | Folder> {
     }
   }
 
-  getTreeItem(providable: Star | Folder): vscode.TreeItem {
+  getTreeItem(providable: Star | PathKind): vscode.TreeItem {
     if (isStar(providable)) {
       const star = providable;
 
@@ -175,21 +154,23 @@ Lifetime encounters: ${++star.encounterCount}, most recently on ${new Date(star.
         .values()
         .toArray()
         .filter((star) =>
-          providable.kind === "suggestion"
+          providable === "suggestion"
             ? suggestionKinds.includes(star.kind as any)
-            : providable.kind === "syntax"
+            : providable === "syntax"
               ? syntaxErrorKinds.includes(star.kind as any)
-              : providable.kind === "error"
+              : providable === "error"
                 ? errorKinds.includes(star.kind as any)
-                : star.kind === providable.kind,
+                : star.kind === providable,
         );
 
       const achieved = stars.filter(isUnlocked).length;
       const total = stars.length;
 
-      providable.description = `${((achieved / total) * 100).toFixed(2)}% (${achieved} of ${total})`;
-
-      return providable;
+      return {
+        label: toPathTitle(providable),
+        collapsibleState: vscode.TreeItemCollapsibleState.Collapsed,
+        description: `${((achieved / total) * 100).toFixed(2)}% (${achieved} of ${total})`,
+      };
     }
   }
 }

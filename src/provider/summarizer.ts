@@ -19,7 +19,7 @@ export class Summarizer extends StarProviderBase<SummaryKind> {
     kinds?: SummaryKind[],
   ) {
     super(config, starmap);
-    this.kinds = kinds ?? summaryKinds.slice(0);
+    this.kinds = kinds ?? Array.from(summaryKinds);
   }
 
   update(newMap: Starmap): void {

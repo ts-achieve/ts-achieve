@@ -1,5 +1,3 @@
-import { expectTypeOf } from "expect-type";
-
 import { StarKind, tsDiagnosticCategories } from "../util/const";
 import { diagnosticMessages } from "../util/diagnosticMessages";
 import { isObject, Maybe } from "../util/type";
@@ -17,7 +15,8 @@ export const isDiagnosticMessage = (x: unknown): x is Message => {
   return typeof x === "string" && x in diagnosticMessages;
 };
 
-type CodeToMessage<N extends number> = Message extends infer M extends Message
+export type CodeToMessage<N extends number> = Message extends infer M extends
+  Message
   ? M extends any
     ? Dictionary[M] extends { code: N }
       ? M
@@ -32,13 +31,6 @@ export const codeToMessage = <N extends number>(
     return value.code === code;
   }) as Maybe<CodeToMessage<N>>;
 };
-
-expectTypeOf<
-  CodeToMessage<1002>
->().toEqualTypeOf<"Unterminated string literal.">();
-expectTypeOf(codeToMessage(1003)!).toEqualTypeOf(
-  "Identifier expected." as const,
-);
 
 type TsDiagnosticCategory = (typeof tsDiagnosticCategories)[number];
 
