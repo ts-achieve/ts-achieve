@@ -44,40 +44,42 @@ export function activate(context: vscode.ExtensionContext) {
     }),
 
     vscode.workspace.onDidChangeTextDocument((event) => {
-      const diagnostics = vscode.languages.getDiagnostics(event.document.uri);
-      if (diagnostics.length > 0) {
-        for (let i = 0; i < diagnostics.length; i++) {
-          const diagnostic = diagnostics[i]!;
+      setTimeout(() => {
+        const diagnostics = vscode.languages.getDiagnostics(event.document.uri);
+        if (diagnostics.length > 0) {
+          for (let i = 0; i < diagnostics.length; i++) {
+            const diagnostic = diagnostics[i]!;
 
-          if (typeof diagnostic.code === "number") {
-            const star = starlister.starmap.get(diagnostic.code);
+            if (typeof diagnostic.code === "number") {
+              const star = starlister.starmap.get(diagnostic.code);
 
-            if (star) {
-              const unlockedStar = unlock(star, event, diagnostic);
-              if (
-                unlockedStar.encounterCount > 1 &&
-                getConfigSection(names.config.notifyRepeatedAchievements)
-              ) {
-                vscode.window.showInformationMessage(
-                  `Achievement found again!\n${diagnostic.code}: ${diagnostic.message}`,
-                );
-              } else if (unlockedStar.encounterCount === 1) {
-                vscode.window.showInformationMessage(
-                  `Achievement unlocked!
+              if (star) {
+                const unlockedStar = unlock(star, event, diagnostic);
+                if (
+                  unlockedStar.encounterCount > 1 &&
+                  getConfigSection(names.config.notifyRepeatedAchievements)
+                ) {
+                  vscode.window.showInformationMessage(
+                    `Achievement found again!\n${diagnostic.code}: ${diagnostic.message}`,
+                  );
+                } else if (unlockedStar.encounterCount === 1) {
+                  vscode.window.showInformationMessage(
+                    `Achievement unlocked!
                   ${diagnostic.code}: ${diagnostic.message}`,
-                );
+                  );
+                }
+                setStarmap(context, starlister.starmap);
+                starlister.update(unlockedStar);
+                summarizer.update(starlister.starmap);
+                starlister.refresh();
+                summarizer.refresh();
               }
-              setStarmap(context, starlister.starmap);
-              starlister.update(unlockedStar);
-              summarizer.update(starlister.starmap);
-              starlister.refresh();
-              summarizer.refresh();
             }
           }
-        }
 
-        setStarmap(context, starlister.starmap);
-      }
+          setStarmap(context, starlister.starmap);
+        }
+      }, 1000);
     }),
   );
 
