@@ -65,7 +65,7 @@ export const isUnlocked = (x: LockedStar): x is UnlockedStar => {
 
 export const unlock = (
   star: Star,
-  event: vscode.TextDocumentChangeEvent,
+  document: vscode.TextDocument,
   diagnostic: vscode.Diagnostic,
 ): UnlockedStar => {
   return {
@@ -75,13 +75,13 @@ export const unlock = (
     time: Date.now(),
     triggerText: sequence(5, (n) => {
       const lineNumber = diagnostic.range.start.line - 2 + n;
-      if (0 <= lineNumber && lineNumber < event.document.lineCount) {
-        return event.document.lineAt(lineNumber).text;
+      if (0 <= lineNumber && lineNumber < document.lineCount) {
+        return document.lineAt(lineNumber).text;
       } else {
         return "";
       }
     }).join("\n"),
-    fileName: event.document.fileName,
+    fileName: document.fileName,
     messageText: diagnostic.message,
     encounterCount: isUnlocked(star) ? star.encounterCount + 1 : 1,
     lastEncounter: Date.now(),

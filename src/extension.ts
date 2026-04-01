@@ -1,4 +1,4 @@
-import vscode from "vscode";
+import vscode, { DiagnosticChangeEvent } from "vscode";
 
 import { names } from "./util/const";
 import { getConfig, getConfigSection } from "./config";
@@ -43,10 +43,12 @@ export function activate(context: vscode.ExtensionContext) {
       summarizer.reconfigure(exConfig);
     }),
 
-    vscode.workspace.onDidChangeTextDocument((event) => {
-      setTimeout(() => {
-        const diagnostics = vscode.languages.getDiagnostics(event.document.uri);
-        if (diagnostics.length > 0) {
+    vscode.languages.onDidChangeDiagnostics((event) => {
+      const diagnosticMap = computeDiagnosticMap(event);
+      if (diagnosticMap.size > 0) {
+        for (const document of diagnosticMap.keys()) {
+          const diagnostics = diagnosticMap.get(document)!;
+
           for (let i = 0; i < diagnostics.length; i++) {
             const diagnostic = diagnostics[i]!;
 
@@ -54,7 +56,7 @@ export function activate(context: vscode.ExtensionContext) {
               const star = starlister.starmap.get(diagnostic.code);
 
               if (star) {
-                const unlockedStar = unlock(star, event, diagnostic);
+                const unlockedStar = unlock(star, document, diagnostic);
                 if (
                   unlockedStar.encounterCount > 1 &&
                   getConfigSection(names.config.notifyRepeatedAchievements)
@@ -76,10 +78,10 @@ export function activate(context: vscode.ExtensionContext) {
               }
             }
           }
-
-          setStarmap(context, starlister.starmap);
         }
-      }, 1000);
+
+        setStarmap(context, starlister.starmap);
+      }
     }),
   );
 
@@ -87,3 +89,16 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 export function deactivate() {}
+
+const computeDiagnosticMap = (
+  event: DiagnosticChangeEvent,
+): Map<vscode.TextDocument, vscode.Diagnostic[]> => {
+  return new Map(
+    vscode.workspace.textDocuments
+      .filter((document) => event.uris.includes(document.uri))
+      .map((document) => [
+        document,
+        vscode.languages.getDiagnostics(document.uri),
+      ]),
+  );
+};
