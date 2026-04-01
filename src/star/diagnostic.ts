@@ -17,10 +17,10 @@ export const isDiagnosticMessage = (x: unknown): x is Message => {
   return typeof x === "string" && x in diagnosticMessages;
 };
 
-type CodeToMessage<N extends number> = Message extends infer U extends Message
-  ? U extends any
-    ? Dictionary[U] extends { code: N }
-      ? U
+type CodeToMessage<N extends number> = Message extends infer M extends Message
+  ? M extends any
+    ? Dictionary[M] extends { code: N }
+      ? M
       : never
     : never
   : never;
@@ -69,7 +69,7 @@ export const kindOf = (diagnostic: TsDiagnostic): StarKind => {
     } else if (taxonomy.suggestion.language.includes(diagnostic.code as any)) {
       return "language";
     } else {
-      return "other";
+      return "other-suggestion";
     }
   } else if (diagnostic.category === "Error") {
     if ("reportsUnnecessary" in diagnostic) {
@@ -82,17 +82,15 @@ export const kindOf = (diagnostic: TsDiagnostic): StarKind => {
       } else if (taxonomy.error.syntax.class.includes(diagnostic.code as any)) {
         return "class";
       } else if (
-        taxonomy.error.syntax["control-flow"].includes(diagnostic.code as any)
+        taxonomy.error.syntax.statement.includes(diagnostic.code as any)
       ) {
-        return "control-flow";
+        return "statement";
       } else if (
         taxonomy.error.syntax.function.includes(diagnostic.code as any)
       ) {
         return "function";
-      } else if (diagnostic.code < 5000) {
-        return "type-error";
       } else {
-        return "tsconfig";
+        return "other-error";
       }
     }
   } else {

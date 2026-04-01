@@ -2,8 +2,6 @@ export const loadingText = "Loading…";
 export const diagnosticMessagesUrl =
   "https://raw.githubusercontent.com/microsoft/TypeScript/refs/heads/main/src/compiler/diagnosticMessages.json" as const;
 
-// const strict = [4114];
-
 export const tsDiagnosticCategories = [
   "Error",
   "Suggestion",
@@ -22,7 +20,7 @@ export const topKinds = [...nonErrorKinds, "error"] as const;
 export const suggestionKinds = [
   "type-suggestion",
   "language",
-  "other",
+  "other-suggestion",
 ] as const;
 
 export const errorKinds = [
@@ -30,12 +28,13 @@ export const errorKinds = [
   "type-error",
   "tsconfig",
   "strict",
+  "other-error",
 ] as const;
 
 export const syntaxErrorKinds = [
   "async",
   "class",
-  "control-flow",
+  "statement",
   "function",
 ] as const;
 
@@ -55,6 +54,7 @@ export const starKinds = [
   "type-error",
   "tsconfig",
   "strict",
+  "other-error",
 ] as const;
 
 export type TopKind = (typeof topKinds)[number];
@@ -68,7 +68,7 @@ export const isErrorKind = (x: string): x is ErrorKind => {
   return errorKinds.includes(x as any);
 };
 
-export const configOptions = [
+export const sortPriorities = [
   "kind (errors first)",
   "kind (errors last)",
   "locked first",

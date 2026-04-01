@@ -277,6 +277,13 @@ export type Split<
   A extends string[] = [],
 > = S extends `${infer F}${C}${infer R}` ? Split<R, C, [...A, F]> : [...A, S];
 
+export const split = <S extends string, C extends string>(
+  string: S,
+  splitter: C,
+) => {
+  return string.split(splitter) as Split<S, C>;
+};
+
 // region block scope dependent
 
 expectTypeOf<["0", "0", "0", "0"]>().toEqualTypeOf(

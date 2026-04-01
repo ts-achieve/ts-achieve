@@ -15,7 +15,7 @@ import {
   SyntaxErrorKind,
   syntaxErrorKinds,
 } from "../util/const";
-import { capitalize, biject, Split } from "../util/type";
+import { capitalize, biject, Split, split } from "../util/type";
 import { StarProviderBase } from "./provider";
 import {
   Star,
@@ -29,39 +29,35 @@ import {
 type PathTitle =
   | `${Capitalize<Extract<PathKind, "special">>} achievements`
   | `${Capitalize<Exclude<TopKind, "special">>}s`
-  | SuggestionTitle
-  | ErrorTitle;
-
-type SuggestionTitle =
-  `${Capitalize<Split<SuggestionKind, "-">[0]>} suggestions`;
-type ErrorTitle =
-  `${Capitalize<Split<ErrorKind | SyntaxErrorKind, "-">[0]>} errors`;
+  | `${Capitalize<Split<SuggestionKind, "-">[0]>} suggestions`
+  | `${Capitalize<Split<ErrorKind | SyntaxErrorKind, "-">[0]>} errors`;
 
 export const toPathTitle = (kind: PathKind): PathTitle => {
   switch (kind) {
     case "special":
       return `${capitalize(kind)} achievements`;
+
     case "message":
     case "suggestion":
     case "warning":
     case "error":
       return `${capitalize(kind)}s`;
+
     case "type-suggestion":
-      return `Type suggestions` as const;
+    case "other-suggestion":
     case "language":
-    case "other":
-      return `${capitalize(kind)} suggestions`;
+      return `${split(capitalize(kind), "-")[0]} suggestions`;
+
     case "type-error":
-      return `Type errors` as const;
-    case "control-flow":
-      return `Control errors` as const;
+    case "other-error":
+    case "statement":
     case "strict":
     case "syntax":
     case "async":
     case "class":
     case "function":
     case "tsconfig":
-      return `${capitalize(kind)} errors`;
+      return `${split(capitalize(kind), "-")[0]} errors`;
   }
   kind satisfies never;
 };
@@ -181,9 +177,11 @@ Lifetime encounters: ${++star.encounterCount}, most recently on ${new Date(star.
         .filter((star) =>
           providable.kind === "suggestion"
             ? suggestionKinds.includes(star.kind as any)
-            : providable.kind === "error"
-              ? errorKinds.includes(star.kind as any)
-              : star.kind === providable.kind,
+            : providable.kind === "syntax"
+              ? syntaxErrorKinds.includes(star.kind as any)
+              : providable.kind === "error"
+                ? errorKinds.includes(star.kind as any)
+                : star.kind === providable.kind,
         );
 
       const achieved = stars.filter(isUnlocked).length;

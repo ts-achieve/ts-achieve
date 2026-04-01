@@ -3,7 +3,7 @@ import vscode, { DiagnosticChangeEvent } from "vscode";
 import { names } from "./util/const";
 import { getConfig, getConfigSection } from "./config";
 import { setStarmap } from "./globalState";
-import { unlock } from "./star/star";
+import { unlock, UnlockedStar } from "./star/star";
 import { Decorator } from "./provider/decorator";
 import { Summarizer } from "./provider/summarizer";
 import { Starlister } from "./provider/starlister";
@@ -45,43 +45,31 @@ export function activate(context: vscode.ExtensionContext) {
 
     vscode.languages.onDidChangeDiagnostics((event) => {
       const diagnosticMap = computeDiagnosticMap(event);
-      if (diagnosticMap.size > 0) {
-        for (const document of diagnosticMap.keys()) {
-          const diagnostics = diagnosticMap.get(document)!;
 
-          for (let i = 0; i < diagnostics.length; i++) {
-            const diagnostic = diagnostics[i]!;
+      for (const document of diagnosticMap.keys()) {
+        const diagnostics = diagnosticMap.get(document)!;
 
-            if (typeof diagnostic.code === "number") {
-              const star = starlister.starmap.get(diagnostic.code);
+        for (let i = 0; i < diagnostics.length; i++) {
+          const diagnostic = diagnostics[i]!;
 
-              if (star) {
-                const unlockedStar = unlock(star, document, diagnostic);
-                if (
-                  unlockedStar.encounterCount > 1 &&
-                  getConfigSection(names.config.notifyRepeatedAchievements)
-                ) {
-                  vscode.window.showInformationMessage(
-                    `Achievement found again!\n${diagnostic.code}: ${diagnostic.message}`,
-                  );
-                } else if (unlockedStar.encounterCount === 1) {
-                  vscode.window.showInformationMessage(
-                    `Achievement unlocked!
-                  ${diagnostic.code}: ${diagnostic.message}`,
-                  );
-                }
-                setStarmap(context, starlister.starmap);
-                starlister.update(unlockedStar);
-                summarizer.update(starlister.starmap);
-                starlister.refresh();
-                summarizer.refresh();
-              }
+          if (typeof diagnostic.code === "number") {
+            const maybeStar = starlister.starmap.get(diagnostic.code);
+
+            if (maybeStar) {
+              const unlockedStar = unlock(maybeStar, document, diagnostic);
+
+              showInformationMessage(unlockedStar, diagnostic);
+              setStarmap(context, starlister.starmap);
+              starlister.update(unlockedStar);
+              summarizer.update(starlister.starmap);
+              starlister.refresh();
+              summarizer.refresh();
             }
           }
         }
-
-        setStarmap(context, starlister.starmap);
       }
+
+      setStarmap(context, starlister.starmap);
     }),
   );
 
@@ -89,6 +77,24 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 export function deactivate() {}
+
+const showInformationMessage = (
+  star: UnlockedStar,
+  diagnostic: vscode.Diagnostic,
+) => {
+  if (
+    star.encounterCount > 1 &&
+    getConfigSection(names.config.notifyRepeatedAchievements)
+  ) {
+    vscode.window.showInformationMessage(
+      `Achievement found again! ${diagnostic.code}: ${diagnostic.message}`,
+    );
+  } else if (star.encounterCount === 1) {
+    vscode.window.showInformationMessage(
+      `Achievement unlocked! ${diagnostic.code}: ${diagnostic.message}`,
+    );
+  }
+};
 
 const computeDiagnosticMap = (
   event: DiagnosticChangeEvent,
