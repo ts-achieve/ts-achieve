@@ -12,9 +12,6 @@ suite("diagnostic.test.ts", () => {
     );
   });
   test("`kindOf`", () => {
-    assert.strictEqual(
-      kindOf({ code: 1, category: "Error" }),
-      "other-suggestion",
-    );
+    assert.strictEqual(kindOf({ code: 1, category: "Error" }), "other-error");
   });
 });

@@ -1,10 +1,14 @@
 out
 old
 logs
+node_modules
+
+.vscode-test
+
 *.log
 pnpm-debug.log*
-node_modules
+
 .DS_Store
-.vscode-test
+lib/git.json
 TODO.md
 *.vsix

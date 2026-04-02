@@ -13,8 +13,18 @@ import {
   TopKind,
   SyntaxErrorKind,
   syntaxErrorKinds,
+  showing,
+  pathKinds,
 } from "../util/const";
-import { capitalize, Split, split } from "../util/type";
+import {
+  capitalize,
+  includes,
+  mod,
+  not,
+  Split,
+  split,
+  succeed,
+} from "../util/type";
 import { StarProviderBase } from "./provider";
 import {
   Star,
@@ -65,11 +75,26 @@ export type Folder<K extends PathKind = PathKind> = K extends any
   ? { kind: K } & vscode.TreeItem
   : never;
 
+type Showing = (typeof showing)[keyof typeof showing];
+
 export class Starlister<T = never> extends StarProviderBase<
   T | Star | PathKind
 > {
+  showing: Showing;
+
   constructor(config: ExtensionConfig, context: vscode.ExtensionContext) {
     super(config, context);
+    this.showing = showing.all;
+  }
+
+  cycleShowing(): void {
+    this.showing = mod(succeed(this.showing), 3);
+    vscode.commands.executeCommand(
+      "setContext",
+      "tsAchieve.showing",
+      this.showing,
+    );
+    this.refresh();
   }
 
   update(unlockedStar?: UnlockedStar): void {
@@ -85,26 +110,67 @@ export class Starlister<T = never> extends StarProviderBase<
   getChildren(
     providable?: T | Star | PathKind,
   ): vscode.ProviderResult<(T | Star | PathKind)[]> {
-    if (!providable) {
-      return Array.from(topKinds);
-    } else if (isStar(providable)) {
-      return [];
-    } else if (typeof providable === "string") {
-      if (providable === "suggestion") {
-        return Array.from(suggestionKinds);
-      } else if (providable === "error") {
-        return Array.from(errorKinds);
-      } else if (providable === "syntax") {
-        return Array.from(syntaxErrorKinds);
-      } else {
-        return this.starmap
-          .values()
-          .filter((star) => star.kind === providable)
-          .toArray();
-      }
-    } else {
-      return undefined;
+    switch (this.showing) {
+      case 0:
+        if (!providable) {
+          return Array.from(topKinds);
+        } else if (isStar(providable)) {
+          return undefined;
+        } else if (typeof providable === "string") {
+          if (providable === "suggestion") {
+            return Array.from(suggestionKinds);
+          } else if (providable === "error") {
+            return Array.from(errorKinds);
+          } else if (providable === "syntax") {
+            return Array.from(syntaxErrorKinds);
+          } else {
+            return this.starmap
+              .values()
+              .filter((star) => star.kind === providable)
+              .toArray();
+          }
+        } else {
+          return undefined;
+        }
+      case 1:
+        return providable
+          ? undefined
+          : this.starmap.values().filter(isUnlocked).toArray();
+      case 2:
+        return providable
+          ? undefined
+          : this.starmap.values().filter(not(isUnlocked)).toArray();
     }
+    this.showing satisfies never;
+  }
+
+  getDescendants(): (T | Star | PathKind)[] {
+    const descendants = [];
+
+    const next = (children?: (T | Star | PathKind)[]) =>
+      (children ?? [undefined])
+        .map((child) => this.getChildren(child))
+        .filter((x) => Array.isArray(x))
+        .flat();
+
+    let children = next();
+
+    while (Array.isArray(children) && children.length > 0) {
+      descendants.push(...children);
+      children = next(children);
+    }
+
+    return descendants as (T | Star | PathKind)[];
+  }
+
+  expandAll(): void {
+    this.getDescendants().forEach((descendant) => {
+      if (includes(pathKinds, descendant)) {
+        console.log(descendant);
+        this.getTreeItem(descendant).collapsibleState =
+          vscode.TreeItemCollapsibleState.Expanded;
+      }
+    });
   }
 
   getTreeItem(providable: Star | PathKind): vscode.TreeItem {

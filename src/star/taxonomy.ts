@@ -1,4 +1,5 @@
-import { DeepKeys, Maybe, UnionToTuple } from "../util/type";
+import { UnionToTuple } from "expect-type";
+import { DeepKeys, Maybe } from "../util/type";
 
 type Taxonomy = DeepKeys<typeof taxonomy>;
 
@@ -27,7 +28,7 @@ export const taxonomy = {
       reference: [2339, 2551],
       expression: [1002, 1005, 1109, 1137],
     },
-    module: [2305],
+    module: [2305, 2593],
     type: {},
     tsconfig: [1294],
     strict: [1100, 1101, 1102, 4114],

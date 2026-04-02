@@ -1,6 +1,6 @@
 import vscode, { DiagnosticChangeEvent } from "vscode";
 
-import { names } from "./util/const";
+import { names, showing } from "./util/const";
 import { getConfig, getConfigSection } from "./config";
 import { setStarmap } from "./globalState";
 import { unlock, UnlockedStar } from "./star/star";
@@ -16,7 +16,29 @@ export function activate(context: vscode.ExtensionContext) {
   const summarizer = new Summarizer(config, starlister.starmap);
   const speedrunner = new Speedrunner(config, context);
 
+  vscode.commands.executeCommand(
+    "setContext",
+    "tsAchieve.showing",
+    showing.all,
+  );
+
   context.subscriptions.push(
+    vscode.commands.registerCommand(names.commands.expandAll, () => {
+      starlister.expandAll();
+    }),
+
+    vscode.commands.registerCommand(names.commands.showUnlocked, () => {
+      starlister.cycleShowing();
+    }),
+
+    vscode.commands.registerCommand(names.commands.showLocked, () => {
+      starlister.cycleShowing();
+    }),
+
+    vscode.commands.registerCommand(names.commands.showAll, () => {
+      starlister.cycleShowing();
+    }),
+
     vscode.commands.registerCommand(names.commands.refresh, () => {
       starlister.refresh();
       summarizer.refresh();
@@ -30,6 +52,9 @@ export function activate(context: vscode.ExtensionContext) {
       starlister.refresh();
       summarizer.refresh();
     }),
+
+    // todo: expandAll
+    // todo: collapseAll
 
     vscode.window.registerFileDecorationProvider(decorator),
     vscode.window.registerTreeDataProvider(names.views.summary, summarizer),

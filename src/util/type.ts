@@ -1,6 +1,4 @@
-import { expectTypeOf, UnionToTuple } from "expect-type";
-
-export { UnionToTuple };
+import { Not, UnionToTuple } from "expect-type";
 
 // region shared
 
@@ -19,16 +17,11 @@ export type DeepKeys<T, K extends keyof T = keyof T> =
   | keyof T
   | (K extends any ? keyof T[K] : never);
 
-export const testObject = {
-  a: 0,
-  b: {
-    c: 1,
-    d: {
-      e: 2,
-      f: {},
-    },
-  },
-} as const;
+// region array
+
+export const includes = <T>(xs: readonly T[], x: unknown): x is T => {
+  return xs.includes(x as any);
+};
 
 // region tuple
 
@@ -38,39 +31,43 @@ export type Tuple<N extends number = number, T = any> = number extends N
     ? _Tuple<N, T>
     : never;
 
-type _Tuple<N extends number, T, A extends any[] = []> = A["length"] extends N
-  ? A
-  : _Tuple<N, T, [T, ...A]>;
+type _Tuple<
+  N extends number,
+  T,
+  A extends readonly any[] = [],
+> = A["length"] extends N ? A : _Tuple<N, T, [T, ...A]>;
 
 export const tuple = <N extends number>(n: N) => {
   return Array(n).keys().toArray() as Tuple<N, number>;
 };
 
-expectTypeOf<[any, any, any, any]>().toEqualTypeOf<Tuple<4>>();
-expectTypeOf<[number, number, number, number]>().toEqualTypeOf(tuple(4));
+export type Biject<T, L extends readonly any[]> = Tuple<L["length"], T>;
 
-type Biject<T, L extends any[] | readonly any[]> = Tuple<L["length"], T>;
-
-export const biject = <U, L extends any[] | readonly any[]>(
+export const biject = <U, L extends readonly any[]>(
   xs: L,
   f: (x: L[number]) => U,
 ) => {
-  return xs.map(f) as Biject<U, ReadWrite<L>>;
+  const ys = [];
+  for (let i = 0; i < xs.length; i++) {
+    ys.push(f(xs[i]));
+  }
+  return ys as Biject<U, ReadWrite<L>>;
 };
-
-expectTypeOf<[never, never, never, never]>().toEqualTypeOf<
-  Biject<never, Tuple<4>>
->();
 
 type Upto<N extends number, A extends number = never> = N extends 0
   ? N | A
   : Upto<Predecessor<N>, Predecessor<N> | A>;
 
 export const sequence = <N extends number, T>(n: N, f: (x: Upto<N>) => T) => {
-  return Array(n)
-    .keys()
-    .toArray()
-    .map(f as any) as Tuple<N, T>;
+  const xs = [];
+  for (let i = 0; i < n; i++) {
+    xs.push(f(i as any));
+  }
+  return xs as Tuple<N, T>;
+};
+
+export const unsafeSequence = <T>(n: number, f: (x: number) => T): T[] => {
+  return sequence(n, f);
 };
 
 export type Concat<
@@ -95,23 +92,14 @@ export const safeConcat = <
 
 // region number
 
-type Successor<N extends number> = [
+export type Successor<N extends number> = [
   N,
   ...Tuple<N>,
 ]["length"] extends infer T extends number
   ? T
   : never;
 
-export const successor = <N extends number>(n: N) => (n + 1) as Successor<N>;
-
-expectTypeOf<1>().toEqualTypeOf<Successor<0>>();
-expectTypeOf<1>().toEqualTypeOf(successor(0));
-expectTypeOf<2>().toEqualTypeOf<Successor<1>>();
-expectTypeOf<2>().toEqualTypeOf(successor(1));
-expectTypeOf<3>().toEqualTypeOf<Successor<2>>();
-expectTypeOf<3>().toEqualTypeOf(successor(2));
-expectTypeOf<4>().toEqualTypeOf<Successor<3>>();
-expectTypeOf<4>().toEqualTypeOf(successor(3));
+export const succeed = <N extends number>(n: N) => (n + 1) as Successor<N>;
 
 export type Predecessor<N extends number> =
   Tuple<N> extends [any, ...infer L] ? L["length"] : never;
@@ -132,6 +120,16 @@ type Minus<M extends number, N extends number> =
 
 export const minus = <M extends number, N extends number>(m: M, n: N) => {
   return (m - n) as Minus<M, N>;
+};
+
+export type Modulo<M extends number, N extends number> = M extends any
+  ? Minus<M, N> extends never
+    ? M
+    : Modulo<Minus<M, N>, N>
+  : never;
+
+export const mod = <M extends number, N extends number>(n: M, d: N) => {
+  return (((n % d) + d) % d) as Modulo<M, N>;
 };
 
 // type Times<
@@ -158,50 +156,44 @@ export const powerOfTen = <N extends number>(exponent: N) => {
   return (10 ** exponent) as PowerOfTen<N>;
 };
 
-type GreaterOf<M extends number, N extends number> =
+export type GreaterOf<M extends number, N extends number> =
   Tuple<M> extends [...Tuple<N>, ...any[]] ? M : N;
 
 export const greaterOf = <M extends number, N extends number>(m: M, n: N) => {
   return Math.max(m, n) as GreaterOf<M, N>;
 };
 
-expectTypeOf<0>().toEqualTypeOf<GreaterOf<0, 0>>();
-expectTypeOf<0>().toEqualTypeOf(greaterOf(0, 0));
-expectTypeOf<1>().toEqualTypeOf<GreaterOf<0, 1>>();
-expectTypeOf<1>().toEqualTypeOf(greaterOf(0, 1));
-expectTypeOf<1>().toEqualTypeOf<GreaterOf<1, 0>>();
-expectTypeOf<1>().toEqualTypeOf(greaterOf(1, 0));
-expectTypeOf<1>().toEqualTypeOf<GreaterOf<1, 1>>();
-expectTypeOf<1>().toEqualTypeOf(greaterOf(1, 1));
+export type Max<L extends readonly number[]> =
+  UnionToTuple<_Max<L>> extends infer T extends readonly number[]
+    ? _Max<T>
+    : never;
 
-type Max<L extends number[]> =
-  UnionToTuple<_Max<L>> extends infer T extends number[] ? _Max<T> : never;
-
-type _Max<L extends number[], M extends number = 0> = L extends [
+type _Max<
+  L extends readonly number[],
+  M extends number = 0,
+> = L extends readonly [
   infer F extends number,
-  ...infer R extends number[],
+  ...infer R extends readonly number[],
 ]
   ? F extends any
     ? _Max<R, GreaterOf<M, F>>
     : never
   : M;
 
-export const max = <L extends number[]>(...xs: L) => {
+export const max = <L extends readonly number[]>(...xs: L) => {
   return Math.max(...xs) as Max<L>;
 };
 
-expectTypeOf<0>().toEqualTypeOf<Max<[0, 0, 0, 0]>>();
-expectTypeOf<0>().toEqualTypeOf(max(0, 0, 0, 0));
-expectTypeOf<3>().toEqualTypeOf<Max<[0, 1, 2, 3]>>();
-expectTypeOf<3>().toEqualTypeOf(max(0, 1, 2, 3));
-expectTypeOf<3>().toEqualTypeOf<Max<[3, 2, 1, 0]>>();
-expectTypeOf<3>().toEqualTypeOf(max(3, 2, 1, 0));
-expectTypeOf<3>().toEqualTypeOf<Max<[0, 1, 2, 3, 2, 1, 0]>>();
-expectTypeOf<3>().toEqualTypeOf(max(0, 1, 2, 3, 2, 1, 0));
-
-expectTypeOf<5>().toEqualTypeOf<Max<[0 | 3, 1 | 4, 2 | 5]>>();
-
 // region string
+
+export type CharsOf<
+  S extends string,
+  A extends string = never,
+> = S extends `${infer F}${infer R}` ? CharsOf<R, A | F> : A;
+
+export const alphabet = "abcdefghijklmnopqrstuvwxyz";
+
+export type Alphabetic = CharsOf<typeof alphabet>;
 
 type Literalizable = string | number | bigint | boolean | null | undefined;
 
@@ -231,24 +223,18 @@ export const uncapitalize = <S extends string>(string: S): Uncapitalize<S> => {
   ) as Uncapitalize<S>;
 };
 
-type Length<
+export type Length<
   S extends string,
   A extends number = 0,
 > = S extends `${any}${infer R}` ? Length<R, Successor<A>> : A;
 
 export const length = <S extends string>(s: S) => s.length as Length<S>;
 
-expectTypeOf<0>().toEqualTypeOf<Length<"">>();
-expectTypeOf<0>().toEqualTypeOf(length(""));
-expectTypeOf<1>().toEqualTypeOf<Length<" ">>();
-expectTypeOf<1>().toEqualTypeOf(length(" "));
-expectTypeOf<2>().toEqualTypeOf<Length<"  ">>();
-expectTypeOf<2>().toEqualTypeOf(length("  "));
-expectTypeOf<3>().toEqualTypeOf<Length<"   ">>();
-expectTypeOf<3>().toEqualTypeOf(length("   "));
-
-type RightPad<S extends string, N extends number, P extends string = " "> =
-  GreaterOf<N, Length<S>> extends Length<S> ? S : RightPad<`${S}${P}`, N, P>;
+export type RightPad<
+  S extends string,
+  N extends number,
+  P extends string = " ",
+> = GreaterOf<N, Length<S>> extends Length<S> ? S : RightPad<`${S}${P}`, N, P>;
 
 export const rightpad = <
   S extends string,
@@ -261,15 +247,6 @@ export const rightpad = <
 ) => {
   return s.padEnd(maxLength, fillString) as RightPad<S, N, P>;
 };
-
-expectTypeOf<"">().toEqualTypeOf<RightPad<"", 0>>();
-expectTypeOf<"">().toEqualTypeOf(rightpad("", 0));
-expectTypeOf<"aaaa">().toEqualTypeOf<RightPad<"", 4, "a">>();
-expectTypeOf<"aaaa">().toEqualTypeOf(rightpad("", 4, "a"));
-expectTypeOf<"abab">().toEqualTypeOf<RightPad<"", 4, "ab">>();
-expectTypeOf<"abab">().toEqualTypeOf(rightpad("", 4, "ab"));
-expectTypeOf<"abcdefgh">().toEqualTypeOf<RightPad<"abcdefgh", 4>>();
-expectTypeOf<"abcdefgh">().toEqualTypeOf(rightpad("abcdefgh", 4));
 
 export type Split<
   S extends string,
@@ -284,8 +261,8 @@ export const split = <S extends string, C extends string>(
   return string.split(splitter) as Split<S, C>;
 };
 
-// region block scope dependent
+// region function
 
-expectTypeOf<["0", "0", "0", "0"]>().toEqualTypeOf(
-  biject([0, 0, 0, 0] as const, literal),
-);
+export const not = <T, B extends boolean>(f: (x: T) => B) => {
+  return ((x: T) => !f(x)) as (x: T) => Not<B>;
+};

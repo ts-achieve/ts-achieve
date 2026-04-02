@@ -1,3 +1,9 @@
+export const showing = {
+  all: 0,
+  unlocked: 1,
+  locked: 2,
+} as const;
+
 export const loadingText = "Loading…";
 export const diagnosticMessagesUrl =
   "https://raw.githubusercontent.com/microsoft/TypeScript/refs/heads/main/src/compiler/diagnosticMessages.json" as const;
@@ -84,11 +90,16 @@ export const sortPriorities = [
 const ex = "tsAchieve" as const;
 
 const commands = {
+  setContext: "setContext",
   refresh: `${ex}.command.refresh`,
   startrun: `${ex}.command.startrun`,
   stoprun: `${ex}.command.stoprun`,
-  setContext: "setContext",
   hardReset: `${ex}.command.hardReset`,
+  showUnlocked: `${ex}.command.showUnlocked`,
+  showLocked: `${ex}.command.showLocked`,
+  showAll: `${ex}.command.showAll`,
+  expandAll: `${ex}.command.expandAll`,
+  collapseAll: `${ex}.command.collapseAll`,
 } as const;
 
 const config = {

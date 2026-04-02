@@ -32,15 +32,59 @@
       },
       {
         "command": "tsAchieve.command.hardReset",
-        "title": "Hard Reset",
-        "icon": "lib/typescript.svg"
+        "title": "Hard Reset"
+      },
+      {
+        "command": "tsAchieve.command.expandAll",
+        "title": "Expand All",
+        "icon": "$(expand-all)"
+      },
+      {
+        "command": "tsAchieve.command.collapseAll",
+        "title": "Collapse All",
+        "icon": "$(collapse-all)"
+      },
+      {
+        "command": "tsAchieve.command.showUnlocked",
+        "title": "Click to show unlocked achievements",
+        "icon": "$(star-half)"
+      },
+      {
+        "command": "tsAchieve.command.showLocked",
+        "title": "Click to show locked achievements",
+        "icon": "$(star-full)"
+      },
+      {
+        "command": "tsAchieve.command.showAll",
+        "title": "Click to show all achievements",
+        "icon": "$(star-empty)"
       }
     ],
     "menus": {
       "view/title": [
         {
-          "command": "tsAchieve.command.hardReset",
-          "when": "view == tsAchieve",
+          "command": "tsAchieve.command.showUnlocked",
+          "when": "view == tsAchieve.view.list && tsAchieve.showing == 0",
+          "group": "navigation"
+        },
+        {
+          "command": "tsAchieve.command.showLocked",
+          "when": "view == tsAchieve.view.list && tsAchieve.showing == 1",
+          "group": "navigation"
+        },
+        {
+          "command": "tsAchieve.command.showAll",
+          "when": "view == tsAchieve.view.list && tsAchieve.showing == 2",
+          "group": "navigation"
+        },
+        {
+          "command": "tsAchieve.command.collapseAll",
+          "when": "view == tsAchieve.view.list",
+          "group": "navigation"
+        },
+        {
+          "command": "tsAchieve.command.expandAll",
+          "when": "view == tsAchieve.view.list",
           "group": "navigation"
         }
       ]
@@ -118,7 +162,7 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "pretest": "pnpm run compile",
-    "test": "vscode-test --run",
+    "test": "vscode-test run",
     "p": "pnpm exec vsce-pnpm patch"
   },
   "devDependencies": {
@@ -127,7 +171,7 @@
     "@types/vscode": "^1.110.0",
     "@vscode/test-cli": "^0.0.12",
     "@vscode/test-electron": "^2.5.2",
-    "typescript": "^5.9.3",
+    "typescript": "^6.0.2",
     "vsce-pnpm": "^0.1.0"
   },
   "dependencies": {
