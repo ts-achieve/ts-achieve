@@ -51,8 +51,6 @@ export type LeafKeys<T, K extends keyof T = keyof T> = {} & (
       : never)
 );
 
-type X = LeafKeys<TestObject>;
-
 // region array
 
 export const includes = <T>(xs: readonly T[], x: unknown): x is T => {

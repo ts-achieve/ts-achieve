@@ -1,8 +1,7 @@
 import { UnionToTuple } from "expect-type";
-import { DeepKeys, LeafKeys, Maybe } from "../util/type";
+import { DeepKeys, Maybe } from "../util/type";
 
 type Taxonomy = DeepKeys<typeof taxonomy>;
-type Leaves = LeafKeys<typeof taxonomy>
 
 export const taxonomy = {
   special: {},
