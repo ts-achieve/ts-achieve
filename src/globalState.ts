@@ -1,14 +1,28 @@
 import vscode from "vscode";
 
 import { Maybe } from "./util/type";
-import { Star, Starmap } from "./star/star";
+import { isStar, Star, Starmap } from "./star/star";
 
 export const getStarmap = (
   context: vscode.ExtensionContext,
 ): Maybe<Starmap> => {
   const maybeStarmap = getGlobalState(context, "starmap");
   if (Array.isArray(maybeStarmap)) {
-    return new Map(maybeStarmap as [number, Star][]);
+    const map = new Map<number, Star>();
+
+    for (const x of maybeStarmap) {
+      if (Array.isArray(x)) {
+        const maybeStar = x[1];
+
+        if (isStar(maybeStar)) {
+          map.set(maybeStar.code, {
+            ...maybeStar,
+            kind: "tsconfig",
+          });
+        }
+      }
+    }
+    return map;
   } else {
     return undefined;
   }

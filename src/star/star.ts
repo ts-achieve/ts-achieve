@@ -33,14 +33,11 @@ export const isStar = (x: unknown): x is Star => {
   );
 };
 
-export type Encounter = LockedStar & {
+export type UnlockedStar = LockedStar & {
   time: number;
   triggerText: string;
   fileName: string;
   messageText: string;
-};
-
-export type UnlockedStar = Encounter & {
   encounterCount: number;
   lastEncounter: number;
 };
@@ -76,11 +73,16 @@ export const unlock = (
     triggerText: sequence(5, (n) => {
       const lineNumber = diagnostic.range.start.line - 2 + n;
       if (0 <= lineNumber && lineNumber < document.lineCount) {
-        return document.lineAt(lineNumber).text;
+        return (
+          (lineNumber + 1).toString().padEnd(4) +
+          document.lineAt(lineNumber).text
+        );
       } else {
         return "";
       }
-    }).join("\n"),
+    })
+      .concat([""])
+      .join("\n"),
     fileName: document.fileName,
     messageText: diagnostic.message,
     encounterCount: isUnlocked(star) ? star.encounterCount + 1 : 1,

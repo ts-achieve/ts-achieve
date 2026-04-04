@@ -69,8 +69,22 @@ export const kindOf = (diagnostic: TsDiagnostic): StarKind => {
     } else {
       if (taxonomy.error.strict.includes(diagnostic.code as any)) {
         return "strict";
+      } else if (taxonomy.error.tsconfig.includes(diagnostic.code as any)) {
+        return "tsconfig";
+      } else if (taxonomy.error.type.includes(diagnostic.code as any)) {
+        return "type-error";
+      } else if (
+        taxonomy.error.syntax.expression.includes(diagnostic.code as any)
+      ) {
+        return "expression";
+      } else if (
+        taxonomy.error.module.includes(diagnostic.code as any)
+      ) {
+        return "module";
       } else if (taxonomy.error.syntax.async.includes(diagnostic.code as any)) {
         return "async";
+      } else if (taxonomy.error.syntax.regex.includes(diagnostic.code as any)) {
+        return "regex";
       } else if (taxonomy.error.syntax.class.includes(diagnostic.code as any)) {
         return "class";
       } else if (

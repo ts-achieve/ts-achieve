@@ -20,19 +20,13 @@
     "commands": [
       {
         "command": "tsAchieve.command.refresh",
-        "title": "Refresh Achievements"
-      },
-      {
-        "command": "tsAchieve.command.startrun",
-        "title": "Start New Run"
-      },
-      {
-        "command": "tsAchieve.command.stoprun",
-        "title": "Stop Current Run"
+        "title": "Refresh Achievements",
+        "icon": "$(refresh)"
       },
       {
         "command": "tsAchieve.command.hardReset",
-        "title": "Hard Reset"
+        "title": "Hard Reset",
+        "icon": "$(trash)"
       },
       {
         "command": "tsAchieve.command.showUnlocked",
@@ -100,7 +94,7 @@
         {
           "id": "tsAchieve",
           "title": "Achievements",
-          "icon": "lib/typescript.svg"
+          "icon": "$(star-empty)"
         }
       ]
     },
@@ -109,17 +103,12 @@
         {
           "id": "tsAchieve.view.summary",
           "name": "Summary",
-          "icon": "lib/typescript.svg"
+          "icon": "$(preview)"
         },
         {
           "id": "tsAchieve.view.list",
           "name": "List",
-          "icon": "lib/typescript.svg"
-        },
-        {
-          "id": "tsAchieve.view.speedrun",
-          "name": "Speedrun",
-          "icon": "lib/typescript.svg"
+          "icon": "$(list-tree)"
         }
       ]
     }

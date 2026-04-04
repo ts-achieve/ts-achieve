@@ -60,7 +60,10 @@ export const toPathTitle = (kind: PathKind): PathTitle => {
 
     case "type-error":
     case "other-error":
+    case "module":
     case "statement":
+    case "expression":
+    case "regex":
     case "strict":
     case "syntax":
     case "async":
@@ -218,6 +221,30 @@ export class Starlister<T = never>
       const label = star.code.toString();
 
       if (isUnlocked(star)) {
+        const tooltip = new vscode.MarkdownString(
+          `
+$(star-full) Unlocked on ${dateAtTime(star.time)}
+
+${++star.encounterCount} lifetime encounters (last: ${dateAtTime(star.lastEncounter)})
+
+---
+
+$(location) Unlock location: \`${star.fileName}\`
+
+\`\`\`ts
+${star.triggerText}
+\`\`\`
+
+---
+
+$(info) Unlock message:
+
+\`\`\`
+${star.messageText} (ts${star.code})
+\`\`\``.trim(),
+        );
+        tooltip.supportThemeIcons = true;
+        harden(tooltip);
         return {
           label,
           description: star.messageTemplate,
@@ -226,19 +253,35 @@ export class Starlister<T = never>
             "star-full",
             new vscode.ThemeColor(names.colors.unlocked),
           ),
-          tooltip: new vscode.MarkdownString(
-            `
-Unlocked on ${new Date(star.time)} in file "${star.fileName}" with region
-\`\`\`ts
-${star.triggerText}
-\`\`\`
-which triggered the message: "${star.messageText}"
-
-Lifetime encounters: ${++star.encounterCount}, most recently on ${new Date(star.lastEncounter)}
-    `.trim(),
-          ),
+          tooltip,
         };
       } else {
+        const tooltip = new vscode.MarkdownString(
+          `
+$(star-empty) Locked
+`.trim(),
+        );
+        if (
+          vscode.workspace
+            .getConfiguration(names.ex)
+            .get(names.config.revealDescription)
+        ) {
+          tooltip.appendMarkdown(
+            `
+[]()
+
+
+---
+
+$(info) Message template:
+
+\`\`\`
+${star.messageTemplate} (ts${star.code})
+\`\`\``.trim(),
+          );
+        }
+        tooltip.supportThemeIcons = true;
+        harden(tooltip);
         return {
           label,
           description: vscode.workspace
@@ -251,6 +294,7 @@ Lifetime encounters: ${++star.encounterCount}, most recently on ${new Date(star.
             "lock",
             new vscode.ThemeColor(names.colors.locked),
           ),
+          tooltip,
         };
       }
     } else {
@@ -278,3 +322,13 @@ Lifetime encounters: ${++star.encounterCount}, most recently on ${new Date(star.
     }
   }
 }
+
+const dateAtTime = (time: number) => {
+  const date = new Date(time);
+  return `${date.toLocaleDateString()} at ${date.toLocaleTimeString()}`;
+};
+
+const harden = (markdown: vscode.MarkdownString): vscode.MarkdownString => {
+  markdown.appendMarkdown("\n[]()");
+  return markdown;
+};

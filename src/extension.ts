@@ -7,87 +7,87 @@ import { unlock, UnlockedStar } from "./star/star";
 import { Decorator } from "./provider/decorator";
 import { Summarizer } from "./provider/summarizer";
 import { Starlister } from "./provider/starlister";
-import { Speedrunner } from "./provider/speedrunner";
 
 export function activate(context: vscode.ExtensionContext) {
-  const config = getConfig();
-  const decorator = new Decorator();
-  const starlister = new Starlister(config, context);
-  const summarizer = new Summarizer(starlister.starmap);
-  const speedrunner = new Speedrunner(config, context);
+  try {
+    const config = getConfig();
+    const decorator = new Decorator();
+    const starlister = new Starlister(config, context);
+    const summarizer = new Summarizer(starlister.starmap);
 
-  vscode.commands.executeCommand(
-    "setContext",
-    "tsAchieve.showing",
-    showing.all,
-  );
+    vscode.commands.executeCommand(
+      "setContext",
+      "tsAchieve.showing",
+      showing.all,
+    );
 
-  context.subscriptions.push(
-    vscode.commands.registerCommand(names.commands.showUnlocked, () => {
-      starlister.cycleShowing();
-    }),
+    context.subscriptions.push(
+      vscode.commands.registerCommand(names.commands.showUnlocked, () => {
+        starlister.cycleShowing();
+      }),
 
-    vscode.commands.registerCommand(names.commands.showLocked, () => {
-      starlister.cycleShowing();
-    }),
+      vscode.commands.registerCommand(names.commands.showLocked, () => {
+        starlister.cycleShowing();
+      }),
 
-    vscode.commands.registerCommand(names.commands.showAll, () => {
-      starlister.cycleShowing();
-    }),
+      vscode.commands.registerCommand(names.commands.showAll, () => {
+        starlister.cycleShowing();
+      }),
 
-    vscode.commands.registerCommand(names.commands.refresh, () => {
-      starlister.refresh();
-      summarizer.refresh();
-    }),
+      vscode.commands.registerCommand(names.commands.refresh, () => {
+        starlister.refresh();
+        summarizer.refresh();
+      }),
 
-    vscode.commands.registerCommand(names.commands.hardReset, () => {
-      setStarmap(context, undefined);
-      starlister.starmap = starlister.loadStarmap(context);
-      summarizer.update(starlister.starmap);
+      vscode.commands.registerCommand(names.commands.hardReset, () => {
+        setStarmap(context, undefined);
+        starlister.starmap = starlister.loadStarmap(context);
+        summarizer.update(starlister.starmap);
 
-      starlister.refresh();
-      summarizer.refresh();
-    }),
+        starlister.refresh();
+        summarizer.refresh();
+      }),
 
-    vscode.window.registerFileDecorationProvider(decorator),
-    vscode.window.registerTreeDataProvider(names.views.summary, summarizer),
-    vscode.window.registerTreeDataProvider(names.views.list, starlister),
-    vscode.window.registerTreeDataProvider(names.views.speedrun, speedrunner),
+      vscode.window.registerFileDecorationProvider(decorator),
+      vscode.window.registerTreeDataProvider(names.views.summary, summarizer),
+      vscode.window.registerTreeDataProvider(names.views.list, starlister),
 
-    vscode.workspace.onDidChangeConfiguration(() => {
-      const exConfig = getConfig();
-      starlister.reconfigure(exConfig);
-      speedrunner.reconfigure(exConfig);
-    }),
+      vscode.workspace.onDidChangeConfiguration(() => {
+        const exConfig = getConfig();
+        starlister.reconfigure(exConfig);
+      }),
 
-    vscode.languages.onDidChangeDiagnostics(() => {
-      const document = vscode.window.activeTextEditor!.document;
-      const diagnostics = vscode.languages.getDiagnostics(document.uri);
+      vscode.languages.onDidChangeDiagnostics(() => {
+        const document = vscode.window.activeTextEditor!.document;
+        const diagnostics = vscode.languages.getDiagnostics(document.uri);
 
-      for (let i = 0; i < diagnostics.length; i++) {
-        const diagnostic = diagnostics[i]!;
+        for (let i = 0; i < diagnostics.length; i++) {
+          const diagnostic = diagnostics[i]!;
 
-        if (typeof diagnostic.code === "number") {
-          const maybeStar = starlister.starmap.get(diagnostic.code);
+          if (typeof diagnostic.code === "number") {
+            const maybeStar = starlister.starmap.get(diagnostic.code);
 
-          if (maybeStar) {
-            const unlockedStar = unlock(maybeStar, document, diagnostic);
+            if (maybeStar) {
+              const unlockedStar = unlock(maybeStar, document, diagnostic);
 
-            showInformationMessage(unlockedStar, diagnostic);
-            setStarmap(context, starlister.starmap);
-            starlister.update(unlockedStar);
-            summarizer.update(starlister.starmap);
-            starlister.refresh();
-            summarizer.refresh();
+              showInformationMessage(unlockedStar, diagnostic);
+              setStarmap(context, starlister.starmap);
+              starlister.update(unlockedStar);
+              summarizer.update(starlister.starmap);
+              starlister.refresh();
+              summarizer.refresh();
+            }
           }
         }
-      }
 
-      setStarmap(context, starlister.starmap);
-    }),
-  );
+        setStarmap(context, starlister.starmap);
+      }),
+    );
 
-  setStarmap(context, starlister.starmap);
+    setStarmap(context, starlister.starmap);
+  } catch (e) {
+    console.log(e);
+  }
 }
 
 export function deactivate() {}

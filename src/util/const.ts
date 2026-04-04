@@ -42,6 +42,9 @@ export const syntaxErrorKinds = [
   "class",
   "statement",
   "function",
+  "expression",
+  "module",
+  "regex",
 ] as const;
 
 export const pathKinds = [
