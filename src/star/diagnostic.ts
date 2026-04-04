@@ -1,36 +1,6 @@
-import { StarKind, tsDiagnosticCategories } from "../util/const";
-import { diagnosticMessages } from "../util/diagnosticMessages";
-import { isObject, Maybe } from "../util/type";
-import { taxonomy } from "./taxonomy";
-
-type Dictionary = {
-  -readonly [K in keyof typeof diagnosticMessages]: {
-    -readonly [L in keyof (typeof diagnosticMessages)[K]]: (typeof diagnosticMessages)[K][L];
-  };
-};
-
-export type Message = keyof Dictionary;
-
-export const isDiagnosticMessage = (x: unknown): x is Message => {
-  return typeof x === "string" && x in diagnosticMessages;
-};
-
-export type CodeToMessage<N extends number> = Message extends infer M extends
-  Message
-  ? M extends any
-    ? Dictionary[M] extends { code: N }
-      ? M
-      : never
-    : never
-  : never;
-
-export const codeToMessage = <N extends number>(
-  code: N,
-): Maybe<CodeToMessage<N>> => {
-  return Object.values(diagnosticMessages).find((value) => {
-    return value.code === code;
-  }) as Maybe<CodeToMessage<N>>;
-};
+import { tsDiagnosticCategories } from "../util/const";
+import { isObject } from "../util/type";
+import { StarKind, taxonomy } from "./taxonomy";
 
 type TsDiagnosticCategory = (typeof tsDiagnosticCategories)[number];
 
@@ -77,9 +47,7 @@ export const kindOf = (diagnostic: TsDiagnostic): StarKind => {
         taxonomy.error.syntax.expression.includes(diagnostic.code as any)
       ) {
         return "expression";
-      } else if (
-        taxonomy.error.module.includes(diagnostic.code as any)
-      ) {
+      } else if (taxonomy.error.module.includes(diagnostic.code as any)) {
         return "module";
       } else if (taxonomy.error.syntax.async.includes(diagnostic.code as any)) {
         return "async";
@@ -106,7 +74,7 @@ export const kindOf = (diagnostic: TsDiagnostic): StarKind => {
 
 export const diagnosticToStar = (
   diagnostic: TsDiagnostic,
-  messageTemplate: keyof typeof diagnosticMessages,
+  messageTemplate: string,
 ) => {
   return {
     code: diagnostic.code,

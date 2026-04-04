@@ -114,7 +114,7 @@
     }
   },
   "scripts": {
-    "r": "rm -rf out && rm -f pnpm-lock.yaml && rm -rf node_modules && pnpm install",
+    "r": "rm -rf .vscode-test && rm -rf out && rm -f pnpm-lock.yaml && rm -rf node_modules && pnpm install",
     "vscode:prepublish": "pnpm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",

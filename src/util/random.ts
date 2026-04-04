@@ -14,7 +14,7 @@ const primitiveNames = [
   "void",
 ] as const;
 
-type PrimitiveMap = {
+export type PrimitiveMap = {
   string: string;
   number: number;
   boolean: boolean;
@@ -27,12 +27,9 @@ type PrimitiveMap = {
 
 type PrimitiveName = keyof PrimitiveMap & {};
 
-type Primitive<K extends PrimitiveName = PrimitiveName> = K extends any
+export type Primitive<K extends PrimitiveName = PrimitiveName> = K extends any
   ? PrimitiveMap[K]
   : never;
-
-// unused
-// const randomName = (): PrimitiveName => randomChoose(primitiveNames);
 
 const randomPrimitive = <T extends PrimitiveName>(
   ...types: T[]

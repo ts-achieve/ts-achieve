@@ -2,7 +2,7 @@ import vscode from "vscode";
 
 import { StarProviderBase } from "./provider";
 import { isUnlocked, Star, Starmap, UnlockedStar } from "../star/star";
-import { errorKinds, isErrorKind, pathKinds, topKinds } from "../util/const";
+import { errorKinds, isErrorKind, pathKinds, topKinds } from "../star/taxonomy";
 import { uncapitalize } from "../util/type";
 import { toPathTitle } from "./starlister";
 

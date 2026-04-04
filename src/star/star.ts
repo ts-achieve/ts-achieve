@@ -1,16 +1,16 @@
 import vscode from "vscode";
 
-import { StarKind, starKinds } from "../util/const";
 import { isObject, sequence } from "../util/type";
 import { diagnosticMessages } from "../util/diagnosticMessages";
-import { diagnosticToStar, Message } from "./diagnostic";
+import { diagnosticToStar } from "./diagnostic";
+import { StarKind, starKinds } from "./taxonomy";
 
 export type Starmap = Map<number, Star>;
 
 export const makeStarmap = (): Starmap => {
   return new Map(
     Object.entries(diagnosticMessages).map(([key, value]) => {
-      return [value.code, diagnosticToStar(value, key as Message)];
+      return [value.code, diagnosticToStar(value, key)];
     }),
   );
 };

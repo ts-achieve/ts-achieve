@@ -2,20 +2,7 @@ import vscode from "vscode";
 
 import { ExtensionConfig } from "../config";
 import { getStarmap } from "../globalState";
-import {
-  topKinds,
-  errorKinds,
-  names,
-  suggestionKinds,
-  ErrorKind,
-  PathKind,
-  SuggestionKind,
-  TopKind,
-  SyntaxErrorKind,
-  syntaxErrorKinds,
-  showing,
-  pathKinds,
-} from "../util/const";
+import { names, showing } from "../util/const";
 import {
   capitalize,
   includes,
@@ -35,6 +22,18 @@ import {
   isUnlocked,
   makeStarmap,
 } from "../star/star";
+import {
+  PathKind,
+  TopKind,
+  SuggestionKind,
+  ErrorKind,
+  SyntaxErrorKind,
+  topKinds,
+  suggestionKinds,
+  errorKinds,
+  syntaxErrorKinds,
+  pathKinds,
+} from "../star/taxonomy";
 
 type PathTitle =
   | `${Capitalize<Extract<PathKind, "special">>} achievements`

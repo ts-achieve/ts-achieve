@@ -17,6 +17,42 @@ export type DeepKeys<T, K extends keyof T = keyof T> =
   | keyof T
   | (K extends any ? keyof T[K] : never);
 
+export type TestObject = {
+  a: 1;
+  b: 2;
+  c: {
+    d: {
+      e: [3, 4];
+      f: 5;
+    };
+    g: 6;
+    h: {
+      i: 7;
+      j: [8];
+      k: {};
+    };
+  };
+};
+
+export type LeafKeys<T, K extends keyof T = keyof T> = {} & (
+  | (keyof T extends infer L extends keyof T
+      ? L extends any
+        ? T[L] extends object
+          ? never
+          : L
+        : never
+      : never)
+  | (K extends any
+      ? T[K] extends readonly any[]
+        ? never
+        : T[K] extends object
+          ? LeafKeys<T[K]>
+          : never
+      : never)
+);
+
+type X = LeafKeys<TestObject>;
+
 // region array
 
 export const includes = <T>(xs: readonly T[], x: unknown): x is T => {
@@ -52,6 +88,21 @@ export const biject = <U, L extends readonly any[]>(
     ys.push(f(xs[i]));
   }
   return ys as Biject<U, ReadWrite<L>>;
+};
+
+export type BijectPrefix<
+  L extends string[],
+  P extends string,
+  A extends string[] = [],
+> = L extends [infer F extends string, ...infer R extends string[]]
+  ? BijectPrefix<R, P, [...A, `${P}${F}`]>
+  : A;
+
+export const bijectPrefix = <L extends string[], P extends string>(
+  list: L,
+  prefix: P,
+) => {
+  return list.map((s) => `${prefix}${s}`) as BijectPrefix<L, P>;
 };
 
 type Upto<N extends number, A extends number = never> = N extends 0

@@ -2,6 +2,8 @@ import { expectTypeOf } from "expect-type";
 import {
   biject,
   Biject,
+  bijectPrefix,
+  BijectPrefix,
   GreaterOf,
   greaterOf,
   Length,
@@ -66,10 +68,10 @@ suite("`tuple`", () => {
     expectTypeOf<[number, number, number, number]>().toEqualTypeOf(tuple(4));
   });
   test("is well-valued", () => {
-    assert.strictEqual(tuple(0), []);
-    assert.strictEqual(tuple(1), [0]);
-    assert.strictEqual(tuple(2), [0, 1]);
-    assert.strictEqual(tuple(3), [0, 1, 2]);
+    assert.deepStrictEqual(tuple(0), []);
+    assert.deepStrictEqual(tuple(1), [0]);
+    assert.deepStrictEqual(tuple(2), [0, 1]);
+    assert.deepStrictEqual(tuple(3), [0, 1, 2]);
   });
 });
 
@@ -80,15 +82,31 @@ suite("`biject`", () => {
     >();
   });
   test("is well-valued", () => {
-    assert.strictEqual(
+    assert.deepStrictEqual(
       biject([], (x) => x),
       [],
     );
-    assert.strictEqual(
+    assert.deepStrictEqual(
       biject([0, 1, 2, 3], (x) => x),
       [0, 1, 2, 3],
     );
-    assert.strictEqual(biject([0, 1, 2, 3], literal), ["0", "1", "2", "3"]);
+    assert.deepStrictEqual(biject([0, 1, 2, 3], literal), ["0", "1", "2", "3"]);
+  });
+});
+
+suite("`bijectPrefix`", () => {
+  test("is well-typed", () => {
+    expectTypeOf<["a0", "a1", "a2", "a3"]>().toEqualTypeOf<
+      BijectPrefix<["0", "1", "2", "3"], "a">
+    >();
+  });
+  test("is well-valued", () => {
+    assert.deepStrictEqual(bijectPrefix(["0", "1", "2", "3"], "a"), [
+      "a0",
+      "a1",
+      "a2",
+      "a3",
+    ]);
   });
 });
 

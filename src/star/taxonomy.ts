@@ -1,7 +1,8 @@
 import { UnionToTuple } from "expect-type";
-import { DeepKeys, Maybe } from "../util/type";
+import { DeepKeys, LeafKeys, Maybe } from "../util/type";
 
 type Taxonomy = DeepKeys<typeof taxonomy>;
+type Leaves = LeafKeys<typeof taxonomy>
 
 export const taxonomy = {
   special: {},
@@ -105,17 +106,83 @@ export const taxonomize = (
   return undefined;
 };
 
-export const categories = (
+export const categoriesOf = (
   subtaxonomy: object = taxonomy,
 ): UnionToTuple<Taxonomy> => {
-  const cats = [];
+  const categories = [];
   for (const [key, value] of Object.entries(subtaxonomy)) {
     if (Array.isArray(value)) {
-      cats.push(key);
+      categories.push(key);
     } else {
-      cats.push(key, ...categories(value));
+      categories.push(key, ...categoriesOf(value));
     }
   }
 
-  return cats as UnionToTuple<Taxonomy>;
+  return categories as UnionToTuple<Taxonomy>;
+};
+
+// type X = UnionToTuple<keyof typeof taxonomy>;
+// const topKinds: X = ["special", "message", "suggestion", "warning", "error"];
+
+export const nonErrorKinds = [
+  "special",
+  "message",
+  "suggestion",
+  "warning",
+] as const;
+
+export const topKinds = [...nonErrorKinds, "error"] as const;
+
+export const suggestionKinds = [
+  "type-suggestion",
+  "language",
+  "other-suggestion",
+] as const;
+
+export const errorKinds = [
+  "syntax",
+  "type-error",
+  "tsconfig",
+  "strict",
+  "other-error",
+] as const;
+
+export const syntaxErrorKinds = [
+  "async",
+  "class",
+  "statement",
+  "function",
+  "expression",
+  "module",
+  "regex",
+] as const;
+
+export const pathKinds = [
+  ...topKinds,
+  ...suggestionKinds,
+  ...errorKinds,
+  ...syntaxErrorKinds,
+] as const;
+
+export const starKinds = [
+  "special",
+  "message",
+  ...suggestionKinds,
+  "warning",
+  ...syntaxErrorKinds,
+  "type-error",
+  "tsconfig",
+  "strict",
+  "other-error",
+] as const;
+
+export type TopKind = (typeof topKinds)[number];
+export type SuggestionKind = (typeof suggestionKinds)[number];
+export type ErrorKind = (typeof errorKinds)[number];
+export type SyntaxErrorKind = (typeof syntaxErrorKinds)[number];
+export type PathKind = (typeof pathKinds)[number];
+export type StarKind = (typeof starKinds)[number];
+
+export const isErrorKind = (x: string): x is ErrorKind => {
+  return errorKinds.includes(x as any);
 };
