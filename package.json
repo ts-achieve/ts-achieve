@@ -35,16 +35,6 @@
         "title": "Hard Reset"
       },
       {
-        "command": "tsAchieve.command.expandAll",
-        "title": "Expand All",
-        "icon": "$(expand-all)"
-      },
-      {
-        "command": "tsAchieve.command.collapseAll",
-        "title": "Collapse All",
-        "icon": "$(collapse-all)"
-      },
-      {
         "command": "tsAchieve.command.showUnlocked",
         "title": "Click to show unlocked achievements",
         "icon": "$(star-half)"
@@ -76,16 +66,6 @@
           "command": "tsAchieve.command.showAll",
           "when": "view == tsAchieve.view.list && tsAchieve.showing == 2",
           "group": "navigation"
-        },
-        {
-          "command": "tsAchieve.command.collapseAll",
-          "when": "view == tsAchieve.view.list",
-          "group": "navigation"
-        },
-        {
-          "command": "tsAchieve.command.expandAll",
-          "when": "view == tsAchieve.view.list",
-          "group": "navigation"
         }
       ]
     },
@@ -98,32 +78,20 @@
           "default": false,
           "description": "Whether a locked achievement should reveal its description. (default: false)"
         },
-        "tsAchieve.config.notifyRepeatedAchievements": {
+        "tsAchieve.config.notifyOnReachieve": {
           "type": "boolean",
           "default": false,
           "description": "Whether to show information message on achievements that are already earned. (default: false)"
         },
-        "tsAchieve.config.sort": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "enum": [
-              "kind (errors first)",
-              "kind (errors last)",
-              "locked first",
-              "unlocked first",
-              "code (ascending)",
-              "code (descending)",
-              "alphabetic (forwards)",
-              "alphabetic (backwards)"
-            ]
-          },
-          "default": [
-            "kind (errors last)",
-            "locked first",
-            "code (ascending)"
+        "tsAchieve.config.subcategorize": {
+          "type": "string",
+          "enum": [
+            "none",
+            "achievements only",
+            "all"
           ],
-          "description": "The ordered list of properties by which to sort. (experimental)"
+          "default": "all",
+          "description": "How to subcategorize achievements (default: all)"
         }
       }
     },

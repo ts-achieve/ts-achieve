@@ -1,19 +1,12 @@
 import vscode from "vscode";
 
-import { ExtensionConfig } from "../config";
 import { Starmap } from "../star/star";
 
 export type Eventable<T> = T | undefined | null | void;
 
-export type Configurable = {
-  config: ExtensionConfig;
-  reconfigure(config: ExtensionConfig): void;
-};
-
-export abstract class StarProviderBase<T>
-  implements vscode.TreeDataProvider<T>, Configurable
-{
-  config: ExtensionConfig;
+export abstract class StarProviderBase<
+  T,
+> implements vscode.TreeDataProvider<T> {
   starmap: Starmap;
 
   protected _onDidChangeTreeData: vscode.EventEmitter<Eventable<T>> =
@@ -21,8 +14,7 @@ export abstract class StarProviderBase<T>
   readonly onDidChangeTreeData: vscode.Event<Eventable<T>> =
     this._onDidChangeTreeData.event;
 
-  constructor(config: ExtensionConfig, ...args: any[]) {
-    this.config = config;
+  constructor(...args: any[]) {
     this.starmap = this.loadStarmap(...args);
   }
 
@@ -34,12 +26,20 @@ export abstract class StarProviderBase<T>
 
   abstract update(..._: any[]): void;
 
-  reconfigure(config: ExtensionConfig): void {
-    this.config = config;
-    this.refresh();
-  }
-
   refresh(): void {
     this._onDidChangeTreeData.fire();
   }
 }
+
+const sortPriorities = [
+  "kind (errors first)",
+  "kind (errors last)",
+  "locked first",
+  "unlocked first",
+  "code (ascending)",
+  "code (descending)",
+  "alphabetic (forwards)",
+  "alphabetic (backwards)",
+];
+
+export type SortPriority = (typeof sortPriorities)[number];

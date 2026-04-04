@@ -21,6 +21,7 @@ import {
   includes,
   mod,
   not,
+  safeConcat,
   Split,
   split,
   succeed,
@@ -77,14 +78,32 @@ export type Folder<K extends PathKind = PathKind> = K extends any
 
 type Showing = (typeof showing)[keyof typeof showing];
 
-export class Starlister<T = never> extends StarProviderBase<
-  T | Star | PathKind
-> {
+export type Configurable = {
+  reconfigure(config: ExtensionConfig): void;
+};
+
+export type Subcategorize = "none" | "achievements only" | "all";
+
+export class Starlister<T = never>
+  extends StarProviderBase<T | Star | PathKind>
+  implements Configurable
+{
   showing: Showing;
+  subcategorize: Subcategorize = "all";
 
   constructor(config: ExtensionConfig, context: vscode.ExtensionContext) {
-    super(config, context);
+    super(context);
+    this.configure(config);
     this.showing = showing.all;
+  }
+
+  configure(config: ExtensionConfig): void {
+    this.subcategorize = config.subcategorize;
+  }
+
+  reconfigure(config: ExtensionConfig): void {
+    this.configure(config);
+    this.refresh();
   }
 
   cycleShowing(): void {
@@ -113,16 +132,35 @@ export class Starlister<T = never> extends StarProviderBase<
     switch (this.showing) {
       case 0:
         if (!providable) {
-          return Array.from(topKinds);
+          if (this.subcategorize !== "none") {
+            return Array.from(topKinds);
+          } else {
+            return this.starmap.values().toArray();
+          }
         } else if (isStar(providable)) {
           return undefined;
         } else if (typeof providable === "string") {
           if (providable === "suggestion") {
             return Array.from(suggestionKinds);
           } else if (providable === "error") {
-            return Array.from(errorKinds);
+            if (this.subcategorize === "all") {
+              return Array.from(errorKinds);
+            } else {
+              return this.starmap
+                .values()
+                .filter((star) =>
+                  safeConcat(errorKinds, syntaxErrorKinds).includes(
+                    star.kind as any,
+                  ),
+                )
+                .toArray();
+            }
           } else if (providable === "syntax") {
-            return Array.from(syntaxErrorKinds);
+            if (this.subcategorize === "all") {
+              return Array.from(syntaxErrorKinds);
+            } else {
+              return undefined;
+            }
           } else {
             return this.starmap
               .values()

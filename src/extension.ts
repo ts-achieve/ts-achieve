@@ -1,4 +1,4 @@
-import vscode, { DiagnosticChangeEvent } from "vscode";
+import vscode from "vscode";
 
 import { names, showing } from "./util/const";
 import { getConfig, getConfigSection } from "./config";
@@ -11,9 +11,9 @@ import { Speedrunner } from "./provider/speedrunner";
 
 export function activate(context: vscode.ExtensionContext) {
   const config = getConfig();
-  const decorator = new Decorator(config);
+  const decorator = new Decorator();
   const starlister = new Starlister(config, context);
-  const summarizer = new Summarizer(config, starlister.starmap);
+  const summarizer = new Summarizer(starlister.starmap);
   const speedrunner = new Speedrunner(config, context);
 
   vscode.commands.executeCommand(
@@ -23,10 +23,6 @@ export function activate(context: vscode.ExtensionContext) {
   );
 
   context.subscriptions.push(
-    vscode.commands.registerCommand(names.commands.expandAll, () => {
-      starlister.expandAll();
-    }),
-
     vscode.commands.registerCommand(names.commands.showUnlocked, () => {
       starlister.cycleShowing();
     }),
@@ -53,9 +49,6 @@ export function activate(context: vscode.ExtensionContext) {
       summarizer.refresh();
     }),
 
-    // todo: expandAll
-    // todo: collapseAll
-
     vscode.window.registerFileDecorationProvider(decorator),
     vscode.window.registerTreeDataProvider(names.views.summary, summarizer),
     vscode.window.registerTreeDataProvider(names.views.list, starlister),
@@ -63,33 +56,29 @@ export function activate(context: vscode.ExtensionContext) {
 
     vscode.workspace.onDidChangeConfiguration(() => {
       const exConfig = getConfig();
-      speedrunner.reconfigure(exConfig);
       starlister.reconfigure(exConfig);
-      summarizer.reconfigure(exConfig);
+      speedrunner.reconfigure(exConfig);
     }),
 
-    vscode.languages.onDidChangeDiagnostics((event) => {
-      const diagnosticMap = computeDiagnosticMap(event);
+    vscode.languages.onDidChangeDiagnostics(() => {
+      const document = vscode.window.activeTextEditor!.document;
+      const diagnostics = vscode.languages.getDiagnostics(document.uri);
 
-      for (const document of diagnosticMap.keys()) {
-        const diagnostics = diagnosticMap.get(document)!;
+      for (let i = 0; i < diagnostics.length; i++) {
+        const diagnostic = diagnostics[i]!;
 
-        for (let i = 0; i < diagnostics.length; i++) {
-          const diagnostic = diagnostics[i]!;
+        if (typeof diagnostic.code === "number") {
+          const maybeStar = starlister.starmap.get(diagnostic.code);
 
-          if (typeof diagnostic.code === "number") {
-            const maybeStar = starlister.starmap.get(diagnostic.code);
+          if (maybeStar) {
+            const unlockedStar = unlock(maybeStar, document, diagnostic);
 
-            if (maybeStar) {
-              const unlockedStar = unlock(maybeStar, document, diagnostic);
-
-              showInformationMessage(unlockedStar, diagnostic);
-              setStarmap(context, starlister.starmap);
-              starlister.update(unlockedStar);
-              summarizer.update(starlister.starmap);
-              starlister.refresh();
-              summarizer.refresh();
-            }
+            showInformationMessage(unlockedStar, diagnostic);
+            setStarmap(context, starlister.starmap);
+            starlister.update(unlockedStar);
+            summarizer.update(starlister.starmap);
+            starlister.refresh();
+            summarizer.refresh();
           }
         }
       }
@@ -109,7 +98,7 @@ const showInformationMessage = (
 ) => {
   if (
     star.encounterCount > 1 &&
-    getConfigSection(names.config.notifyRepeatedAchievements)
+    getConfigSection(names.config.notifyOnReachieve)
   ) {
     vscode.window.showInformationMessage(
       `Achievement found again! ${diagnostic.code}: ${diagnostic.message}`,
@@ -119,17 +108,4 @@ const showInformationMessage = (
       `Achievement unlocked! ${diagnostic.code}: ${diagnostic.message}`,
     );
   }
-};
-
-const computeDiagnosticMap = (
-  event: DiagnosticChangeEvent,
-): Map<vscode.TextDocument, vscode.Diagnostic[]> => {
-  return new Map(
-    vscode.workspace.textDocuments
-      .filter((document) => event.uris.includes(document.uri))
-      .map((document) => [
-        document,
-        vscode.languages.getDiagnostics(document.uri),
-      ]),
-  );
 };

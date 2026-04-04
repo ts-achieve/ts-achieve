@@ -1,9 +1,8 @@
-import vscode, { TreeItem } from "vscode";
+import vscode from "vscode";
 
-import { ExtensionConfig } from "../config";
 import { StarProviderBase } from "./provider";
 import { isUnlocked, Star, Starmap, UnlockedStar } from "../star/star";
-import { isErrorKind, pathKinds } from "../util/const";
+import { errorKinds, isErrorKind, pathKinds, topKinds } from "../util/const";
 import { uncapitalize } from "../util/type";
 import { toPathTitle } from "./starlister";
 
@@ -13,12 +12,8 @@ type SummaryKind = (typeof summaryKinds)[number];
 export class Summarizer extends StarProviderBase<SummaryKind> {
   kinds: SummaryKind[];
 
-  constructor(
-    config: ExtensionConfig,
-    starmap: Starmap,
-    kinds?: SummaryKind[],
-  ) {
-    super(config, starmap);
+  constructor(starmap: Starmap, kinds?: SummaryKind[]) {
+    super(starmap);
     this.kinds = kinds ?? Array.from(summaryKinds);
   }
 
@@ -30,6 +25,18 @@ export class Summarizer extends StarProviderBase<SummaryKind> {
     return starmap;
   }
 
+  getChildren(kind?: SummaryKind): vscode.ProviderResult<SummaryKind[]> {
+    if (!kind) {
+      return ["overall", "encounters"];
+    } else if (kind === "encounters") {
+      return Array.from(topKinds);
+    } else if (kind === "error") {
+      return Array.from(errorKinds);
+    } else {
+      return undefined;
+    }
+  }
+
   getTreeItem(kind: SummaryKind): vscode.TreeItem {
     switch (kind) {
       case "overall":
@@ -38,12 +45,10 @@ export class Summarizer extends StarProviderBase<SummaryKind> {
         const achieved = stars.filter(isUnlocked).length;
         const total = stars.length;
 
-        const treeItem = new TreeItem(
-          `Overall: ${((achieved / total) * 100).toFixed(2)}%`,
-        );
-        treeItem.description = `(${achieved} of ${total})`;
-
-        return treeItem;
+        return {
+          label: `Overall: ${((achieved / total) * 100).toFixed(2)}%`,
+          description: `(${achieved} of ${total})`,
+        };
       default:
         const statistic =
           kind === "encounters" ? kind : uncapitalize(toPathTitle(kind));
@@ -54,17 +59,16 @@ export class Summarizer extends StarProviderBase<SummaryKind> {
               ? (star: Star) => isErrorKind(star.kind as any)
               : (star: Star) => star.kind === kind;
 
-        return new TreeItem(
-          `Lifetime ${statistic}: ${this.starmap
+        return {
+          label: `Lifetime ${statistic}: ${this.starmap
             .values()
             .filter((star) => isUnlocked(star) && condition(star))
             .map((star) => (star as UnlockedStar).encounterCount)
             .reduce((xs, x) => xs + x, 0)}`,
-        );
+          collapsibleState: ["encounters", "error"].includes(kind as any)
+            ? vscode.TreeItemCollapsibleState.Collapsed
+            : vscode.TreeItemCollapsibleState.None,
+        };
     }
-  }
-
-  getChildren(kind?: SummaryKind): vscode.ProviderResult<SummaryKind[]> {
-    return kind ? [] : this.kinds;
   }
 }

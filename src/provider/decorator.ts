@@ -1,16 +1,8 @@
 import vscode from "vscode";
 
 import { names } from "../util/const";
-import { logger } from "../util/logger";
-import { ExtensionConfig } from "../config";
 
 export class Decorator implements vscode.FileDecorationProvider {
-  config: ExtensionConfig;
-
-  constructor(config: ExtensionConfig) {
-    this.config = config;
-  }
-
   provideFileDecoration(
     uri: vscode.Uri,
     _token: vscode.CancellationToken,
@@ -27,7 +19,6 @@ export class Decorator implements vscode.FileDecorationProvider {
           color: new vscode.ThemeColor(names.colors.unlocked),
         };
       default:
-        logger(`bad path: ${uri.path}`);
         return undefined;
     }
   }

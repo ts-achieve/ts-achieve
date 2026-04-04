@@ -98,14 +98,12 @@ const commands = {
   showUnlocked: `${ex}.command.showUnlocked`,
   showLocked: `${ex}.command.showLocked`,
   showAll: `${ex}.command.showAll`,
-  expandAll: `${ex}.command.expandAll`,
-  collapseAll: `${ex}.command.collapseAll`,
 } as const;
 
 const config = {
   revealDescription: `config.revealDescription`,
-  notifyRepeatedAchievements: `config.notifyRepeatedAchievements`,
-  sort: `config.sort`,
+  notifyOnReachieve: `config.notifyOnReachieve`,
+  subcategorize: `config.subcategorize`,
 } as const;
 
 const context = {

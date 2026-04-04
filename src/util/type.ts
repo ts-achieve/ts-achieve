@@ -78,7 +78,7 @@ export type Concat<
   ...infer R extends readonly (readonly any[])[],
 ]
   ? Concat<[...T, ...F], R>
-  : T;
+  : Writable<T>;
 
 export const safeConcat = <
   T extends readonly any[],
