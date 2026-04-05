@@ -5,7 +5,7 @@
   },
   "displayName": "ts-achieve",
   "description": "TypeScript errors as achievements",
-  "version": "0.0.30",
+  "version": "0.0.31",
   "engines": {
     "vscode": "^1.110.0"
   },
