@@ -1,18 +1,15 @@
 import { tsDiagnosticCategories } from "../util/const";
-import { capitalize, isObject, RequiredBy, uncapitalize } from "../util/type";
+import { capitalize, isObject, uncapitalize } from "../util/type";
+import { Star } from "./star";
 import { StarKind, taxonomy } from "./taxonomy";
 
 type TsDiagnosticCategory = (typeof tsDiagnosticCategories)[number];
 
-export type TsDiagnostic<
-  C extends TsDiagnosticCategory = TsDiagnosticCategory,
-> = C extends any
-  ? {
-      code: number;
-      category: C;
-      reportsUnnecessary?: boolean;
-    }
-  : never;
+export type TsDiagnostic = {
+  code: number;
+  category: TsDiagnosticCategory;
+  reportsUnnecessary?: boolean;
+};
 
 export const isTsDiagnostic = (x: unknown): x is TsDiagnostic => {
   return (
@@ -29,10 +26,7 @@ export const computeKind = ({
   category,
   reportsUnnecessary,
   messageTemplate,
-}: RequiredBy<
-  TsDiagnostic & { messageTemplate: string },
-  "code"
->): StarKind => {
+}: Omit<Star, "kind">): StarKind => {
   if (reportsUnnecessary === true) {
     return "warning";
   } else if (category === "Suggestion") {

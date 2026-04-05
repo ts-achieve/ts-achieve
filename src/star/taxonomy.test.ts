@@ -5,7 +5,6 @@ suite("deep children", () => {
   suite("childless kinds", () => {
     const childlessKinds = [
       "special",
-      "message",
       "warning",
       "other",
       "suggestion-type",
@@ -38,6 +37,7 @@ suite("deep children", () => {
   test("error", () => {
     assert.deepStrictEqual(deepChildrenOf("error"), [
       "error-async",
+      "error-react",
       "error-reference",
       "error-oop",
       "error-type",
@@ -47,11 +47,23 @@ suite("deep children", () => {
       "error-other",
     ]);
   });
+  test("error-type", () => {
+    assert.deepStrictEqual(deepChildrenOf("error-type"), [
+      "error-type-interface",
+      "error-type-assert",
+      "error-type-generic",
+      "error-type-primitive",
+      "error-type-array",
+      "error-type-other",
+    ]);
+  });
   test("error-oop", () => {
     assert.deepStrictEqual(deepChildrenOf("error-oop"), [
       "error-oop-class",
+      "error-oop-abstract",
       "error-oop-constructor",
       "error-oop-accessor",
+      "error-oop-accessibility",
       "error-oop-decorator",
       "error-oop-this",
       "error-oop-other",

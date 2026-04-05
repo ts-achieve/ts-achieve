@@ -30,15 +30,19 @@ export const sortPriorities = [
 const ex = "tsAchieve" as const;
 
 const commands = {
-  setContext: "setContext",
   refresh: `${ex}.command.refresh`,
   startrun: `${ex}.command.startrun`,
   stoprun: `${ex}.command.stoprun`,
   hardReset: `${ex}.command.hardReset`,
+  logStarmap: `${ex}.command.logStarmap`,
   showUnlocked: `${ex}.command.showUnlocked`,
   showLocked: `${ex}.command.showLocked`,
   showAll: `${ex}.command.showAll`,
-} as const;
+} as const satisfies Commands;
+
+type Commands = {
+  [K in string]: `${typeof ex}.command.${K}`;
+};
 
 const config = {
   revealDescription: `config.revealDescription`,

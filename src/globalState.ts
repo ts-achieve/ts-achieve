@@ -3,30 +3,58 @@ import vscode from "vscode";
 import { Maybe } from "./util/type";
 import { isStar, Star, Starmap } from "./star/star";
 import { computeKind } from "./star/diagnostic";
+import { diagnosticMessages } from "./util/diagnosticMessages";
+import { logger } from "./util/logger";
 
+/**
+ * Calls {@linkcode getGlobalState} to fetch the stringified data
+ * stored in {@linkcode vscode.ExtensionContext.globalState}, and then
+ * processes the information to make and return a new {@linkcode Starmap}.
+ */
 export const fetchStarmap = (
   context: vscode.ExtensionContext,
 ): Maybe<Starmap> => {
-  console.log("fetching starmap");
+  logger("fetchStarmap:");
   const maybeStarmap = getGlobalState(context, "starmap");
 
   if (Array.isArray(maybeStarmap)) {
-    const map = new Map<number, Star>();
+    logger("- starmap is well-shapen");
+    const starmap = new Map<number, Star>();
 
     for (const x of maybeStarmap) {
       if (Array.isArray(x)) {
         const maybeStar = x[1];
 
         if (isStar(maybeStar)) {
-          map.set(maybeStar.code, {
+          const diagnostic =
+            diagnosticMessages[
+              maybeStar.messageTemplate as keyof typeof diagnosticMessages
+            ];
+
+          const star = {
             ...maybeStar,
+            category: diagnostic.category,
             kind: computeKind(maybeStar),
-          });
+          };
+
+          if ("reportsUnnecessary" in diagnostic) {
+            Object.assign(star, {
+              reportsUnnecessary: diagnostic.reportsUnnecessary,
+            });
+          }
+
+          starmap.set(maybeStar.code, star);
         }
       }
     }
-    return map;
+    logger("- starmap rebuilt");
+
+    setStarmap(context, starmap);
+
+    return starmap;
   } else {
+    logger("- no well-shapen starmap");
+
     return undefined;
   }
 };

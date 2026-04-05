@@ -2,11 +2,12 @@ import vscode from "vscode";
 
 import { names, showing } from "./util/const";
 import { getConfig, getConfigSection } from "./config";
-import { setStarmap } from "./globalState";
+import { getGlobalState, setStarmap } from "./globalState";
 import { unlock, UnlockedStar } from "./star/star";
 import { Decorator } from "./provider/decorator";
 import { Summarizer } from "./provider/summarizer";
 import { Starlister } from "./provider/starlister";
+import { logger } from "./util/logger";
 
 export function activate(context: vscode.ExtensionContext) {
   try {
@@ -22,6 +23,18 @@ export function activate(context: vscode.ExtensionContext) {
     );
 
     context.subscriptions.push(
+      vscode.commands.registerCommand(names.commands.logStarmap, () => {
+        logger(
+          "log starmap:",
+          starlister.starmap,
+          getGlobalState(context, "starmap"),
+          starlister.starmap.get(7045),
+          (getGlobalState(context, "starmap") as [number, any][]).find(
+            ([x, _]) => x === 7045,
+          )?.[1],
+        );
+      }),
+
       vscode.commands.registerCommand(names.commands.showUnlocked, () => {
         starlister.cycleShowing();
       }),
@@ -62,7 +75,7 @@ export function activate(context: vscode.ExtensionContext) {
       }),
 
       vscode.languages.onDidChangeDiagnostics(() => {
-        console.log("diagnostic changed");
+        logger("diagnostic changed");
         const document = vscode.window.activeTextEditor!.document;
         const diagnostics = vscode.languages.getDiagnostics(document.uri);
 
@@ -73,7 +86,7 @@ export function activate(context: vscode.ExtensionContext) {
             const maybeStar = starlister.starmap.get(diagnostic.code);
 
             if (maybeStar) {
-              console.log("star found:", maybeStar);
+              logger("star found:", maybeStar);
               const unlockedStar = unlock(maybeStar, document, diagnostic);
 
               showInformationMessage(unlockedStar, diagnostic);

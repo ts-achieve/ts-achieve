@@ -14,6 +14,7 @@ import {
   makeStarmap,
 } from "../star/star";
 import { PathKind, topKinds, StarKind, deepChildrenOf } from "../star/taxonomy";
+import { logger } from "../util/logger";
 
 export const toPathTitle = (s: string) => {
   const capitalizeOOP = (s: string) => (s === "oop" ? "OOP" : s);
@@ -45,8 +46,8 @@ export class Starlister<T = never>
 
   constructor(config: ExtensionConfig, context: vscode.ExtensionContext) {
     super(context);
-    this.configure(config);
     this.showing = showing.all;
+    this.reconfigure(config);
   }
 
   configure(config: ExtensionConfig): void {
@@ -75,7 +76,16 @@ export class Starlister<T = never>
   }
 
   loadStarmap(context: vscode.ExtensionContext): Starmap {
-    return fetchStarmap(context) ?? makeStarmap();
+    logger("trying to fetch starmap");
+    const x = fetchStarmap(context);
+    if (x) {
+      logger("succeeded, it has", x.get(7045));
+      return x;
+    }
+    logger("failed, we will make starmap instead");
+    const y = makeStarmap();
+    logger("it has", y.get(7045));
+    return y;
   }
 
   getChildren(

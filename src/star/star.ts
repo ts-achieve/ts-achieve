@@ -10,7 +10,7 @@ export const diagnosticToStar = (
   messageTemplate: string,
 ): LockedStar => {
   return {
-    code: diagnostic.code,
+    ...diagnostic,
     kind: computeKind({ ...diagnostic, messageTemplate }),
     messageTemplate,
   };
@@ -28,8 +28,7 @@ export const makeStarmap = (): Starmap => {
   );
 };
 
-type LockedStar = {
-  code: number;
+type LockedStar = TsDiagnostic & {
   kind: StarKind;
   messageTemplate: string;
 };
@@ -79,9 +78,7 @@ export const unlock = (
   diagnostic: vscode.Diagnostic,
 ): UnlockedStar => {
   return {
-    code: star.code,
-    kind: star.kind,
-    messageTemplate: star.messageTemplate,
+    ...star,
     time: Date.now(),
     triggerText: sequence(5, (n) => {
       const lineNumber = diagnostic.range.start.line - 2 + n;
