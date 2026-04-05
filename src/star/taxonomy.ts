@@ -75,7 +75,7 @@ export const hierarchy = {
           branches: {},
         },
         type: {
-          leaves: ["interface", "assert"],
+          leaves: ["interface", "assert", "generic", "primitive", "array"],
           branches: {},
         },
         syntax: {
@@ -90,11 +90,11 @@ export const hierarchy = {
           branches: {},
         },
         tsconfig: {
-          leaves: ["strict", "compiler"],
+          leaves: ["strict mode", "build"],
           branches: {},
         },
         module: {
-          leaves: ["port", "namespace"],
+          leaves: ["import", "export", "namespace"],
           branches: {},
         },
       },

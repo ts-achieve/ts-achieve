@@ -24,10 +24,15 @@ export const isTsDiagnostic = (x: unknown): x is TsDiagnostic => {
   );
 };
 
-export const computeKind = (
-  { code, category, reportsUnnecessary }: RequiredBy<TsDiagnostic, "code">,
-  messageTemplate?: string,
-): StarKind => {
+export const computeKind = ({
+  code,
+  category,
+  reportsUnnecessary,
+  messageTemplate,
+}: RequiredBy<
+  TsDiagnostic & { messageTemplate: string },
+  "code"
+>): StarKind => {
   if (reportsUnnecessary === true) {
     return "warning";
   } else if (category === "Suggestion") {
@@ -40,7 +45,7 @@ export const computeKind = (
     }
   } else if (messageTemplate) {
     if (includesAny(messageTemplate, "strict mode", "use strict")) {
-      return "error-tsconfig-strict";
+      return "error-tsconfig-strict mode";
     } else if (
       includesAny(
         messageTemplate,
@@ -50,23 +55,26 @@ export const computeKind = (
         "'target'",
         "'exclude'",
         "'include'",
+        "noEmit",
         "baseUrl",
         "rootDir",
         "allowJs",
         "composite",
+        "esModuleInterop",
         "isolatedModules",
         "moduleResolution",
         "preserveConstEnums",
         "verbatimModuleSyntax",
         "erasableSyntaxOnly",
         "exactOptionalPropertyTypes",
+        "allowImportingTsExtensions",
       )
     ) {
       return "error-tsconfig-other";
     } else if (
       includesAny(messageTemplate, "--", "compile", "build", "watch")
     ) {
-      return "error-tsconfig-compiler";
+      return "error-tsconfig-build";
     } else if (includesAny(messageTemplate, "jsx", "JSX", "tsx", "TSX")) {
       return "error-react";
     } else if (includesAny(messageTemplate, "async", "await", "promis")) {
@@ -75,11 +83,15 @@ export const computeKind = (
       return "error-syntax-function";
     } else if (includesAny(messageTemplate, "namespac")) {
       return "error-module-namespace";
-    } else if (includesAny(messageTemplate, "import", "export")) {
-      return "error-module-port";
+    } else if (includesAny(messageTemplate, "import")) {
+      return "error-module-import";
+    } else if (includesAny(messageTemplate, "export")) {
+      return "error-module-export";
     } else if (includesAny(messageTemplate, "module")) {
       return "error-module-other";
-    } else if (includesAny(messageTemplate, "assert", "'!'")) {
+    } else if (includesAny(messageTemplate, "generic")) {
+      return "error-type-generic";
+    } else if (includesAny(messageTemplate, "assert")) {
       return "error-type-assert";
     } else if (includesAny(messageTemplate, "interface")) {
       return "error-type-interface";
@@ -101,7 +113,9 @@ export const computeKind = (
       return "error-syntax-expression";
     } else if (includesAny(messageTemplate, "keyword", "reserved")) {
       return "error-syntax-keyword";
-    } else if (includesAny(messageTemplate, "character class")) {
+    } else if (
+      includesAny(messageTemplate, "regular expression", "character class")
+    ) {
       return "error-syntax-regex";
     } else if (includesAny(messageTemplate, "abstract")) {
       return "error-oop-abstract";
@@ -128,6 +142,10 @@ export const computeKind = (
       return "error-oop-accessibility";
     } else if (includesAny(messageTemplate, "class", "implement")) {
       return "error-oop-class";
+    } else if (includesAny(messageTemplate, "tuple", "readonly", "read-only")) {
+      return "error-type-array";
+    } else if (includesAny(messageTemplate, "primitiv", "bigint", "literal")) {
+      return "error-type-primitive";
     } else if (
       includesAny(
         messageTemplate,
@@ -144,11 +162,6 @@ export const computeKind = (
         "truthi",
         "falsy",
         "falsi",
-        "'bigint'",
-        "primitive",
-        "tuple",
-        "readonly",
-        "read-only",
         "assign",
       )
     ) {

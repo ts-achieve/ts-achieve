@@ -3,7 +3,7 @@ import vscode from "vscode";
 import { ExtensionConfig } from "../config";
 import { fetchStarmap } from "../globalState";
 import { names, showing } from "../util/const";
-import { capitalize, mod, not, split, succeed } from "../util/type";
+import { capitalize, join, mod, not, split, succeed } from "../util/type";
 import { StarProviderBase } from "./provider";
 import {
   Star,
@@ -114,11 +114,11 @@ export class Starlister<T = never>
       case 1:
         return providable
           ? undefined
-          : this.starmap.values().filter(isUnlocked).toArray();
+          : this.starmap.values().toArray().filter(isUnlocked);
       case 2:
         return providable
           ? undefined
-          : this.starmap.values().filter(not(isUnlocked)).toArray();
+          : this.starmap.values().toArray().filter(not(isUnlocked));
     }
     this.showing satisfies never;
   }
@@ -149,33 +149,6 @@ export class Starlister<T = never>
       const label = star.code.toString();
 
       if (isUnlocked(star)) {
-        const tooltip = new vscode.MarkdownString(
-          `
-$(star-full) Unlocked on ${dateAtTime(star.time)}
-
-${++star.encounterCount} lifetime encounters (last: ${dateAtTime(star.lastEncounter)})
-
----
-
-$(location) Unlock location: \`${star.fileName}\`
-
-\`\`\`ts
-${star.triggerText}
-\`\`\`
-
----
-
-$(info) Unlock message:
-
-\`\`\`
-${star.messageText} (ts${star.code})
-\`\`\`
-
-Internal category: \`${star.kind}\`
-`.trim(),
-        );
-        tooltip.supportThemeIcons = true;
-        harden(tooltip);
         return {
           label,
           description: star.messageTemplate,
@@ -184,38 +157,9 @@ Internal category: \`${star.kind}\`
             "star-full",
             new vscode.ThemeColor(names.colors.unlocked),
           ),
-          tooltip,
+          tooltip: makeTooltip(star),
         };
       } else {
-        const tooltip = new vscode.MarkdownString(
-          `
-$(star-empty) Locked
-`.trim(),
-        );
-        if (
-          vscode.workspace
-            .getConfiguration(names.ex)
-            .get(names.config.revealDescription)
-        ) {
-          tooltip.appendMarkdown(
-            `
-[]()
-
-
----
-
-$(info) Message template:
-
-\`\`\`
-${star.messageTemplate} (ts${star.code})
-\`\`\`
-
-Internal category: \`${star.kind}\`
-`.trim(),
-          );
-        }
-        tooltip.supportThemeIcons = true;
-        harden(tooltip);
         return {
           label,
           description: vscode.workspace
@@ -228,7 +172,7 @@ Internal category: \`${star.kind}\`
             "lock",
             new vscode.ThemeColor(names.colors.locked),
           ),
-          tooltip,
+          tooltip: makeTooltip(star),
         };
       }
     } else if (typeof providable === "string") {
@@ -250,12 +194,71 @@ Internal category: \`${star.kind}\`
   }
 }
 
+const tooltipheader = (star: Star) => {
+  const icon = isUnlocked(star) ? "$(star-full)" : "$(star-empty)";
+  const status = isUnlocked(star)
+    ? `Unlocked on ${dateAtTime(star.time)}`
+    : "Locked";
+
+  const encounters = isUnlocked(star)
+    ? `\n\n${++star.encounterCount} lifetime encounters (last: ${dateAtTime(star.lastEncounter)})`
+    : "";
+
+  return `${icon} ${star.code}: ${status}${encounters}
+
+Internal category: \`${star.kind}\`` as const;
+};
+
+const tooltipUnlockedLocation = (star: UnlockedStar) =>
+  `$(location) Unlock location: \`${star.fileName}\`
+
+\`\`\`ts
+${star.triggerText}
+\`\`\`` as const;
+
+const tooltipfooter = (star: Star) =>
+  `$(info) ${isUnlocked(star) ? "Message text" : "Message template"}:
+
+\`\`\`
+${isUnlocked(star) ? star.messageText : star.messageTemplate} (ts${star.code})
+\`\`\`` as const;
+
 const dateAtTime = (time: number) => {
   const date = new Date(time);
   return `${date.toLocaleDateString()} at ${date.toLocaleTimeString()}`;
 };
 
-const harden = (markdown: vscode.MarkdownString): vscode.MarkdownString => {
-  markdown.appendMarkdown("\n[]()");
-  return markdown;
+const hardness = () => "[]()" as const;
+
+export const makeTooltip = (star: Star): vscode.MarkdownString => {
+  const tooltip = isUnlocked(star)
+    ? new vscode.MarkdownString(
+        join(
+          [
+            tooltipheader(star),
+            tooltipUnlockedLocation(star),
+            tooltipfooter(star),
+          ],
+          "\n\n---\n\n",
+        ),
+      )
+    : (() => {
+        const tooltip = new vscode.MarkdownString(tooltipheader(star));
+
+        if (
+          vscode.workspace
+            .getConfiguration(names.ex)
+            .get(names.config.revealDescription)
+        ) {
+          tooltip.appendMarkdown("\n\n---\n\n");
+          tooltip.appendMarkdown(tooltipfooter(star));
+        }
+
+        return tooltip;
+      })();
+
+  tooltip.supportThemeIcons = true;
+  tooltip.appendMarkdown(hardness());
+
+  return tooltip;
 };

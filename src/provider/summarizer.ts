@@ -10,9 +10,12 @@ import {
   topKinds,
 } from "../star/taxonomy";
 import { uncapitalize } from "../util/type";
-import { toPathTitle } from "./starlister";
+import { makeTooltip, toPathTitle } from "./starlister";
 
-const summaryKinds = ["overall", "encounter", ...pathKinds()] as const;
+const topSummaryKinds = ["overall", "favorite", "lifetime"] as const;
+
+const summaryKinds = [...topSummaryKinds, ...pathKinds()] as const;
+
 type SummaryKind = (typeof summaryKinds)[number];
 
 export class Summarizer extends StarProviderBase<SummaryKind> {
@@ -33,9 +36,9 @@ export class Summarizer extends StarProviderBase<SummaryKind> {
 
   getChildren(kind?: SummaryKind): vscode.ProviderResult<SummaryKind[]> {
     if (!kind) {
-      return ["overall", "encounter"];
-    } else if (kind === "encounter") {
-      return Array.from(topKinds());
+      return [...topSummaryKinds];
+    } else if (kind === "lifetime") {
+      return [...topKinds()];
     } else {
       const deepChildren = deepChildrenOf(kind);
       if (deepChildren.length > 0) {
@@ -58,11 +61,29 @@ export class Summarizer extends StarProviderBase<SummaryKind> {
           label: `Overall: ${((achieved / total) * 100).toFixed(2)}%`,
           description: `(${achieved} of ${total})`,
         };
+      case "favorite":
+        const favorites = this.starmap
+          .values()
+          .toArray()
+          .filter(isUnlocked)
+          .sort((a, b) => a.encounterCount - b.encounterCount);
+        const favorite = favorites.at(-1);
+
+        return favorite
+          ? {
+              label: `Favorite achievement: ${favorite.code}`,
+              description: `(${favorite.encounterCount} encounters)`,
+              tooltip: makeTooltip(favorite),
+            }
+          : {
+              label: `Favorite achievement: none`,
+            };
+
       default:
         const statistic =
-          kind === "encounter" ? kind : toPathTitle(uncapitalize(kind));
+          kind === "lifetime" ? "encounter" : toPathTitle(uncapitalize(kind));
         const condition =
-          kind === "encounter"
+          kind === "lifetime"
             ? () => true
             : kind === "error"
               ? (star: Star) => isErrorStarKind(star.kind as any)
@@ -75,7 +96,7 @@ export class Summarizer extends StarProviderBase<SummaryKind> {
             .map((star) => (star as UnlockedStar).encounterCount)
             .reduce((xs, x) => xs + x, 0)}`,
           collapsibleState:
-            kind === "encounter" || hasChildren(kind)
+            kind === "lifetime" || hasChildren(kind)
               ? vscode.TreeItemCollapsibleState.Collapsed
               : vscode.TreeItemCollapsibleState.None,
         };

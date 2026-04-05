@@ -11,7 +11,7 @@ export const diagnosticToStar = (
 ): LockedStar => {
   return {
     code: diagnostic.code,
-    kind: computeKind(diagnostic, messageTemplate),
+    kind: computeKind({ ...diagnostic, messageTemplate }),
     messageTemplate,
   };
 };
