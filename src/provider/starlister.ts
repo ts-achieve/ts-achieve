@@ -24,54 +24,19 @@ import {
 } from "../star/star";
 import {
   PathKind,
-  TopKind,
-  SuggestionKind,
-  ErrorKind,
-  SyntaxErrorKind,
   topKinds,
   suggestionKinds,
-  errorKinds,
-  syntaxErrorKinds,
-  pathKinds,
+  errorStarKinds,
+  StarKind,
 } from "../star/taxonomy";
 
-type PathTitle =
-  | `${Capitalize<Extract<PathKind, "special">>} achievements`
-  | `${Capitalize<Exclude<TopKind, "special">>}s`
-  | `${Capitalize<Split<SuggestionKind, "-">[0]>} suggestions`
-  | `${Capitalize<Split<ErrorKind | SyntaxErrorKind, "-">[0]>} errors`;
-
-export const toPathTitle = (kind: PathKind): PathTitle => {
-  switch (kind) {
-    case "special":
-      return `${capitalize(kind)} achievements`;
-
-    case "message":
-    case "suggestion":
-    case "warning":
-    case "error":
-      return `${capitalize(kind)}s`;
-
-    case "type-suggestion":
-    case "other-suggestion":
-    case "language":
-      return `${split(capitalize(kind), "-")[0]} suggestions`;
-
-    case "type-error":
-    case "other-error":
-    case "module":
-    case "statement":
-    case "expression":
-    case "regex":
-    case "strict":
-    case "syntax":
-    case "async":
-    case "class":
-    case "function":
-    case "tsconfig":
-      return `${split(capitalize(kind), "-")[0]} errors`;
+export const toPathTitle = (kind: PathKind) => {
+  console.log(kind);
+  if (kind.includes("-")) {
+    return `${split(capitalize(kind), "-")[0]} ${split(capitalize(kind), "-").at(-1)}`;
+  } else {
+    return `${capitalize(kind)}s`;
   }
-  kind satisfies never;
 };
 
 export type Folder<K extends PathKind = PathKind> = K extends any
@@ -87,7 +52,7 @@ export type Configurable = {
 export type Subcategorize = "none" | "achievements only" | "all";
 
 export class Starlister<T = never>
-  extends StarProviderBase<T | Star | PathKind>
+  extends StarProviderBase<T | PathKind | StarKind | Star>
   implements Configurable
 {
   showing: Showing;
@@ -129,13 +94,13 @@ export class Starlister<T = never>
   }
 
   getChildren(
-    providable?: T | Star | PathKind,
-  ): vscode.ProviderResult<(T | Star | PathKind)[]> {
+    providable?: T | PathKind | StarKind | Star,
+  ): vscode.ProviderResult<(T | PathKind | StarKind | Star)[]> {
     switch (this.showing) {
       case 0:
         if (!providable) {
           if (this.subcategorize !== "none") {
-            return Array.from(topKinds);
+            return topKinds();
           } else {
             return this.starmap.values().toArray();
           }
@@ -143,25 +108,19 @@ export class Starlister<T = never>
           return undefined;
         } else if (typeof providable === "string") {
           if (providable === "suggestion") {
-            return Array.from(suggestionKinds);
+            return suggestionKinds();
           } else if (providable === "error") {
             if (this.subcategorize === "all") {
-              return Array.from(errorKinds);
+              return childrenOf(providable);
             } else {
               return this.starmap
                 .values()
                 .filter((star) =>
-                  safeConcat(errorKinds, syntaxErrorKinds).includes(
+                  safeConcat(errorStarKinds, syntaxErrorKinds).includes(
                     star.kind as any,
                   ),
                 )
                 .toArray();
-            }
-          } else if (providable === "syntax") {
-            if (this.subcategorize === "all") {
-              return Array.from(syntaxErrorKinds);
-            } else {
-              return undefined;
             }
           } else {
             return this.starmap
@@ -184,10 +143,10 @@ export class Starlister<T = never>
     this.showing satisfies never;
   }
 
-  getDescendants(): (T | Star | PathKind)[] {
+  getDescendants(): (T | PathKind | StarKind | Star)[] {
     const descendants = [];
 
-    const next = (children?: (T | Star | PathKind)[]) =>
+    const next = (children?: (T | PathKind | StarKind | Star)[]) =>
       (children ?? [undefined])
         .map((child) => this.getChildren(child))
         .filter((x) => Array.isArray(x))
@@ -200,20 +159,10 @@ export class Starlister<T = never>
       children = next(children);
     }
 
-    return descendants as (T | Star | PathKind)[];
+    return descendants as (T | PathKind | StarKind | Star)[];
   }
 
-  expandAll(): void {
-    this.getDescendants().forEach((descendant) => {
-      if (includes(pathKinds, descendant)) {
-        console.log(descendant);
-        this.getTreeItem(descendant).collapsibleState =
-          vscode.TreeItemCollapsibleState.Expanded;
-      }
-    });
-  }
-
-  getTreeItem(providable: Star | PathKind): vscode.TreeItem {
+  getTreeItem(providable: T | PathKind | StarKind | Star): vscode.TreeItem {
     if (isStar(providable)) {
       const star = providable;
 
@@ -302,11 +251,11 @@ ${star.messageTemplate} (ts${star.code})
         .toArray()
         .filter((star) =>
           providable === "suggestion"
-            ? suggestionKinds.includes(star.kind as any)
+            ? suggestionKinds().includes(star.kind as any)
             : providable === "syntax"
               ? syntaxErrorKinds.includes(star.kind as any)
               : providable === "error"
-                ? errorKinds.includes(star.kind as any)
+                ? errorStarKinds.includes(star.kind as any)
                 : star.kind === providable,
         );
 

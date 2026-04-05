@@ -1,127 +1,193 @@
 import { UnionToTuple } from "expect-type";
-import { DeepKeys, Maybe } from "../util/type";
+import {
+  biject,
+  bijectPrefix,
+  DeepValues,
+  includes,
+  isObject,
+  safeConcat,
+  safeKeys,
+} from "../util/type";
 
-type Taxonomy = DeepKeys<typeof taxonomy>;
+type Level = {
+  leaves: string[];
+  branches: Record<string, Level>;
+};
+
+type VerboseStarName<
+  S extends string = DeepValues<typeof hierarchy>[number],
+  T extends Level = typeof hierarchy,
+  P extends string = "",
+> = S extends any
+  ? S extends T["leaves"][number]
+    ? P extends ""
+      ? S | "other"
+      : `${P}-${S | "other"}`
+    : keyof T["branches"] extends infer K extends keyof T["branches"] & string
+      ? K extends any
+        ? P extends ""
+          ? VerboseStarName<S, T["branches"][K], K>
+          : VerboseStarName<S, T["branches"][K], `${P}-${K}`>
+        : never
+      : never
+  : never;
+
+type VerbosePathName<
+  T extends Level = typeof hierarchy,
+  P extends string = "",
+> = keyof T["branches"] extends never
+  ? never
+  : keyof T["branches"] extends infer K extends keyof T["branches"] & string
+    ? K extends any
+      ? P extends ""
+        ? K | VerbosePathName<T["branches"][K], K>
+        : `${P}-${K}` | VerbosePathName<T["branches"][K], `${P}-${K}`>
+      : never
+    : never;
+
+type ConciseName = {} & (
+  | DeepKeys<typeof hierarchy>
+  | DeepValues<typeof hierarchy>[number]
+);
+
+type VerboseName = VerbosePathName | VerboseStarName;
+
+export const hierarchy = {
+  leaves: ["special", "message", "warning"],
+  branches: {
+    suggestion: {
+      leaves: ["type", "language"],
+      branches: {},
+    },
+    error: {
+      leaves: ["async", "reference"],
+      branches: {
+        oop: {
+          leaves: ["class", "constructor", "accessor", "decorator", "this"],
+          branches: {},
+        },
+        type: {
+          leaves: ["interface"],
+          branches: {},
+        },
+        syntax: {
+          leaves: [
+            "declaration",
+            "expression",
+            "statement",
+            "function",
+            "regex",
+          ],
+          branches: {},
+        },
+        tsconfig: {
+          leaves: ["strict"],
+          branches: {},
+        },
+        module: {
+          leaves: ["port", "namespace"],
+          branches: {},
+        },
+      },
+    },
+  },
+} as const satisfies Level;
 
 export const taxonomy = {
-  special: {},
-  message: {},
-  suggestion: {
-    type: [7043, 7044, 7045, 7046, 7047, 7048, 7049, 7050],
-    language: [80001, 80002, 80003, 80004, 80005, 80009, 80010],
-    other: [6385, 6387, 80006, 80007, 80008],
-  },
-  warning: {},
-  error: {
-    syntax: {
-      async: [1055, 1058, 1059, 1060, 1062, 1064, 1065, 1103, 1106, 1375, 1378],
-      class: [
-        1028, 1029, 1030, 1031, 1034, 1047, 1048, 1049, 1051, 1052, 1053, 1054,
-        1172, 1173, 1174, 1175, 1176, 1242, 1243, 1244, 1245, 1246, 1247, 1248,
-        1249, 1253, 1267, 1275, 1276, 1318, 1341, 1368, 1433, 1451, 2302, 2331,
-        2332, 2334, 2335, 2336, 2337, 2338, 2340, 2341, 2348, 2350, 2351, 2376,
-        2377, 2378, 2389, 2390, 2391, 2392, 2393, 2394, 2408, 2409, 2414, 2415,
-        2417, 2420, 2422, 2423, 2425, 2426, 2443, 2444, 2445, 2446, 2507, 2508,
-        2509, 2510, 2511, 2512, 2513, 2515, 2516, 2517,
-      ],
-      interface: [2427, 2430],
-      decorator: {},
-      expression: [
-        1002, 1003, 1005, 1009, 1010, 1012, 1109, 1121, 1124, 1125, 1126, 1127,
-        1132, 1135, 1137, 1140, 1141, 1160, 1161, 1177, 1178, 1180, 1181, 1182,
-        1186, 1198, 1199, 1200, 1257, 1260, 1265, 1266, 1327, 1351, 1352, 1353,
-        1381, 1382, 1477, 1478, 1487, 1488, 1489,
-      ],
-      regex: [
-        1499, 1500, 1502, 1504, 1505, 1506, 1507, 1508, 1509, 1510, 1511, 1512,
-        1513, 1514, 1515, 1516, 1517, 1518, 1519, 1520, 1521, 1522, 1523, 1524,
-        1525, 1526, 1527, 1528, 1529, 1530, 1531, 1532, 1533, 1534, 1535, 1536,
-        1537, 1538,
-      ],
-      statement: [
-        1035, 1036, 1038, 1039, 1040, 1042, 1044, 1046, 1104, 1105, 1107, 1108,
-        1113, 1115, 1116, 1128, 1129, 1130, 1134, 1136, 1138, 1139, 1142, 1144,
-        1145, 1146, 1472, 1163, 1185, 1188, 1189, 1190, 1196, 1197, 1221, 1313,
-        1344, 2410,
-      ],
-      function: [
-        1013, 1014, 1015, 1016, 1017, 1018, 1019, 1020, 1021, 1022, 1024, 1025,
-        2349,
-      ],
-      reference: [2339, 2551],
-    },
-    module: [
-      1147, 1148, 1149, 1191, 1192, 1193, 1194, 1195, 1202, 1203, 1205, 1216,
-      1217, 1231, 1232, 1233, 1234, 1235, 1258, 1259, 1261, 1262, 1269, 1280,
-      1281, 1314, 1315, 1316, 1319, 1361, 1362, 1363, 1379, 1380, 1392, 1431,
-      1437, 1443, 1448, 1453, 1454, 1455, 1456, 1463, 1464, 1470, 1471, 1473,
-      1474, 1479, 1484, 1485, 1486, 1540, 1541, 1542, 1543, 1544, 2303, 2305,
-      2306, 2307, 2308, 2309, 2433, 2434, 2435, 2436, 2437, 2438, 2439, 2440,
-      2458, 2459, 2460, 2593,
-    ],
-    type: [
-      1345, 1354, 1355, 1360, 1385, 1386, 1387, 1388, 1441, 2200, 2201, 2202,
-      2203, 2204, 2205, 2206, 2207, 2208, 2312, 2313, 2314, 2315, 2316, 2317,
-      2318, 2319, 2320, 2321, 2322, 2324, 2325, 2326, 2327, 2328, 2329, 2330,
-      2339, 2344, 2345, 2347, 2352, 2353, 2355, 2356, 2357, 2358, 2359, 2362,
-      2363, 2364, 2365, 2366, 2367, 2368, 2370, 2405, 2406, 2407, 2411, 2413,
-      2456, 2457, 2461, 2464, 2467, 2514, 2527, 2531, 2532, 2533, 2534, 2536,
-      2537, 2538, 2539, 2540, 2542, 2551, 2554, 2555, 2556, 2558, 2559, 2560,
-      2561, 2574, 2577, 2588, 2589, 2590,
-    ],
-    tsconfig: [
-      1282, 1283, 1284, 1285, 1286, 1287, 1288, 1289, 1290, 1291, 1292, 1293,
-      1294, 1295, 1323, 1324, 1343, 1432, 1501, 1503, 2209, 2210, 2375, 2379,
-      2412,
-    ],
-    strict: [
-      1100, 1101, 1102, 1212, 1213, 1214, 1215, 1250, 1251, 1252, 1346, 1347,
-      1349, 4114,
-    ],
-  },
-} as const;
+  "suggestion-type": [7043, 7044, 7045, 7046, 7047, 7048, 7049, 7050],
+  "suggestion-language": [80001, 80002, 80003, 80004, 80005, 80009, 80010],
+  "suggestion-other": [6385, 6387, 80006, 80007, 80008],
+  "error-async": [
+    1055, 1058, 1059, 1060, 1062, 1064, 1065, 1103, 1106, 1375, 1378,
+  ],
+  "error-oop-class": [
+    1028, 1029, 1030, 1031, 1034, 1047, 1048, 1049, 1051, 1052, 1053, 1054,
+    1172, 1173, 1174, 1175, 1176, 1242, 1243, 1244, 1245, 1246, 1247, 1248,
+    1249, 1253, 1267, 1275, 1276, 1318, 1341, 1368, 1433, 1451, 2302, 2331,
+    2332, 2334, 2335, 2336, 2337, 2338, 2340, 2341, 2348, 2350, 2351, 2376,
+    2377, 2378, 2389, 2390, 2391, 2392, 2393, 2394, 2408, 2409, 2414, 2415,
+    2417, 2420, 2422, 2423, 2425, 2426, 2443, 2444, 2445, 2446, 2507, 2508,
+    2509, 2510, 2511, 2512, 2513, 2515, 2516, 2517,
+  ],
+  "error-type-interface": [2427, 2430],
+  "error-syntax-expression": [
+    1002, 1003, 1005, 1009, 1010, 1012, 1109, 1121, 1124, 1125, 1126, 1127,
+    1132, 1135, 1137, 1140, 1141, 1160, 1161, 1177, 1178, 1180, 1181, 1182,
+    1186, 1198, 1199, 1200, 1257, 1260, 1265, 1266, 1327, 1351, 1352, 1353,
+    1381, 1382, 1477, 1478, 1487, 1488, 1489,
+  ],
+  "error-syntax-regex": [
+    1499, 1500, 1502, 1504, 1505, 1506, 1507, 1508, 1509, 1510, 1511, 1512,
+    1513, 1514, 1515, 1516, 1517, 1518, 1519, 1520, 1521, 1522, 1523, 1524,
+    1525, 1526, 1527, 1528, 1529, 1530, 1531, 1532, 1533, 1534, 1535, 1536,
+    1537, 1538,
+  ],
+  "error-syntax-statement": [
+    1035, 1036, 1038, 1039, 1040, 1042, 1044, 1046, 1104, 1105, 1107, 1108,
+    1113, 1115, 1116, 1128, 1129, 1130, 1134, 1136, 1138, 1139, 1142, 1144,
+    1145, 1146, 1472, 1163, 1185, 1188, 1189, 1190, 1196, 1197, 1221, 1313,
+    1344, 2410,
+  ],
+  "error-syntax-function": [
+    1013, 1014, 1015, 1016, 1017, 1018, 1019, 1020, 1021, 1022, 1024, 1025,
+    2349,
+  ],
+  "error-reference": [2339, 2551],
+  "error-module-namespace": [
+    1147, 1148, 1149, 1191, 1192, 1193, 1194, 1195, 1202, 1203, 1205, 1216,
+    1217, 1231, 1232, 1233, 1234, 1235, 1258, 1259, 1261, 1262, 1269, 1280,
+    1281, 1314, 1315, 1316, 1319, 1361, 1362, 1363, 1379, 1380, 1392, 1431,
+    1437, 1443, 1448, 1453, 1454, 1455, 1456, 1463, 1464, 1470, 1471, 1473,
+    1474, 1479, 1484, 1485, 1486, 1540, 1541, 1542, 1543, 1544, 2303, 2305,
+    2306, 2307, 2308, 2309, 2433, 2434, 2435, 2436, 2437, 2438, 2439, 2440,
+    2458, 2459, 2460, 2593,
+  ],
+  "error-type-other": [
+    1345, 1354, 1355, 1360, 1385, 1386, 1387, 1388, 1441, 2200, 2201, 2202,
+    2203, 2204, 2205, 2206, 2207, 2208, 2312, 2313, 2314, 2315, 2316, 2317,
+    2318, 2319, 2320, 2321, 2322, 2324, 2325, 2326, 2327, 2328, 2329, 2330,
+    2339, 2344, 2345, 2347, 2352, 2353, 2355, 2356, 2357, 2358, 2359, 2362,
+    2363, 2364, 2365, 2366, 2367, 2368, 2370, 2405, 2406, 2407, 2411, 2413,
+    2456, 2457, 2461, 2464, 2467, 2514, 2527, 2531, 2532, 2533, 2534, 2536,
+    2537, 2538, 2539, 2540, 2542, 2551, 2554, 2555, 2556, 2558, 2559, 2560,
+    2561, 2574, 2577, 2588, 2589, 2590,
+  ],
+  "error-tsconfig-other": [
+    1282, 1283, 1284, 1285, 1286, 1287, 1288, 1289, 1290, 1291, 1292, 1293,
+    1294, 1295, 1323, 1324, 1343, 1432, 1501, 1503, 2209, 2210, 2375, 2379,
+    2412,
+  ],
+  "error-tsconfig-strict": [
+    1100, 1101, 1102, 1212, 1213, 1214, 1215, 1250, 1251, 1252, 1346, 1347,
+    1349, 4114,
+  ],
+} as const satisfies Partial<Record<VerboseStarName, number[]>>;
 
-export const taxonomize = (
-  code: number,
-  subtaxonomy: object = taxonomy,
-): Maybe<Taxonomy> => {
-  for (const [key, value] of Object.entries(subtaxonomy)) {
-    if (Array.isArray(value)) {
-      if (value.includes(code)) {
-        return key as Taxonomy;
-      } else {
-        continue;
-      }
-    } else {
-      const maybe = taxonomize(code, value);
-      if (maybe) {
-        return maybe;
-      } else {
-        continue;
+export const deepValue = <T extends object, K extends DeepKeys<T>>(
+  x: T,
+  key: K,
+) => {
+  if (Object.keys(x).includes(key as any)) {
+    return x[key as keyof T];
+  } else {
+    for (const v of Object.values(x)) {
+      if (isObject(v) && Object.keys(v).length > 0) {
+        const vv: DeepValues<T> = deepValue(v, key as DeepKeys);
+        if (vv !== undefined) {
+          return vv;
+        }
       }
     }
+    return undefined;
   }
-
-  return undefined;
 };
 
-export const categoriesOf = (
-  subtaxonomy: object = taxonomy,
-): UnionToTuple<Taxonomy> => {
-  const categories = [];
-  for (const [key, value] of Object.entries(subtaxonomy)) {
-    if (Array.isArray(value)) {
-      categories.push(key);
-    } else {
-      categories.push(key, ...categoriesOf(value));
-    }
-  }
-
-  return categories as UnionToTuple<Taxonomy>;
+export const childrenOf = (parent: DeepKeys<typeof hierarchy>) => {
+  return {
+    leaves: hierarchy.branches[parent].leaves,
+    branches: safeKeys(hierarchy.branches[parent].branches),
+  };
 };
-
-// type X = UnionToTuple<keyof typeof taxonomy>;
-// const topKinds: X = ["special", "message", "suggestion", "warning", "error"];
 
 export const nonErrorKinds = [
   "special",
@@ -130,58 +196,42 @@ export const nonErrorKinds = [
   "warning",
 ] as const;
 
-export const topKinds = [...nonErrorKinds, "error"] as const;
+export const resolveHierarchy = (): UnionToTuple<
+  keyof (typeof hierarchy)["branches"]
+> => {
+  return safeKeys(hierarchy.branches);
+};
 
-export const suggestionKinds = [
-  "type-suggestion",
-  "language",
-  "other-suggestion",
-] as const;
+export const topKinds = () =>
+  safeConcat(hierarchy.leaves, safeKeys(hierarchy.branches));
 
-export const errorKinds = [
-  "syntax",
-  "type-error",
-  "tsconfig",
-  "strict",
-  "other-error",
-] as const;
+export const suggestionKinds = () =>
+  bijectPrefix("suggestion-", andOther(hierarchy.branches.suggestion.leaves));
 
-export const syntaxErrorKinds = [
-  "async",
-  "class",
-  "statement",
-  "function",
-  "expression",
-  "module",
-  "regex",
-] as const;
+const andOther = <T extends readonly string[]>(xs: T) => {
+  return [...xs, "other"] as const;
+};
 
-export const pathKinds = [
-  ...topKinds,
-  ...suggestionKinds,
-  ...errorKinds,
-  ...syntaxErrorKinds,
-] as const;
+export const errorStarKinds = () =>
+  safeConcat(
+    andOther(hierarchy.branches.error.leaves),
+    biject(safeKeys(hierarchy.branches.error.branches), (branch) =>
+      bijectPrefix(
+        `${branch}-`,
+        andOther(hierarchy.branches.error.branches[branch].leaves),
+      ),
+    ),
+  );
 
-export const starKinds = [
-  "special",
-  "message",
-  ...suggestionKinds,
-  "warning",
-  ...syntaxErrorKinds,
-  "type-error",
-  "tsconfig",
-  "strict",
-  "other-error",
-] as const;
+export type PathKind = VerbosePathName;
+export type StarKind = VerboseStarName;
 
-export type TopKind = (typeof topKinds)[number];
-export type SuggestionKind = (typeof suggestionKinds)[number];
-export type ErrorKind = (typeof errorKinds)[number];
-export type SyntaxErrorKind = (typeof syntaxErrorKinds)[number];
-export type PathKind = (typeof pathKinds)[number];
-export type StarKind = (typeof starKinds)[number];
+type ErrorStarKind = StarKind extends infer K extends StarKind
+  ? K extends `error-${any}`
+    ? K
+    : never
+  : never;
 
-export const isErrorKind = (x: string): x is ErrorKind => {
-  return errorKinds.includes(x as any);
+export const isErrorStarKind = (x: string): x is ErrorStarKind => {
+  return errorStarKinds().includes(x as any);
 };

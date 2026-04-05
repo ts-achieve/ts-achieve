@@ -7,15 +7,35 @@ export type Maybe<T> = T | undefined;
 export type Writable<T> = { -readonly [K in keyof T]: T[K] };
 export type ReadWrite<T> = T | Readonly<T> | Writable<T>;
 
+export type DeepWritable<T> = { -readonly [K in keyof T]: DeepWritable<T[K]> };
+
 export const isObject = (
   x: unknown,
 ): x is Exclude<object, any[] | readonly any[]> => {
   return typeof x === "object" && !!x && !Array.isArray(x);
 };
 
-export type DeepKeys<T, K extends keyof T = keyof T> =
+export const safeKeys = <T extends object>(x: T): UnionToTuple<keyof T> => {
+  return Object.keys(x) as UnionToTuple<keyof T>;
+};
+
+export type DeepKeys<T = object, K extends keyof T = keyof T> =
   | keyof T
-  | (K extends any ? keyof T[K] : never);
+  | (K extends any
+      ? T[K] extends readonly any[]
+        ? K
+        : T[K] extends object
+          ? DeepKeys<T[K]>
+          : never
+      : never);
+
+export type DeepValues<T, K extends keyof T = keyof T> = K extends any
+  ? T[K] extends readonly any[]
+    ? T[K]
+    : T[K] extends object
+      ? DeepValues<T[K]>
+      : T[K]
+  : never;
 
 export type TestObject = {
   a: 1;
@@ -44,7 +64,7 @@ export type LeafKeys<T, K extends keyof T = keyof T> = {} & (
       : never)
   | (K extends any
       ? T[K] extends readonly any[]
-        ? never
+        ? K
         : T[K] extends object
           ? LeafKeys<T[K]>
           : never
@@ -55,6 +75,19 @@ export type LeafKeys<T, K extends keyof T = keyof T> = {} & (
 
 export const includes = <T>(xs: readonly T[], x: unknown): x is T => {
   return xs.includes(x as any);
+};
+
+export type Flat<
+  T extends readonly any[],
+  A extends readonly any[] = [],
+> = T extends [infer F, ...infer R]
+  ? F extends readonly any[]
+    ? Flat<R, [...A, ...Flat<F>]>
+    : Flat<R, [...A, F]>
+  : A;
+
+export const flat = <T extends readonly any[]>(xs: T): Flat<T> => {
+  return xs.flat() as Flat<T>;
 };
 
 // region tuple
@@ -89,18 +122,20 @@ export const biject = <U, L extends readonly any[]>(
 };
 
 export type BijectPrefix<
-  L extends string[],
   P extends string,
+  L extends string[],
   A extends string[] = [],
 > = L extends [infer F extends string, ...infer R extends string[]]
-  ? BijectPrefix<R, P, [...A, `${P}${F}`]>
+  ? BijectPrefix<P, R, [...A, `${P}${F}`]>
   : A;
 
-export const bijectPrefix = <L extends string[], P extends string>(
-  list: L,
+export const bijectPrefix = <P extends string, L extends readonly string[]>(
   prefix: P,
+  list: L,
 ) => {
-  return list.map((s) => `${prefix}${s}`) as BijectPrefix<L, P>;
+  return list.map((s) => `${prefix}${s}`) as P extends any
+    ? BijectPrefix<P, Writable<L>>
+    : never;
 };
 
 type Upto<N extends number, A extends number = never> = N extends 0

@@ -97,11 +97,11 @@ suite("`biject`", () => {
 suite("`bijectPrefix`", () => {
   test("is well-typed", () => {
     expectTypeOf<["a0", "a1", "a2", "a3"]>().toEqualTypeOf<
-      BijectPrefix<["0", "1", "2", "3"], "a">
+      BijectPrefix<"a", ["0", "1", "2", "3"]>
     >();
   });
   test("is well-valued", () => {
-    assert.deepStrictEqual(bijectPrefix(["0", "1", "2", "3"], "a"), [
+    assert.deepStrictEqual(bijectPrefix("a", ["0", "1", "2", "3"]), [
       "a0",
       "a1",
       "a2",

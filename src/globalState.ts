@@ -17,7 +17,7 @@ export const getStarmap = (
         if (isStar(maybeStar)) {
           map.set(maybeStar.code, {
             ...maybeStar,
-            kind: "tsconfig",
+            kind: "other",
           });
         }
       }

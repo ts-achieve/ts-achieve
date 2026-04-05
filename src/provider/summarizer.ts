@@ -2,7 +2,7 @@ import vscode from "vscode";
 
 import { StarProviderBase } from "./provider";
 import { isUnlocked, Star, Starmap, UnlockedStar } from "../star/star";
-import { errorKinds, isErrorKind, pathKinds, topKinds } from "../star/taxonomy";
+import { errorStarKinds, isErrorStarKind, pathKinds, topKinds } from "../star/taxonomy";
 import { uncapitalize } from "../util/type";
 import { toPathTitle } from "./starlister";
 
@@ -31,7 +31,7 @@ export class Summarizer extends StarProviderBase<SummaryKind> {
     } else if (kind === "encounters") {
       return Array.from(topKinds);
     } else if (kind === "error") {
-      return Array.from(errorKinds);
+      return Array.from(errorStarKinds);
     } else {
       return undefined;
     }
@@ -56,7 +56,7 @@ export class Summarizer extends StarProviderBase<SummaryKind> {
           kind === "encounters"
             ? () => true
             : kind === "error"
-              ? (star: Star) => isErrorKind(star.kind as any)
+              ? (star: Star) => isErrorStarKind(star.kind as any)
               : (star: Star) => star.kind === kind;
 
         return {

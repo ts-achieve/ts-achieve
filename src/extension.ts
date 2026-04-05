@@ -40,12 +40,16 @@ export function activate(context: vscode.ExtensionContext) {
       }),
 
       vscode.commands.registerCommand(names.commands.hardReset, () => {
-        setStarmap(context, undefined);
-        starlister.starmap = starlister.loadStarmap(context);
-        summarizer.update(starlister.starmap);
+        try {
+          setStarmap(context, undefined);
+          starlister.starmap = starlister.loadStarmap(context);
+          summarizer.update(starlister.starmap);
 
-        starlister.refresh();
-        summarizer.refresh();
+          starlister.refresh();
+          summarizer.refresh();
+        } catch (e: any) {
+          console.log(e.stack);
+        }
       }),
 
       vscode.window.registerFileDecorationProvider(decorator),
