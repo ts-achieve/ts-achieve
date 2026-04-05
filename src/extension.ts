@@ -26,12 +26,10 @@ export function activate(context: vscode.ExtensionContext) {
       vscode.commands.registerCommand(names.commands.logStarmap, () => {
         logger(
           "log starmap:",
-          starlister.starmap,
+          "- raw starmap:",
           getGlobalState(context, "starmap"),
-          starlister.starmap.get(7045),
-          (getGlobalState(context, "starmap") as [number, any][]).find(
-            ([x, _]) => x === 7045,
-          )?.[1],
+          "- parsed starmap:",
+          starlister.starmap,
         );
       }),
 
