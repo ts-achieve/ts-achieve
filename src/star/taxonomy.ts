@@ -68,6 +68,7 @@ export const hierarchy = {
             "abstract",
             "constructor",
             "accessor",
+            "accessibility",
             "decorator",
             "this",
           ],

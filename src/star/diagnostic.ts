@@ -46,7 +46,10 @@ export const computeKind = (
         messageTemplate,
         "tsconfig",
         "'jsx",
+        "'module'",
         "'target'",
+        "'exclude'",
+        "'include'",
         "baseUrl",
         "rootDir",
         "allowJs",
@@ -66,6 +69,8 @@ export const computeKind = (
       return "error-tsconfig-compiler";
     } else if (includesAny(messageTemplate, "jsx", "JSX", "tsx", "TSX")) {
       return "error-react";
+    } else if (includesAny(messageTemplate, "async", "await", "promis")) {
+      return "error-async";
     } else if (includesAny(messageTemplate, "overload")) {
       return "error-syntax-function";
     } else if (includesAny(messageTemplate, "namespac")) {
@@ -78,12 +83,24 @@ export const computeKind = (
       return "error-type-assert";
     } else if (includesAny(messageTemplate, "interface")) {
       return "error-type-interface";
-    } else if (includesAny(messageTemplate, "switch", "case")) {
+    } else if (
+      includesAny(
+        messageTemplate,
+        "switch",
+        "case",
+        "'break'",
+        "'continue'",
+        "'return'",
+        "'yield'",
+      )
+    ) {
       return "error-syntax-statement";
+    } else if (
+      includesAny(messageTemplate, "expression", "token", "destructur", "rest")
+    ) {
+      return "error-syntax-expression";
     } else if (includesAny(messageTemplate, "keyword", "reserved")) {
       return "error-syntax-keyword";
-    } else if (includesAny(messageTemplate, "async", "await", "promis")) {
-      return "error-async";
     } else if (includesAny(messageTemplate, "character class")) {
       return "error-syntax-regex";
     } else if (includesAny(messageTemplate, "abstract")) {
@@ -105,6 +122,10 @@ export const computeKind = (
       )
     ) {
       return "error-oop-accessor";
+    } else if (
+      includesAny(messageTemplate, "public", "private", "protected", "accessi")
+    ) {
+      return "error-oop-accessibility";
     } else if (includesAny(messageTemplate, "class", "implement")) {
       return "error-oop-class";
     } else if (
@@ -127,9 +148,15 @@ export const computeKind = (
         "primitive",
         "tuple",
         "readonly",
+        "read-only",
+        "assign",
       )
     ) {
       return "error-type-other";
+    } else if (includesAny(messageTemplate, "declar", "enum")) {
+      return "error-syntax-declaration";
+    } else if (includesAny(messageTemplate, "find")) {
+      return "error-reference";
     }
   }
 

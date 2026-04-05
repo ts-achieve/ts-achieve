@@ -94,12 +94,19 @@ export class Starlister<T = never>
         } else if (typeof providable === "string") {
           const deepChildren = deepChildrenOf(providable);
           if (deepChildren.length > 0) {
-            return deepChildren;
+            return deepChildren.filter(
+              (child) =>
+                !child.endsWith("other") ||
+                this.starmap
+                  .values()
+                  .toArray()
+                  .filter((star) => star.kind === child).length > 0,
+            );
           } else {
             return this.starmap
               .values()
-              .filter((star) => star.kind === providable)
-              .toArray();
+              .toArray()
+              .filter((star) => star.kind === providable);
           }
         } else {
           return undefined;
