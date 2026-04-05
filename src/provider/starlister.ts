@@ -228,17 +228,7 @@ Internal category: \`${star.kind}\`
       const stars = this.starmap
         .values()
         .toArray()
-        .filter((star) => {
-          if (star.code > 7000) {
-            console.log(
-              star.code,
-              star.kind,
-              providable,
-              star.kind.startsWith(providable),
-            );
-          }
-          return star.kind.startsWith(providable);
-        });
+        .filter((star) => star.kind.startsWith(providable));
 
       const achieved = stars.filter(isUnlocked).length;
       const total = stars.length;

@@ -2,8 +2,19 @@ import vscode from "vscode";
 
 import { isObject, sequence } from "../util/type";
 import { diagnosticMessages } from "../util/diagnosticMessages";
-import { diagnosticToStar } from "./diagnostic";
 import { StarKind } from "./taxonomy";
+import { computeKind, TsDiagnostic } from "./diagnostic";
+
+export const diagnosticToStar = (
+  diagnostic: TsDiagnostic,
+  messageTemplate: string,
+): LockedStar => {
+  return {
+    code: diagnostic.code,
+    kind: computeKind(diagnostic, messageTemplate),
+    messageTemplate,
+  };
+};
 
 export type Starmap = Map<number, Star>;
 
