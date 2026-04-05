@@ -19,6 +19,9 @@ export const safeKeys = <T extends object>(x: T): UnionToTuple<keyof T> => {
   return Object.keys(x) as UnionToTuple<keyof T>;
 };
 
+export type RequiredBy<T, K extends keyof T> = Partial<Omit<T, K>> &
+  Required<Pick<T, K>>;
+
 export type DeepKeys<T = object, K extends keyof T = keyof T> =
   | keyof T
   | (K extends any
@@ -336,13 +339,36 @@ export type Split<
   S extends string,
   C extends string = "",
   A extends string[] = [],
-> = S extends `${infer F}${C}${infer R}` ? Split<R, C, [...A, F]> : [...A, S];
+> = S extends `${infer F}${C}${infer R}`
+  ? Split<R, C, [...A, F]>
+  : S extends ""
+    ? [...A, S]
+    : string[];
 
 export const split = <S extends string, C extends string>(
   string: S,
   splitter: C,
 ) => {
   return string.split(splitter) as Split<S, C>;
+};
+
+export type Join<
+  L extends readonly string[],
+  J extends string = "",
+  A extends string = "",
+> = L extends [infer F extends string, ...infer R extends string[]]
+  ? A extends ""
+    ? Join<R, J, `${F}`>
+    : Join<R, J, `${A}${J}${F}`>
+  : L extends []
+    ? A
+    : string;
+
+export const join = <S extends readonly string[], J extends string>(
+  strings: S,
+  separator?: J,
+) => {
+  return strings.join(separator) as Join<S, J>;
 };
 
 // region function

@@ -3,9 +3,10 @@ import vscode from "vscode";
 import { Maybe } from "./util/type";
 import { isStar, Star, Starmap } from "./star/star";
 
-export const getStarmap = (
+export const fetchStarmap = (
   context: vscode.ExtensionContext,
 ): Maybe<Starmap> => {
+  console.log("fetching starmap");
   const maybeStarmap = getGlobalState(context, "starmap");
   if (Array.isArray(maybeStarmap)) {
     const map = new Map<number, Star>();
@@ -17,7 +18,7 @@ export const getStarmap = (
         if (isStar(maybeStar)) {
           map.set(maybeStar.code, {
             ...maybeStar,
-            kind: "other",
+            kind: "error-async",
           });
         }
       }

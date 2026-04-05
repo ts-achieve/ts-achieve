@@ -1,18 +1,9 @@
 import vscode from "vscode";
 
 import { ExtensionConfig } from "../config";
-import { getStarmap } from "../globalState";
+import { fetchStarmap } from "../globalState";
 import { names, showing } from "../util/const";
-import {
-  capitalize,
-  includes,
-  mod,
-  not,
-  safeConcat,
-  Split,
-  split,
-  succeed,
-} from "../util/type";
+import { capitalize, mod, not, split, succeed } from "../util/type";
 import { StarProviderBase } from "./provider";
 import {
   Star,
@@ -22,20 +13,14 @@ import {
   isUnlocked,
   makeStarmap,
 } from "../star/star";
-import {
-  PathKind,
-  topKinds,
-  suggestionKinds,
-  errorStarKinds,
-  StarKind,
-} from "../star/taxonomy";
+import { PathKind, topKinds, StarKind, deepChildrenOf } from "../star/taxonomy";
 
-export const toPathTitle = (kind: PathKind) => {
-  console.log(kind);
-  if (kind.includes("-")) {
-    return `${split(capitalize(kind), "-")[0]} ${split(capitalize(kind), "-").at(-1)}`;
+export const toPathTitle = (s: string) => {
+  const capitalizeOOP = (s: string) => (s === "oop" ? "OOP" : s);
+  if (s.includes("-")) {
+    return `${capitalizeOOP(split(s, "-").at(-1)!)} ${split(s, "-")[0]}`;
   } else {
-    return `${capitalize(kind)}s`;
+    return s;
   }
 };
 
@@ -90,7 +75,7 @@ export class Starlister<T = never>
   }
 
   loadStarmap(context: vscode.ExtensionContext): Starmap {
-    return getStarmap(context) ?? makeStarmap();
+    return fetchStarmap(context) ?? makeStarmap();
   }
 
   getChildren(
@@ -107,21 +92,9 @@ export class Starlister<T = never>
         } else if (isStar(providable)) {
           return undefined;
         } else if (typeof providable === "string") {
-          if (providable === "suggestion") {
-            return suggestionKinds();
-          } else if (providable === "error") {
-            if (this.subcategorize === "all") {
-              return childrenOf(providable);
-            } else {
-              return this.starmap
-                .values()
-                .filter((star) =>
-                  safeConcat(errorStarKinds, syntaxErrorKinds).includes(
-                    star.kind as any,
-                  ),
-                )
-                .toArray();
-            }
+          const deepChildren = deepChildrenOf(providable);
+          if (deepChildren.length > 0) {
+            return deepChildren;
           } else {
             return this.starmap
               .values()
@@ -189,7 +162,10 @@ $(info) Unlock message:
 
 \`\`\`
 ${star.messageText} (ts${star.code})
-\`\`\``.trim(),
+\`\`\`
+
+Internal category: \`${star.kind}\`
+`.trim(),
         );
         tooltip.supportThemeIcons = true;
         harden(tooltip);
@@ -225,7 +201,10 @@ $(info) Message template:
 
 \`\`\`
 ${star.messageTemplate} (ts${star.code})
-\`\`\``.trim(),
+\`\`\`
+
+Internal category: \`${star.kind}\`
+`.trim(),
           );
         }
         tooltip.supportThemeIcons = true;
@@ -245,29 +224,32 @@ ${star.messageTemplate} (ts${star.code})
           tooltip,
         };
       }
-    } else {
+    } else if (typeof providable === "string") {
       const stars = this.starmap
         .values()
         .toArray()
-        .filter((star) =>
-          providable === "suggestion"
-            ? suggestionKinds().includes(star.kind as any)
-            : providable === "syntax"
-              ? syntaxErrorKinds.includes(star.kind as any)
-              : providable === "error"
-                ? errorStarKinds.includes(star.kind as any)
-                : star.kind === providable,
-        );
+        .filter((star) => {
+          if (star.code > 7000) {
+            console.log(
+              star.code,
+              star.kind,
+              providable,
+              star.kind.startsWith(providable),
+            );
+          }
+          return star.kind.startsWith(providable);
+        });
 
       const achieved = stars.filter(isUnlocked).length;
       const total = stars.length;
 
       return {
-        label: toPathTitle(providable),
+        label: `${capitalize(toPathTitle(providable))}s`,
         collapsibleState: vscode.TreeItemCollapsibleState.Collapsed,
         description: `${((achieved / total) * 100).toFixed(2)}% (${achieved} of ${total})`,
       };
     }
+    return {};
   }
 }
 

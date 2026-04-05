@@ -3,7 +3,7 @@ import vscode from "vscode";
 import { isObject, sequence } from "../util/type";
 import { diagnosticMessages } from "../util/diagnosticMessages";
 import { diagnosticToStar } from "./diagnostic";
-import { StarKind, starKinds } from "./taxonomy";
+import { StarKind } from "./taxonomy";
 
 export type Starmap = Map<number, Star>;
 
@@ -27,7 +27,7 @@ export const isStar = (x: unknown): x is Star => {
     "code" in x &&
     typeof x.code === "number" &&
     "kind" in x &&
-    starKinds.includes(x.kind as any) &&
+    typeof x.kind === "string" &&
     "messageTemplate" in x &&
     typeof x.messageTemplate === "string"
   );

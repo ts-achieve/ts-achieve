@@ -2,11 +2,17 @@ import vscode from "vscode";
 
 import { StarProviderBase } from "./provider";
 import { isUnlocked, Star, Starmap, UnlockedStar } from "../star/star";
-import { errorStarKinds, isErrorStarKind, pathKinds, topKinds } from "../star/taxonomy";
+import {
+  deepChildrenOf,
+  hasChildren,
+  isErrorStarKind,
+  pathKinds,
+  topKinds,
+} from "../star/taxonomy";
 import { uncapitalize } from "../util/type";
 import { toPathTitle } from "./starlister";
 
-const summaryKinds = ["overall", "encounters", ...pathKinds] as const;
+const summaryKinds = ["overall", "encounter", ...pathKinds()] as const;
 type SummaryKind = (typeof summaryKinds)[number];
 
 export class Summarizer extends StarProviderBase<SummaryKind> {
@@ -27,13 +33,16 @@ export class Summarizer extends StarProviderBase<SummaryKind> {
 
   getChildren(kind?: SummaryKind): vscode.ProviderResult<SummaryKind[]> {
     if (!kind) {
-      return ["overall", "encounters"];
-    } else if (kind === "encounters") {
-      return Array.from(topKinds);
-    } else if (kind === "error") {
-      return Array.from(errorStarKinds);
+      return ["overall", "encounter"];
+    } else if (kind === "encounter") {
+      return Array.from(topKinds());
     } else {
-      return undefined;
+      const deepChildren = deepChildrenOf(kind);
+      if (deepChildren.length > 0) {
+        return deepChildren;
+      } else {
+        return undefined;
+      }
     }
   }
 
@@ -51,23 +60,24 @@ export class Summarizer extends StarProviderBase<SummaryKind> {
         };
       default:
         const statistic =
-          kind === "encounters" ? kind : uncapitalize(toPathTitle(kind));
+          kind === "encounter" ? kind : toPathTitle(uncapitalize(kind));
         const condition =
-          kind === "encounters"
+          kind === "encounter"
             ? () => true
             : kind === "error"
               ? (star: Star) => isErrorStarKind(star.kind as any)
               : (star: Star) => star.kind === kind;
 
         return {
-          label: `Lifetime ${statistic}: ${this.starmap
+          label: `Lifetime ${statistic}s: ${this.starmap
             .values()
             .filter((star) => isUnlocked(star) && condition(star))
             .map((star) => (star as UnlockedStar).encounterCount)
             .reduce((xs, x) => xs + x, 0)}`,
-          collapsibleState: ["encounters", "error"].includes(kind as any)
-            ? vscode.TreeItemCollapsibleState.Collapsed
-            : vscode.TreeItemCollapsibleState.None,
+          collapsibleState:
+            kind === "encounter" || hasChildren(kind)
+              ? vscode.TreeItemCollapsibleState.Collapsed
+              : vscode.TreeItemCollapsibleState.None,
         };
     }
   }

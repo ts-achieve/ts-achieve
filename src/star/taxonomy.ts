@@ -1,12 +1,12 @@
-import { UnionToTuple } from "expect-type";
 import {
-  biject,
   bijectPrefix,
+  DeepKeys,
   DeepValues,
-  includes,
-  isObject,
+  join,
+  not,
   safeConcat,
   safeKeys,
+  split,
 } from "../util/type";
 
 type Level = {
@@ -45,12 +45,12 @@ type VerbosePathName<
       : never
     : never;
 
-type ConciseName = {} & (
+export type ConciseName = {} & (
   | DeepKeys<typeof hierarchy>
   | DeepValues<typeof hierarchy>[number]
 );
 
-type VerboseName = VerbosePathName | VerboseStarName;
+export type VerboseName = VerbosePathName | VerboseStarName;
 
 export const hierarchy = {
   leaves: ["special", "message", "warning"],
@@ -163,44 +163,49 @@ export const taxonomy = {
   ],
 } as const satisfies Partial<Record<VerboseStarName, number[]>>;
 
-export const deepValue = <T extends object, K extends DeepKeys<T>>(
-  x: T,
-  key: K,
-) => {
-  if (Object.keys(x).includes(key as any)) {
-    return x[key as keyof T];
+export const getAllKinds = (
+  currentKinds: VerboseName[] = deepChildrenOf(),
+): VerboseName[] => {
+  if (
+    currentKinds.length > 1 ||
+    (currentKinds.length > 0 && currentKinds[0] !== "other")
+  ) {
+    return currentKinds.concat(
+      ...currentKinds.map((kind) => getAllKinds(deepChildrenOf(kind))),
+    );
   } else {
-    for (const v of Object.values(x)) {
-      if (isObject(v) && Object.keys(v).length > 0) {
-        const vv: DeepValues<T> = deepValue(v, key as DeepKeys);
-        if (vv !== undefined) {
-          return vv;
-        }
-      }
-    }
-    return undefined;
+    return currentKinds;
   }
 };
 
-export const childrenOf = (parent: DeepKeys<typeof hierarchy>) => {
-  return {
-    leaves: hierarchy.branches[parent].leaves,
-    branches: safeKeys(hierarchy.branches[parent].branches),
-  };
+export const hasChildren = (name: VerboseName) => {
+  return deepChildrenOf(name).length > 0;
 };
 
-export const nonErrorKinds = [
-  "special",
-  "message",
-  "suggestion",
-  "warning",
-] as const;
+export const deepChildrenOf = (
+  parent: string = "",
+  level: Level = hierarchy,
+): VerboseName[] => {
+  const [first, ...rest] = split(parent, "-");
+  const prefix = first!;
+  const suffix = join(rest, "-");
 
-export const resolveHierarchy = (): UnionToTuple<
-  keyof (typeof hierarchy)["branches"]
-> => {
-  return safeKeys(hierarchy.branches);
+  if (parent === "other" || level.leaves.includes(prefix)) {
+    return [];
+  } else if (Object.keys(level.branches).includes(prefix)) {
+    const deepChildren = deepChildrenOf(suffix, level.branches[prefix]);
+    if (deepChildren.length > 0 && !deepChildren[0]!.includes("-")) {
+      deepChildren.push("other");
+    }
+    return deepChildren.map((child) => `${prefix}-${child}`) as VerboseName[];
+  } else {
+    return level.leaves.concat(Object.keys(level.branches)) as VerboseName[];
+  }
 };
+
+export const pathKinds = () => getAllKinds().filter(hasChildren);
+
+export const bottomKinds = () => getAllKinds().filter(not(hasChildren));
 
 export const topKinds = () =>
   safeConcat(hierarchy.leaves, safeKeys(hierarchy.branches));
@@ -213,15 +218,7 @@ const andOther = <T extends readonly string[]>(xs: T) => {
 };
 
 export const errorStarKinds = () =>
-  safeConcat(
-    andOther(hierarchy.branches.error.leaves),
-    biject(safeKeys(hierarchy.branches.error.branches), (branch) =>
-      bijectPrefix(
-        `${branch}-`,
-        andOther(hierarchy.branches.error.branches[branch].leaves),
-      ),
-    ),
-  );
+  bottomKinds().filter((kind) => kind.startsWith("error-"));
 
 export type PathKind = VerbosePathName;
 export type StarKind = VerboseStarName;

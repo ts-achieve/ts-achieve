@@ -62,6 +62,7 @@ export function activate(context: vscode.ExtensionContext) {
       }),
 
       vscode.languages.onDidChangeDiagnostics(() => {
+        console.log("diagnostic changed");
         const document = vscode.window.activeTextEditor!.document;
         const diagnostics = vscode.languages.getDiagnostics(document.uri);
 
@@ -72,6 +73,7 @@ export function activate(context: vscode.ExtensionContext) {
             const maybeStar = starlister.starmap.get(diagnostic.code);
 
             if (maybeStar) {
+              console.log("star found:", maybeStar);
               const unlockedStar = unlock(maybeStar, document, diagnostic);
 
               showInformationMessage(unlockedStar, diagnostic);
@@ -89,8 +91,8 @@ export function activate(context: vscode.ExtensionContext) {
     );
 
     setStarmap(context, starlister.starmap);
-  } catch (e) {
-    console.log(e);
+  } catch (e: any) {
+    console.log(e.stack);
   }
 }
 
