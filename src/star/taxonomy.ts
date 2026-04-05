@@ -53,21 +53,28 @@ export type ConciseName = {} & (
 export type VerboseName = VerbosePathName | VerboseStarName;
 
 export const hierarchy = {
-  leaves: ["special", "message", "warning"],
+  leaves: ["special", "warning"],
   branches: {
     suggestion: {
       leaves: ["type", "language"],
       branches: {},
     },
     error: {
-      leaves: ["async", "reference"],
+      leaves: ["async", "react", "reference"],
       branches: {
         oop: {
-          leaves: ["class", "constructor", "accessor", "decorator", "this"],
+          leaves: [
+            "class",
+            "abstract",
+            "constructor",
+            "accessor",
+            "decorator",
+            "this",
+          ],
           branches: {},
         },
         type: {
-          leaves: ["interface"],
+          leaves: ["interface", "assert"],
           branches: {},
         },
         syntax: {
@@ -77,11 +84,12 @@ export const hierarchy = {
             "statement",
             "function",
             "regex",
+            "keyword",
           ],
           branches: {},
         },
         tsconfig: {
-          leaves: ["strict"],
+          leaves: ["strict", "compiler"],
           branches: {},
         },
         module: {
@@ -97,15 +105,6 @@ export const taxonomy = {
   "suggestion-type": [7043, 7044, 7045, 7046, 7047, 7048, 7049, 7050],
   "suggestion-language": [80001, 80002, 80003, 80004, 80005, 80009, 80010],
   "suggestion-other": [6385, 6387, 80006, 80007, 80008],
-  "error-oop-class": [
-    1028, 1029, 1030, 1031, 1034, 1047, 1048, 1049, 1051, 1052, 1053, 1054,
-    1172, 1173, 1174, 1175, 1176, 1242, 1243, 1244, 1245, 1246, 1247, 1248,
-    1249, 1253, 1267, 1275, 1276, 1318, 1341, 1368, 1433, 1451, 2302, 2331,
-    2332, 2334, 2335, 2336, 2337, 2338, 2340, 2341, 2348, 2350, 2351, 2376,
-    2377, 2378, 2389, 2390, 2391, 2392, 2393, 2394, 2408, 2409, 2414, 2415,
-    2417, 2420, 2422, 2423, 2425, 2426, 2443, 2444, 2445, 2446, 2507, 2508,
-    2509, 2510, 2511, 2512, 2513, 2515, 2516, 2517,
-  ],
   "error-syntax-expression": [
     1002, 1003, 1005, 1009, 1010, 1012, 1109, 1121, 1124, 1125, 1126, 1127,
     1132, 1135, 1137, 1140, 1141, 1160, 1161, 1177, 1178, 1180, 1181, 1182,
@@ -129,25 +128,6 @@ export const taxonomy = {
     2349,
   ],
   "error-reference": [2339, 2551],
-  "error-type-other": [
-    1345, 1354, 1355, 1360, 1385, 1386, 1387, 1388, 1441, 2200, 2201, 2202,
-    2203, 2204, 2205, 2206, 2207, 2208, 2312, 2313, 2314, 2315, 2316, 2317,
-    2318, 2319, 2320, 2321, 2322, 2324, 2325, 2326, 2327, 2328, 2329, 2330,
-    2339, 2344, 2345, 2347, 2352, 2353, 2355, 2356, 2357, 2358, 2359, 2362,
-    2363, 2364, 2365, 2366, 2367, 2368, 2370, 2405, 2406, 2407, 2411, 2413,
-    2456, 2457, 2461, 2464, 2467, 2514, 2527, 2531, 2532, 2533, 2534, 2536,
-    2537, 2538, 2539, 2540, 2542, 2551, 2554, 2555, 2556, 2558, 2559, 2560,
-    2561, 2574, 2577, 2588, 2589, 2590,
-  ],
-  "error-tsconfig-other": [
-    1282, 1283, 1284, 1285, 1286, 1287, 1288, 1289, 1290, 1291, 1292, 1293,
-    1294, 1295, 1323, 1324, 1343, 1432, 1501, 1503, 2209, 2210, 2375, 2379,
-    2412,
-  ],
-  "error-tsconfig-strict": [
-    1100, 1101, 1102, 1212, 1213, 1214, 1215, 1250, 1251, 1252, 1346, 1347,
-    1349, 4114,
-  ],
 } as const satisfies Partial<Record<VerboseStarName, number[]>>;
 
 export const getAllKinds = (

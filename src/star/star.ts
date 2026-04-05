@@ -20,9 +20,11 @@ export type Starmap = Map<number, Star>;
 
 export const makeStarmap = (): Starmap => {
   return new Map(
-    Object.entries(diagnosticMessages).map(([key, value]) => {
-      return [value.code, diagnosticToStar(value, key)];
-    }),
+    Object.entries(diagnosticMessages)
+      .filter(([_, { category }]) => category !== "Message")
+      .map(([key, value]) => {
+        return [value.code, diagnosticToStar(value, key)];
+      }),
   );
 };
 
