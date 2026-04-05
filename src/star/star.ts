@@ -34,6 +34,17 @@ type LockedStar = {
   messageTemplate: string;
 };
 
+export type UnlockedStar = LockedStar & {
+  time: number;
+  triggerText: string;
+  fileName: string;
+  messageText: string;
+  encounterCount: number;
+  lastEncounter: number;
+};
+
+export type Star = LockedStar | UnlockedStar;
+
 export const isStar = (x: unknown): x is Star => {
   return (
     isObject(x) &&
@@ -45,17 +56,6 @@ export const isStar = (x: unknown): x is Star => {
     typeof x.messageTemplate === "string"
   );
 };
-
-export type UnlockedStar = LockedStar & {
-  time: number;
-  triggerText: string;
-  fileName: string;
-  messageText: string;
-  encounterCount: number;
-  lastEncounter: number;
-};
-
-export type Star = LockedStar | UnlockedStar;
 
 export const isUnlocked = (x: LockedStar): x is UnlockedStar => {
   return (

@@ -2,7 +2,6 @@ import vscode from "vscode";
 
 import { Maybe } from "./util/type";
 import { isStar, Star, Starmap } from "./star/star";
-import { getAllKinds } from "./star/taxonomy";
 import { computeKind } from "./star/diagnostic";
 
 export const fetchStarmap = (
@@ -10,9 +9,9 @@ export const fetchStarmap = (
 ): Maybe<Starmap> => {
   console.log("fetching starmap");
   const maybeStarmap = getGlobalState(context, "starmap");
+
   if (Array.isArray(maybeStarmap)) {
     const map = new Map<number, Star>();
-    const allKinds = getAllKinds();
 
     for (const x of maybeStarmap) {
       if (Array.isArray(x)) {
@@ -21,9 +20,7 @@ export const fetchStarmap = (
         if (isStar(maybeStar)) {
           map.set(maybeStar.code, {
             ...maybeStar,
-            kind: allKinds.includes(maybeStar.kind as any)
-              ? maybeStar.kind
-              : computeKind(maybeStar),
+            kind: computeKind(maybeStar),
           });
         }
       }
