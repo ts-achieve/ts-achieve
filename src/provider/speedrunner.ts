@@ -1,9 +1,9 @@
 import vscode from "vscode";
 
-import { Maybe } from "../util/type";
-import { Starlister } from "./starlister";
-import { makeStarmap, Starmap } from "../star/star";
-import { ExtensionConfig } from "../config";
+import { Starmap } from "../star/star";
+import { names } from "../util/const";
+import { biject, Maybe, slice } from "../util/type";
+import { readHtml } from "./fs";
 
 type Speedrun = {
   start: Date;
@@ -14,33 +14,112 @@ type Speedrun = {
   ruleset?: any;
 };
 
-export class Speedrunner extends Starlister<Speedrun> {
-  history: Speedrun[];
-  current: Maybe<Speedrun>;
+export class Speedrunner implements vscode.WebviewViewProvider {
+  static readonly viewType = names.views.speedrun;
 
-  constructor(config: ExtensionConfig, context: vscode.ExtensionContext) {
-    super(config, context);
-    this.history = [];
-    this.current = {
-      start: new Date(),
-      end: undefined,
-      starmap: this.starmap,
-      keystrokes: 0,
+  starmap: Starmap;
+
+  private _extensionUri: vscode.Uri;
+  private _view?: vscode.WebviewView;
+
+  constructor(_extensionUri: vscode.Uri, starmap: Starmap) {
+    this._extensionUri = _extensionUri;
+    this.starmap = starmap;
+  }
+
+  resolveWebviewView(
+    webviewView: vscode.WebviewView,
+    _context: vscode.WebviewViewResolveContext,
+    _token: vscode.CancellationToken,
+  ) {
+    this._view = webviewView;
+
+    webviewView.webview.options = {
+      enableScripts: true,
+      localResourceRoots: [this._extensionUri],
     };
+
+    webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
+
+    webviewView.webview.onDidReceiveMessage((data) => {
+      switch (data.type) {
+        case "colorSelected": {
+          vscode.window.activeTextEditor?.insertSnippet(
+            new vscode.SnippetString(`#${data.value}`),
+          );
+          break;
+        }
+      }
+    });
   }
 
-  override loadStarmap(): Starmap {
-    return makeStarmap();
+  public addColor() {
+    if (this._view) {
+      this._view.show?.(true); // `show` is not implemented in 1.49 but is for 1.50 insiders
+      this._view.webview.postMessage({ type: "addColor" });
+    }
   }
 
-  get isRunning(): boolean {
-    return !!this.current;
+  public clearColors() {
+    if (this._view) {
+      this._view.webview.postMessage({ type: "clearColors" });
+    }
   }
 
-  override getTreeItem(): vscode.TreeItem {
-    return {
-      label: (Date.now() - (this.current?.start.valueOf() ?? 0)).toString(),
-      description: "nyeh",
-    };
+  private _getHtmlForWebview(webview: vscode.Webview) {
+    const [htmlUri, cssUri, jsUri] = biject(
+      ["html", "css", "js"] as const,
+      (ext) =>
+        webview.asWebviewUri(
+          vscode.Uri.joinPath(this._extensionUri, ext, `speedrunner.${ext}`),
+        ),
+    );
+
+    const nonce = getNonce();
+
+    return readHtml(htmlUri)!.replace(
+      /\${(nonce|cssUri|jsUri|cspSource|currentTime|startTime)}/g,
+      (substring: string) => {
+        const chop = slice(substring as Replaceable, 2, 1);
+
+        switch (chop) {
+          case "nonce":
+            return nonce;
+          case "cssUri":
+            return cssUri.toString();
+          case "jsUri":
+            return jsUri.toString();
+          case "cspSource":
+            return webview.cspSource;
+          case "currentTime":
+            return Date.now().toString();
+          case "startTime":
+            return Date.now().toString();
+        }
+
+        chop satisfies never;
+      },
+    );
   }
 }
+
+const rawReplaceables = [
+  "nonce",
+  "cssUri",
+  "jsUri",
+  "cspSource",
+  "startTime",
+  "currentTime",
+] as const;
+
+type Replaceable = `\${${(typeof rawReplaceables)[number]}}`;
+
+const getNonce = () => {
+  let text = "";
+  const possible =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  for (let i = 0; i < 32; i++) {
+    text += possible.charAt(Math.floor(Math.random() * possible.length));
+  }
+  return text;
+};

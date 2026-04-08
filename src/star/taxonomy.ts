@@ -75,7 +75,7 @@ export const hierarchy = {
           branches: {},
         },
         type: {
-          leaves: ["interface", "assert", "generic", "primitive", "array"],
+          leaves: ["interface", "assertion", "generic", "primitive", "array"],
           branches: {},
         },
         syntax: {

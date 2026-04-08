@@ -86,7 +86,7 @@ export const computeKind = ({
     } else if (includesAny(messageTemplate, "generic")) {
       return "error-type-generic";
     } else if (includesAny(messageTemplate, "assert")) {
-      return "error-type-assert";
+      return "error-type-assertion";
     } else if (includesAny(messageTemplate, "interface")) {
       return "error-type-interface";
     } else if (

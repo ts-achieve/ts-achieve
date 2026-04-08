@@ -14,33 +14,15 @@ import {
   makeStarmap,
 } from "../star/star";
 import { PathKind, topKinds, StarKind, deepChildrenOf } from "../star/taxonomy";
-import { logger } from "../util/logger";
-
-export const toPathTitle = (s: string) => {
-  const capitalizeOOP = (s: string) => (s === "oop" ? "OOP" : s);
-  if (s.includes("-")) {
-    return `${capitalizeOOP(split(s, "-").at(-1)!)} ${split(s, "-")[0]}`;
-  } else {
-    return s;
-  }
-};
-
-export type Folder<K extends PathKind = PathKind> = K extends any
-  ? { kind: K } & vscode.TreeItem
-  : never;
+import { consoleLog } from "../util/console";
 
 type Showing = (typeof showing)[keyof typeof showing];
 
-export type Configurable = {
-  reconfigure(config: ExtensionConfig): void;
-};
-
 export type Subcategorize = "none" | "achievements only" | "all";
 
-export class Starlister<T = never>
-  extends StarProviderBase<T | PathKind | StarKind | Star>
-  implements Configurable
-{
+export class Starlister<T = never> extends StarProviderBase<
+  T | PathKind | StarKind | Star
+> {
   showing: Showing;
   subcategorize: Subcategorize = "all";
 
@@ -48,15 +30,30 @@ export class Starlister<T = never>
     super(context);
     this.showing = showing.all;
     this.reconfigure(config);
+
+    consoleLog(". Starlister construction");
   }
 
   configure(config: ExtensionConfig): void {
     this.subcategorize = config.subcategorize;
+    consoleLog(". Starlister configuration");
   }
 
   reconfigure(config: ExtensionConfig): void {
     this.configure(config);
     this.refresh();
+  }
+
+  update(unlockedStar?: UnlockedStar): void {
+    if (unlockedStar) {
+      this.starmap.set(unlockedStar.code, unlockedStar);
+    }
+    consoleLog("Starlister update");
+  }
+
+  loadStarmap(context: vscode.ExtensionContext): Starmap {
+    consoleLog("Starlister starmap load");
+    return fetchStarmap(context) ?? makeStarmap();
   }
 
   cycleShowing(): void {
@@ -67,25 +64,7 @@ export class Starlister<T = never>
       this.showing,
     );
     this.refresh();
-  }
-
-  update(unlockedStar?: UnlockedStar): void {
-    if (unlockedStar) {
-      this.starmap.set(unlockedStar.code, unlockedStar);
-    }
-  }
-
-  loadStarmap(context: vscode.ExtensionContext): Starmap {
-    logger("trying to fetch starmap");
-    const x = fetchStarmap(context);
-    if (x) {
-      logger("succeeded, it has", x.get(7045));
-      return x;
-    }
-    logger("failed, we will make starmap instead");
-    const y = makeStarmap();
-    logger("it has", y.get(7045));
-    return y;
+    consoleLog("Starlister showing cycle");
   }
 
   getChildren(
@@ -94,6 +73,7 @@ export class Starlister<T = never>
     switch (this.showing) {
       case 0:
         if (!providable) {
+          consoleLog("Starlister children call (top-level, showing both)");
           if (this.subcategorize !== "none") {
             return topKinds();
           } else {
@@ -122,34 +102,17 @@ export class Starlister<T = never>
           return undefined;
         }
       case 1:
+        consoleLog("Starlister children call (top-level, showing unlocked)");
         return providable
           ? undefined
           : this.starmap.values().toArray().filter(isUnlocked);
       case 2:
+        consoleLog("Starlister children call (top-level, showing locked)");
         return providable
           ? undefined
           : this.starmap.values().toArray().filter(not(isUnlocked));
     }
     this.showing satisfies never;
-  }
-
-  getDescendants(): (T | PathKind | StarKind | Star)[] {
-    const descendants = [];
-
-    const next = (children?: (T | PathKind | StarKind | Star)[]) =>
-      (children ?? [undefined])
-        .map((child) => this.getChildren(child))
-        .filter((x) => Array.isArray(x))
-        .flat();
-
-    let children = next();
-
-    while (Array.isArray(children) && children.length > 0) {
-      descendants.push(...children);
-      children = next(children);
-    }
-
-    return descendants as (T | PathKind | StarKind | Star)[];
   }
 
   getTreeItem(providable: T | PathKind | StarKind | Star): vscode.TreeItem {
@@ -204,6 +167,15 @@ export class Starlister<T = never>
   }
 }
 
+export const toPathTitle = (s: string) => {
+  const capitalizeOOP = (s: string) => (s === "oop" ? "OOP" : s);
+  if (s.includes("-")) {
+    return `${capitalizeOOP(split(s, "-").at(-1)!)} ${split(s, "-")[0]}`;
+  } else {
+    return s;
+  }
+};
+
 const tooltipheader = (star: Star) => {
   const icon = isUnlocked(star) ? "$(star-full)" : "$(star-empty)";
   const status = isUnlocked(star)
@@ -227,7 +199,7 @@ ${star.triggerText}
 \`\`\`` as const;
 
 const tooltipfooter = (star: Star) =>
-  `$(info) ${isUnlocked(star) ? "Message text" : "Message template"}:
+  `$(info) ${isUnlocked(star) ? "Unlock message" : "Message template"}:
 
 \`\`\`
 ${isUnlocked(star) ? star.messageText : star.messageTemplate} (ts${star.code})
@@ -238,7 +210,7 @@ const dateAtTime = (time: number) => {
   return `${date.toLocaleDateString()} at ${date.toLocaleTimeString()}`;
 };
 
-const hardness = () => "[]()" as const;
+const hardnessToken = () => "\n[]()" as const;
 
 export const makeTooltip = (star: Star): vscode.MarkdownString => {
   const tooltip = isUnlocked(star)
@@ -268,7 +240,9 @@ export const makeTooltip = (star: Star): vscode.MarkdownString => {
       })();
 
   tooltip.supportThemeIcons = true;
-  tooltip.appendMarkdown(hardness());
+  tooltip.appendMarkdown(hardnessToken());
+
+  consoleLog("tooltip construction for", star.code);
 
   return tooltip;
 };

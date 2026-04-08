@@ -1,12 +1,12 @@
 import vscode from "vscode";
 
 import { Starmap } from "../star/star";
-import { logger } from "../util/logger";
+import { consoleLog } from "../util/console";
 
 export type Eventable<T> = T | undefined | null | void;
 
 export abstract class StarProviderBase<
-  T,
+  T = never,
 > implements vscode.TreeDataProvider<T> {
   starmap: Starmap;
 
@@ -18,6 +18,7 @@ export abstract class StarProviderBase<
   constructor(...args: any[]) {
     this.starmap = this.loadStarmap(...args);
     this.refresh();
+    consoleLog("StarProvider construction");
   }
 
   abstract getTreeItem(element: T): vscode.TreeItem;
@@ -36,7 +37,7 @@ export abstract class StarProviderBase<
    */
   refresh(): void {
     this._onDidChangeTreeData.fire();
-    logger("starlister refreshed");
+    consoleLog("StarProvider refresh");
   }
 }
 

@@ -219,18 +219,6 @@ export const mod = <M extends number, N extends number>(n: M, d: N) => {
   return (((n % d) + d) % d) as Modulo<M, N>;
 };
 
-// type Times<
-//   M extends number,
-//   N extends number,
-//   A extends number = 0,
-// > = N extends 0 ? A : Times<M, Predecessor<N>, Plus<A, M>>;
-
-// type Power<
-//   M extends number,
-//   N extends number,
-//   A extends number = 1,
-// > = N extends 0 ? A : Power<M, Predecessor<N>, Times<A, M>>;
-
 type PowerOfTen<N extends number, A extends string = "1"> = N extends 0
   ? Parse<A>
   : PowerOfTen<Predecessor<N>, `${A}0`>;
@@ -368,7 +356,41 @@ export const join = <S extends readonly string[], J extends string>(
   strings: S,
   separator?: J,
 ) => {
-  return strings.join(separator) as Join<S, J>;
+  return strings.join(separator) as Join<Writable<S>, J>;
+};
+
+type SliceStart<S extends string, N extends number> = N extends 0
+  ? S
+  : S extends `${any}${infer R}`
+    ? SliceStart<R, Predecessor<N>>
+    : S;
+
+type SliceEnd<
+  S extends string,
+  N extends number,
+  A extends string = "",
+> = N extends 0
+  ? `${A}${S}`
+  : GreaterOf<Length<S>, N> extends N
+    ? `${A}`
+    : S extends `${infer F}${infer R}`
+      ? Length<R> extends N
+        ? `${A}${F}`
+        : SliceEnd<R, N, `${A}${F}`>
+      : `${A}${S}`;
+
+export type Slice<
+  S extends string,
+  M extends number,
+  N extends number = 0,
+> = SliceEnd<SliceStart<S, M>, N>;
+
+export const slice = <S extends string, M extends number, N extends number>(
+  string: S,
+  start: M,
+  end: N,
+) => {
+  return string.slice(start, -end) as Slice<S, M, N>;
 };
 
 // region function

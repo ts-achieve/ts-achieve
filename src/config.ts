@@ -6,6 +6,7 @@ import { Decorator } from "./provider/decorator";
 import { Speedrunner } from "./provider/speedrunner";
 import { Summarizer } from "./provider/summarizer";
 import { Starlister, Subcategorize } from "./provider/starlister";
+import { consoleLog } from "./util/console";
 
 export type ExtensionConfig = {
   revealDescription: boolean;
@@ -27,6 +28,7 @@ export const getConfigSection = <K extends keyof ExtensionConfig>(
 };
 
 export const getConfig = (): ExtensionConfig => {
+  consoleLog("`getConfig` call");
   const wsConfig = vscode.workspace.getConfiguration(names.ex);
 
   const exConfig: ExtensionConfig = {

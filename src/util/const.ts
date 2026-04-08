@@ -38,11 +38,7 @@ const commands = {
   showUnlocked: `${ex}.command.showUnlocked`,
   showLocked: `${ex}.command.showLocked`,
   showAll: `${ex}.command.showAll`,
-} as const satisfies Commands;
-
-type Commands = {
-  [K in string]: `${typeof ex}.command.${K}`;
-};
+} as const satisfies Record<string, `${typeof ex}.command.${any}`>;
 
 const config = {
   revealDescription: `config.revealDescription`,

@@ -5,12 +5,12 @@ import { isUnlocked, Star, Starmap, UnlockedStar } from "../star/star";
 import {
   deepChildrenOf,
   hasChildren,
-  isErrorStarKind,
   pathKinds,
   topKinds,
 } from "../star/taxonomy";
 import { uncapitalize } from "../util/type";
 import { makeTooltip, toPathTitle } from "./starlister";
+import { consoleLog } from "../util/console";
 
 const topSummaryKinds = ["overall", "favorite", "lifetime"] as const;
 
@@ -24,23 +24,27 @@ export class Summarizer extends StarProviderBase<SummaryKind> {
   constructor(starmap: Starmap, kinds?: SummaryKind[]) {
     super(starmap);
     this.kinds = kinds ?? Array.from(summaryKinds);
+    consoleLog("Summarizer construction");
   }
 
   update(newMap: Starmap): void {
     this.starmap = newMap;
+    consoleLog("Summarizer update");
   }
 
   loadStarmap(starmap: Starmap): Starmap {
+    consoleLog("Summarizer starmap load");
     return starmap;
   }
 
-  getChildren(kind?: SummaryKind): vscode.ProviderResult<SummaryKind[]> {
-    if (!kind) {
+  getChildren(providable?: SummaryKind): vscode.ProviderResult<SummaryKind[]> {
+    if (!providable) {
+      consoleLog("Summarizer children call (top-level)");
       return [...topSummaryKinds];
-    } else if (kind === "lifetime") {
+    } else if (providable === "lifetime") {
       return [...topKinds()];
     } else {
-      const deepChildren = deepChildrenOf(kind);
+      const deepChildren = deepChildrenOf(providable);
       if (deepChildren.length > 0) {
         return deepChildren;
       } else {
@@ -49,8 +53,8 @@ export class Summarizer extends StarProviderBase<SummaryKind> {
     }
   }
 
-  getTreeItem(kind: SummaryKind): vscode.TreeItem {
-    switch (kind) {
+  getTreeItem(providable: SummaryKind): vscode.TreeItem {
+    switch (providable) {
       case "overall":
         const stars = this.starmap.values().toArray();
 
@@ -81,13 +85,13 @@ export class Summarizer extends StarProviderBase<SummaryKind> {
 
       default:
         const statistic =
-          kind === "lifetime" ? "encounter" : toPathTitle(uncapitalize(kind));
+          providable === "lifetime"
+            ? "encounter"
+            : toPathTitle(uncapitalize(providable));
         const condition =
-          kind === "lifetime"
+          providable === "lifetime"
             ? () => true
-            : kind === "error"
-              ? (star: Star) => isErrorStarKind(star.kind as any)
-              : (star: Star) => star.kind === kind;
+            : (star: Star) => star.kind.startsWith(providable);
 
         return {
           label: `Lifetime ${statistic}s: ${this.starmap
@@ -96,7 +100,7 @@ export class Summarizer extends StarProviderBase<SummaryKind> {
             .map((star) => (star as UnlockedStar).encounterCount)
             .reduce((xs, x) => xs + x, 0)}`,
           collapsibleState:
-            kind === "lifetime" || hasChildren(kind)
+            providable === "lifetime" || hasChildren(providable)
               ? vscode.TreeItemCollapsibleState.Collapsed
               : vscode.TreeItemCollapsibleState.None,
         };

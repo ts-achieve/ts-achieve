@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; style-src ${cspSource}; script-src 'nonce-${nonce}';"
+    />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <link href="${cssUri}" rel="stylesheet" />
+
+    <title>Cat Colors</title>
+  </head>
+  <body>
+    <h1>${currentTime}</h1>
+
+    <button class="add-color-button">Add Color</button>
+
+    <span id="nyeh">start time: ${startTime}</span>
+
+    <script nonce="${nonce}" src="${jsUri}">
+      document.getElementById("nyeh").innerText = "wah";
+    </script>
+  </body>
+</html>

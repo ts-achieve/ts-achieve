@@ -1,8 +1,13 @@
 import vscode from "vscode";
 
 import { names } from "../util/const";
+import { consoleLog } from "../util/console";
 
 export class Decorator implements vscode.FileDecorationProvider {
+  constructor() {
+    consoleLog("Decorator construction");
+  }
+
   provideFileDecoration(
     uri: vscode.Uri,
     _token: vscode.CancellationToken,
