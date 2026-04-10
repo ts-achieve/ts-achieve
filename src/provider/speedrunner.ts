@@ -1,30 +1,29 @@
 import vscode from "vscode";
 
-import { Starmap } from "../star/star";
+import { makeStarmap } from "../star/star";
 import { names } from "../util/const";
-import { biject, Maybe, slice } from "../util/type";
+import { biject, slice } from "../util/type";
 import { readHtml } from "./fs";
-
-type Speedrun = {
-  start: Date;
-  end: Maybe<Date>;
-  starmap: Starmap;
-  keystrokes: number;
-  splits?: any;
-  ruleset?: any;
-};
+import { consoleLog } from "../util/console";
 
 export class Speedrunner implements vscode.WebviewViewProvider {
   static readonly viewType = names.views.speedrun;
 
-  starmap: Starmap;
-
   private _extensionUri: vscode.Uri;
   private _view?: vscode.WebviewView;
+  isRunning: boolean;
 
-  constructor(_extensionUri: vscode.Uri, starmap: Starmap) {
+  constructor(_extensionUri: vscode.Uri) {
     this._extensionUri = _extensionUri;
-    this.starmap = starmap;
+    this.isRunning = false;
+  }
+
+  update(code: number) {
+    if (this.isRunning) {
+      if (this._view) {
+        this._view.webview.postMessage({ type: "star", value: code });
+      }
+    }
   }
 
   resolveWebviewView(
@@ -34,36 +33,26 @@ export class Speedrunner implements vscode.WebviewViewProvider {
   ) {
     this._view = webviewView;
 
-    webviewView.webview.options = {
+    this._view.webview.options = {
       enableScripts: true,
       localResourceRoots: [this._extensionUri],
     };
 
-    webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
+    this._view.webview.html = this._getHtmlForWebview(webviewView.webview);
 
-    webviewView.webview.onDidReceiveMessage((data) => {
+    this._view.webview.onDidReceiveMessage((data) => {
       switch (data.type) {
-        case "colorSelected": {
-          vscode.window.activeTextEditor?.insertSnippet(
-            new vscode.SnippetString(`#${data.value}`),
-          );
+        case "isRunning": {
+          this.isRunning = data.value;
+          consoleLog("isRunning:", this.isRunning);
           break;
         }
       }
     });
-  }
-
-  public addColor() {
-    if (this._view) {
-      this._view.show?.(true); // `show` is not implemented in 1.49 but is for 1.50 insiders
-      this._view.webview.postMessage({ type: "addColor" });
-    }
-  }
-
-  public clearColors() {
-    if (this._view) {
-      this._view.webview.postMessage({ type: "clearColors" });
-    }
+    this._view.webview.postMessage({
+      type: "starmap",
+      value: makeStarmap().entries().toArray(),
+    });
   }
 
   private _getHtmlForWebview(webview: vscode.Webview) {
@@ -71,13 +60,13 @@ export class Speedrunner implements vscode.WebviewViewProvider {
       ["html", "css", "js"] as const,
       (ext) =>
         webview.asWebviewUri(
-          vscode.Uri.joinPath(this._extensionUri, ext, `speedrunner.${ext}`),
+          vscode.Uri.joinPath(this._extensionUri, "html", `speedrunner.${ext}`),
         ),
     );
 
     const nonce = getNonce();
 
-    return readHtml(htmlUri)!.replace(
+    const htmlData = readHtml(htmlUri)!.replace(
       /\${(nonce|cssUri|jsUri|cspSource|currentTime|startTime)}/g,
       (substring: string) => {
         const chop = slice(substring as Replaceable, 2, 1);
@@ -100,6 +89,8 @@ export class Speedrunner implements vscode.WebviewViewProvider {
         chop satisfies never;
       },
     );
+
+    return htmlData;
   }
 }
 

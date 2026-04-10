@@ -15,14 +15,24 @@
     <title>Cat Colors</title>
   </head>
   <body>
-    <h1>${currentTime}</h1>
+    <div id="time"><h1></h1></div>
+    <div id="splits">
+      <h2>Splits</h2>
+      <dl>
+        <dt>All achievements</dt>
+        <dd></dd>
+      </dl>
+    </div>
+    <div id="latest">
+      <h2>Latest achievements</h2>
+      <ul id="latest-ul"></ul>
+    </div>
+    <div id="buttons">
+      <button id="begin-run">Begin run</button>
+      <button id="end-run">End run</button>
+    </div>
+    <div id="log"></div>
 
-    <button class="add-color-button">Add Color</button>
-
-    <span id="nyeh">start time: ${startTime}</span>
-
-    <script nonce="${nonce}" src="${jsUri}">
-      document.getElementById("nyeh").innerText = "wah";
-    </script>
+    <script nonce="${nonce}" src="${jsUri}"></script>
   </body>
 </html>

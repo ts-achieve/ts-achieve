@@ -18,10 +18,7 @@ export function activate(context: vscode.ExtensionContext) {
     const decorator = new Decorator();
     const starlister = new Starlister(config, context);
     const summarizer = new Summarizer(starlister.starmap);
-    // const speedrunner = new Speedrunner(
-    //   context.extensionUri,
-    //   starlister.starmap,
-    // );
+    const speedrunner = new Speedrunner(context.extensionUri);
 
     vscode.commands.executeCommand(
       "setContext",
@@ -73,10 +70,10 @@ export function activate(context: vscode.ExtensionContext) {
       vscode.window.registerFileDecorationProvider(decorator),
       vscode.window.registerTreeDataProvider(names.views.summary, summarizer),
       vscode.window.registerTreeDataProvider(names.views.list, starlister),
-      // vscode.window.registerWebviewViewProvider(
-      //   Speedrunner.viewType,
-      //   speedrunner,
-      // ),
+      vscode.window.registerWebviewViewProvider(
+        Speedrunner.viewType,
+        speedrunner,
+      ),
 
       vscode.workspace.onDidChangeConfiguration(() => {
         const exConfig = getConfig();
@@ -93,6 +90,8 @@ export function activate(context: vscode.ExtensionContext) {
             const diagnostic = diagnostics[i]!;
 
             if (typeof diagnostic.code === "number") {
+              speedrunner.update(diagnostic.code);
+
               const maybeStar = starlister.starmap.get(diagnostic.code);
 
               if (maybeStar) {

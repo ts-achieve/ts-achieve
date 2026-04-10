@@ -1,0 +1,59 @@
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+div {
+  border: 0.1rem solid white;
+  padding: 0.5rem;
+}
+
+#latest {
+  height: 12lh;
+  overflow-y: scroll;
+}
+
+ul {
+  margin: 0.5rem 0;
+  padding-left: 1rem;
+  font-family: monospace;
+}
+
+h1,
+h2 {
+  margin: 0;
+}
+
+h1 {
+  font-family: monospace;
+  text-align: right;
+}
+
+#log {
+  font-family: monospace;
+  height: 8lh;
+  overflow-y: scroll;
+}
+
+#log p {
+  margin: 0;
+}
+
+button {
+  border: none;
+  border-radius: 0.4rem;
+  padding: 0.3rem 0.4rem;
+  width: 100%;
+  text-align: center;
+  color: var(--vscode-button-foreground);
+  background: var(--vscode-button-background);
+}
+
+button:hover {
+  cursor: pointer;
+  background: var(--vscode-button-hoverBackground);
+}
+
+button#end-run {
+  display: none;
+}
