@@ -119,6 +119,12 @@
           "id": "tsAchieve.view.list",
           "name": "List",
           "icon": "$(list-tree)"
+        },
+        {
+          "type": "webview",
+          "id": "tsAchieve.view.speedrun",
+          "name": "Speedrun",
+          "icon": "$(symbol-event)"
         }
       ]
     }
