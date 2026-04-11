@@ -1,16 +1,39 @@
 {
   "name": "ts-achieve",
+  "publisher": "ts-achieve",
   "repository": {
     "url": "https://github.com/ts-achieve/ts-achieve.git"
   },
   "displayName": "ts-achieve",
-  "description": "TypeScript errors as achievements",
+  "description": "TypeScript errors as achievements: gamify the development experience",
   "version": "0.0.38",
+  "license": "SEE LICENSE IN LICENSE",
   "engines": {
     "vscode": "^1.110.0"
   },
   "categories": [
-    "Other"
+    "Programming Languages",
+    "Linters",
+    "Debuggers",
+    "Visualization",
+    "Education"
+  ],
+  "keywords": [
+    "ts",
+    "typescript",
+    "star",
+    "achieve",
+    "achievement",
+    "error",
+    "warning",
+    "suggestion",
+    "message",
+    "game",
+    "gamify",
+    "unlock",
+    "lock",
+    "encounter",
+    "speedrun"
   ],
   "activationEvents": [
     "onStartupFinished"
@@ -130,22 +153,22 @@
     }
   },
   "scripts": {
-    "r": "rm -rf .vscode-test && rm -rf out && rm -f pnpm-lock.yaml && rm -rf node_modules && pnpm install",
-    "vscode:prepublish": "pnpm run compile",
+    "r": "rm -rf .vscode-test && rm -rf out && rm -f package-lock.json && rm -rf node_modules",
+    "ri": "npm run r && npm i",
+    "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "pretest": "pnpm run compile",
+    "pretest": "npm run compile",
     "test": "vscode-test run",
-    "p": "pnpm exec vsce-pnpm patch"
+    "b": "vsce pack 0.0.39"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
-    "@types/node": "22.x",
+    "@types/node": "~22.19.17",
     "@types/vscode": "^1.110.0",
-    "@vscode/test-cli": "^0.0.12",
+    "@vscode/test-cli": "^0.0.11",
     "@vscode/test-electron": "^2.5.2",
-    "typescript": "^6.0.2",
-    "vsce-pnpm": "^0.1.0"
+    "typescript": "^6.0.2"
   },
   "dependencies": {
     "expect-type": "^1.3.0"

@@ -50,7 +50,7 @@ suite("deep children", () => {
   test("error-type", () => {
     assert.deepStrictEqual(deepChildrenOf("error-type"), [
       "error-type-interface",
-      "error-type-assert",
+      "error-type-assertion",
       "error-type-generic",
       "error-type-primitive",
       "error-type-array",
