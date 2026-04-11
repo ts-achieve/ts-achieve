@@ -2,9 +2,6 @@ on:
   push:
     branches:
       - main
-  release:
-    types:
-      - created
 
 jobs:
   build:
@@ -25,8 +22,3 @@ jobs:
       - name: Test (non-Linux)
         run: npm t
         if: runner.os != 'Linux'
-      - name: Publish
-        run: npm run d
-        if: success() && startsWith(github.ref, 'refs/tags/') && matrix.os == 'ubuntu-latest'
-        env:
-          VSCE_PAT: ${{ secrets.VSCE_PAT }}

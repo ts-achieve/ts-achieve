@@ -160,8 +160,7 @@
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile",
     "test": "vscode-test run",
-    "b": "vsce pack",
-    "d": "vsce publish"
+    "b": "vsce pack"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
