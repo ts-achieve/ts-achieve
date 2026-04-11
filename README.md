@@ -12,14 +12,14 @@
 
 ```
 cd ts-achieve
-pnpm i
+npm i
 ```
 
 ## testing
 
 ```
 cd ts-achieve
-pnpm t
+npm t
 
 ```
 
@@ -27,5 +27,5 @@ pnpm t
 
 ```
 cd ts-achieve
-pnpm b
+npm run b
 ```
