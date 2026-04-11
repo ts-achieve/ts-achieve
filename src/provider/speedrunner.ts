@@ -4,7 +4,7 @@ import { makeStarmap } from "../star/star";
 import { names } from "../util/const";
 import { biject, slice } from "../util/type";
 import { readHtml } from "./fs";
-import { consoleLog } from "../util/console";
+import { consoleErr, consoleLog } from "../util/console";
 
 export class Speedrunner implements vscode.WebviewViewProvider {
   static readonly viewType = names.views.speedrun;
@@ -42,18 +42,32 @@ export class Speedrunner implements vscode.WebviewViewProvider {
 
     this._view.webview.onDidReceiveMessage((data) => {
       switch (data.type) {
-        case "isRunning": {
+        case "isRunning":
           this.isRunning = data.value;
           consoleLog("isRunning:", this.isRunning);
           break;
-        }
+        case "request":
+          switch (data.value) {
+            case "map":
+              this.deliverMap();
+              break;
+          }
+          break;
+        default:
+          consoleErr("unhandled message:", data);
       }
     });
-    this._view.webview.postMessage({
-      type: "starmap",
-      value: makeStarmap().entries().toArray(),
-    });
+    this.deliverMap();
   }
+
+  private deliverMap = () => {
+    if (this._view) {
+      this._view.webview.postMessage({
+        type: "emptymap",
+        value: makeStarmap().entries().toArray(),
+      });
+    }
+  };
 
   private _getHtmlForWebview(webview: vscode.Webview) {
     const [htmlUri, cssUri, jsUri] = biject(

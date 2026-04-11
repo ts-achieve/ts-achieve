@@ -3,15 +3,19 @@ window.onload = () => {
     log("starting up…");
 
     const vscode = acquireVsCodeApi();
+    const oldState = vscode.getState();
 
     const everything = {
       state: {
-        starmap: undefined,
+        emptymap: maybeGet(oldState.emptymap),
+        starmap: maybeGet(oldState.entries)
+          ? new Map(oldState.entries)
+          : undefined,
         vscode: vscode,
-        isRunning: false,
-        history: [],
-        startTime: -1,
-        elapsedTime: -1,
+        isRunning: maybeGet(oldState, "isRunning", false),
+        history: maybeGet(oldState, "history", []),
+        startTime: maybeGet(oldState, "startTime", -1),
+        elapsedTime: maybeGet(oldState, "elapsedTime", 0),
       },
       dom: {
         h1: document.getElementsByTagName("h1")[0],
@@ -24,11 +28,18 @@ window.onload = () => {
       },
     };
 
+    if (!everything.state.emptymap) {
+      everything.state.vscode.postMessage({ type: "request", value: "map" });
+    }
+
     window.addEventListener("message", (event) => {
       const message = event.data;
       switch (message.type) {
-        case "starmap": {
-          everything.state.starmap = new Map(message.value);
+        case "emptymap": {
+          everything.state.emptymap = message.value;
+          everything.state.vscode.setState({
+            emptymap: everything.state.emptymap,
+          });
           break;
         }
         case "star": {
@@ -45,6 +56,12 @@ window.onload = () => {
       endRun(e, everything),
     );
 
+    resetDom(everything);
+
+    if (everything.state.isRunning) {
+      resumeRun(everything);
+    }
+
     log("started up!");
   } catch (error) {
     log(error, error.stack);
@@ -53,23 +70,54 @@ window.onload = () => {
 
 const handleStar = (code, everything) => {
   try {
-    log("handling code:", code);
     const maybeOldStar = everything.state.starmap.get(code);
+
     if (maybeOldStar) {
       if ("encounterCount" in maybeOldStar) {
         maybeOldStar.encounterCount++;
       } else {
+        const stars = everything.state.starmap.values().toArray();
         maybeOldStar.encounterCount = 1;
         everything.dom.latestUl.innerHTML += `<li>${code}: ${maybeOldStar.messageTemplate}</li>`;
         document.getElementsByTagName("dd")[0].innerHTML =
-          everything.state.starmap
-            .values()
-            .toArray()
-            .filter((star) => "encounterCount" in star).length +
+          stars.filter((star) => "encounterCount" in star).length +
           " of " +
-          everything.state.starmap.values().toArray().length;
+          stars.length;
       }
     }
+  } catch (error) {
+    log(error, error.stack);
+  }
+};
+
+const resumeRun = (everything) => {
+  try {
+    log("resuming run…");
+
+    resetDom(everything);
+
+    const oldState = everything.state.vscode.getState();
+
+    everything.state.starmap = new Map(oldState.entries);
+    everything.state.vscode.setState({
+      entries: everything.state.starmap.entries().toArray(),
+    });
+
+    everything.state.startTime = oldState.startTime;
+
+    everything.dom.buttons.begin.style.display = "none";
+    everything.dom.buttons.end.style.display = "block";
+    everything.dom.h1.classList.add("running");
+
+    everything.state.isRunning = true;
+    everything.state.vscode.postMessage({
+      type: "isRunning",
+      value: everything.state.isRunning,
+    });
+
+    log("run resumed!");
+
+    requestAnimationFrame((t) => tick(t, everything));
   } catch (error) {
     log(error, error.stack);
   }
@@ -79,35 +127,61 @@ const beginRun = (event, everything) => {
   try {
     log("beginning run…");
 
+    resetDom(everything);
+
+    everything.state.starmap = new Map(
+      everything.state.emptymap.map(([k, v]) => [
+        k,
+        {
+          category: v.category,
+          code: v.code,
+          kind: v.kind,
+          messageTemplate: v.messageTemplate,
+        },
+      ]),
+    );
+
+    everything.state.startTime = Date.now();
+
+    everything.state.vscode.setState({
+      entries: everything.state.starmap.entries().toArray(),
+    });
+
+    everything.dom.buttons.begin.style.display = "none";
+    everything.dom.buttons.end.style.display = "block";
+    everything.dom.h1.classList.add("running");
+
     everything.state.isRunning = true;
     everything.state.vscode.postMessage({
       type: "isRunning",
       value: everything.state.isRunning,
     });
-    everything.dom.buttons.begin.style.display = "none";
-    everything.dom.buttons.end.style.display = "block";
-    everything.dom.h1.classList.add("running");
-
-    const timeH1 = document
-      .getElementById("time")
-      .getElementsByTagName("h1")[0];
-    everything.state.startTime = performance.now();
-
-    document.getElementsByTagName("dd")[0].innerHTML =
-      "0 of " + everything.state.starmap.values().toArray().length;
 
     log("run begun!");
 
-    const tick = () => {
-      everything.state.elapsedTime = Math.round(
-        performance.now() - everything.state.startTime,
-      );
-      timeH1.innerHTML = pprint(everything.state.elapsedTime);
-      if (everything.state.isRunning) {
-        requestAnimationFrame(tick);
-      }
-    };
-    requestAnimationFrame(tick);
+    requestAnimationFrame((t) => tick(t, everything));
+  } catch (error) {
+    log(error, error.stack);
+  }
+};
+
+const tick = (t, everything) => {
+  try {
+    everything.dom.h1.innerHTML = pprint(everything.state.elapsedTime);
+
+    everything.state.elapsedTime = Date.now() - everything.state.startTime;
+
+    everything.state.vscode.setState({
+      entries: everything.state.starmap.entries().toArray(),
+      isRunning: everything.state.isRunning,
+      history: everything.state.history,
+      startTime: everything.state.startTime,
+      elapsedTime: everything.state.elapsedTime,
+    });
+
+    if (everything.state.isRunning) {
+      requestAnimationFrame((t) => tick(t, everything));
+    }
   } catch (error) {
     log(error, error.stack);
   }
@@ -115,7 +189,7 @@ const beginRun = (event, everything) => {
 
 const pprint = (time) => {
   return (
-    mod(Math.floor(time / (60 * 60 * 1000)), 60)
+    Math.floor(time / (60 * 60 * 1000))
       .toString()
       .padStart(2, "0") +
     ":" +
@@ -127,7 +201,7 @@ const pprint = (time) => {
       .toString()
       .padStart(2, "0") +
     "." +
-    mod(time, 1000).toString().padStart(3, "0")
+    mod(Math.floor(time), 1000).toString().padStart(3, "0")
   );
 };
 
@@ -144,22 +218,59 @@ const endRun = (event, everything) => {
     everything.dom.buttons.end.style.display = "none";
     everything.dom.h1.classList.remove("running");
 
-    const achieved = everything.state.starmap
+    const numberAchieved = everything.state.starmap
       .values()
       .toArray()
       .filter((star) => "encounterCount" in star).length;
-    const total = everything.state.starmap.values().toArray().length;
+    const numberTotal = everything.state.starmap.values().toArray().length;
 
-    everything.dom.historyUl.innerHTML =
-      `<li>Duration: ${pprint(everything.state.elapsedTime)}` +
-      "<br>" +
-      `Progress: ${((achieved / total) * 100).toFixed(2)}% (${achieved} of ${total})</li>` +
-      everything.dom.historyUl.innerHTML;
+    everything.state.history.push({
+      duration: everything.state.elapsedTime,
+      numberAchieved,
+      numberTotal,
+    });
+
+    everything.state.vscode.setState({
+      entries: everything.state.starmap.entries().toArray(),
+      isRunning: everything.state.isRunning,
+      history: everything.state.history,
+    });
+
+    renderHistoryUl(everything);
 
     log("run ended!");
   } catch (error) {
     log(error, error.stack);
   }
+};
+
+resetDom = (everything) => {
+  log("resetting dom…");
+
+  everything.dom.h1.innerHTML = "00:00:00.000";
+  if (everything.state.starmap) {
+    document.getElementsByTagName("dd")[0].innerHTML =
+      "0 of " + everything.state.starmap.values().toArray().length;
+  }
+  everything.dom.latestUl.innerHTML = "";
+  renderHistoryUl(everything);
+
+  log("dom reset!");
+};
+
+const renderHistoryUl = (everything) => {
+  everything.dom.historyUl.innerHTML = everything.state.history
+    .map(
+      (item) =>
+        "<li>" +
+        `Duration: ${pprint(item.duration)}` +
+        "<br>" +
+        `Progress: ${((item.numberAchieved / item.numberTotal) * 100).toFixed(2)}%` +
+        " " +
+        `(${item.numberAchieved} of ${item.numberTotal})` +
+        "</li>",
+    )
+    .join("");
 };
 
 const log = (...args) => {
@@ -174,4 +285,14 @@ const log = (...args) => {
 
 const mod = (n, d) => {
   return ((n % d) + d) % d;
+};
+
+const stringify = (x) => {
+  return ["string", "number"].includes(typeof x)
+    ? x
+    : JSON.stringify(x, null, 2);
+};
+
+const maybeGet = (x, key, fallback = undefined) => {
+  return typeof x === "object" && !!x && key in x ? x[key] : fallback;
 };

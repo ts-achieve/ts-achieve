@@ -12,10 +12,19 @@ div {
   overflow-y: scroll;
 }
 
+#history {
+  height: 8lh;
+  overflow-y: scroll;
+}
+
 ul {
   margin: 0.5rem 0;
   padding-left: 1rem;
   font-family: monospace;
+}
+
+li {
+  margin: 0.5rem 0;
 }
 
 h1,
