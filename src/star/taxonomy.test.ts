@@ -1,5 +1,5 @@
 import assert from "assert";
-import { bottomKinds, deepChildrenOf, getAllKinds } from "./taxonomy";
+import { deepChildrenOf, getAllKinds } from "./taxonomy";
 
 suite("deep children", () => {
   suite("childless kinds", () => {
@@ -73,8 +73,6 @@ suite("deep children", () => {
 
 suite("get all kinds", () => {
   test("get all kinds", () => {
-    const kinds = getAllKinds();
-    console.log("", kinds, bottomKinds());
-    assert.ok(kinds);
+    assert.ok(getAllKinds());
   });
 });

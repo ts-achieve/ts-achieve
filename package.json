@@ -148,6 +148,12 @@
           "id": "tsAchieve.view.speedrun",
           "name": "Speedrun",
           "icon": "$(symbol-event)"
+        },
+        {
+          "type": "webview",
+          "id": "tsAchieve.view.liveblog",
+          "name": "Liveblog",
+          "icon": "$(dashboard)"
         }
       ]
     }

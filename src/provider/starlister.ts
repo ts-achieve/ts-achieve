@@ -4,7 +4,7 @@ import { ExtensionConfig } from "../config";
 import { fetchStarmap } from "../globalState";
 import { names, showing } from "../util/const";
 import { capitalize, join, mod, not, split, succeed } from "../util/type";
-import { StarProviderBase } from "./provider";
+import { TreeProviderBase } from "./provider";
 import {
   Star,
   UnlockedStar,
@@ -20,7 +20,7 @@ type Showing = (typeof showing)[keyof typeof showing];
 
 export type Subcategorize = "none" | "achievements only" | "all";
 
-export class Starlister<T = never> extends StarProviderBase<
+export class Starlister<T = never> extends TreeProviderBase<
   T | PathKind | StarKind | Star
 > {
   showing: Showing;

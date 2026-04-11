@@ -1,6 +1,6 @@
 import vscode from "vscode";
 
-import { StarProviderBase } from "./provider";
+import { TreeProviderBase } from "./provider";
 import { isUnlocked, Star, Starmap, UnlockedStar } from "../star/star";
 import {
   deepChildrenOf,
@@ -18,7 +18,7 @@ const summaryKinds = [...topSummaryKinds, ...pathKinds()] as const;
 
 type SummaryKind = (typeof summaryKinds)[number];
 
-export class Summarizer extends StarProviderBase<SummaryKind> {
+export class Summarizer extends TreeProviderBase<SummaryKind> {
   kinds: SummaryKind[];
 
   constructor(starmap: Starmap, kinds?: SummaryKind[]) {

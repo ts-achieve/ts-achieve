@@ -2,23 +2,13 @@ import vscode from "vscode";
 
 import { Maybe } from "./util/type";
 import { names } from "./util/const";
-import { Decorator } from "./provider/decorator";
-import { Speedrunner } from "./provider/speedrunner";
-import { Summarizer } from "./provider/summarizer";
-import { Starlister, Subcategorize } from "./provider/starlister";
+import { Subcategorize } from "./provider/starlister";
 import { consoleLog } from "./util/console";
 
 export type ExtensionConfig = {
   revealDescription: boolean;
   notifyOnReachieve: boolean;
   subcategorize: Subcategorize;
-};
-
-export type Providers = {
-  starlistProvider: Starlister;
-  summaryProvider: Summarizer;
-  speedrunProvider: Speedrunner;
-  decorationProvider: Decorator;
 };
 
 export const getConfigSection = <K extends keyof ExtensionConfig>(

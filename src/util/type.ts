@@ -2,6 +2,15 @@ import { Not, UnionToTuple } from "expect-type";
 
 // region shared
 
+export type Serializable =
+  | string
+  | number
+  | bigint
+  | boolean
+  | object
+  | null
+  | undefined;
+
 export type Maybe<T> = T | undefined;
 
 export type Writable<T> = { -readonly [K in keyof T]: T[K] };
@@ -9,9 +18,7 @@ export type ReadWrite<T> = T | Readonly<T> | Writable<T>;
 
 export type DeepWritable<T> = { -readonly [K in keyof T]: DeepWritable<T[K]> };
 
-export const isObject = (
-  x: unknown,
-): x is Exclude<object, any[] | readonly any[]> => {
+export const isObject = (x: unknown): x is Exclude<object, readonly any[]> => {
   return typeof x === "object" && !!x && !Array.isArray(x);
 };
 
@@ -126,9 +133,9 @@ export const biject = <U, L extends readonly any[]>(
 
 export type BijectPrefix<
   P extends string,
-  L extends string[],
+  L extends readonly string[],
   A extends string[] = [],
-> = L extends [infer F extends string, ...infer R extends string[]]
+> = L extends [infer F extends string, ...infer R extends readonly string[]]
   ? BijectPrefix<P, R, [...A, `${P}${F}`]>
   : A;
 

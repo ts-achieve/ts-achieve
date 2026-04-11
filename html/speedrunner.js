@@ -70,6 +70,7 @@ window.onload = () => {
 
 const handleStar = (code, everything) => {
   try {
+    log("handling star:", code);
     const maybeOldStar = everything.state.starmap.get(code);
 
     if (maybeOldStar) {
@@ -111,7 +112,7 @@ const resumeRun = (everything) => {
 
     everything.state.isRunning = true;
     everything.state.vscode.postMessage({
-      type: "isRunning",
+      type: "running",
       value: everything.state.isRunning,
     });
 
@@ -153,7 +154,7 @@ const beginRun = (event, everything) => {
 
     everything.state.isRunning = true;
     everything.state.vscode.postMessage({
-      type: "isRunning",
+      type: "running",
       value: everything.state.isRunning,
     });
 

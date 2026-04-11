@@ -9,6 +9,7 @@ import { Summarizer } from "./provider/summarizer";
 import { Starlister } from "./provider/starlister";
 import { consoleLog } from "./util/console";
 import { Speedrunner } from "./provider/speedrunner";
+import { Liveblogger } from "./provider/liveblogger";
 
 export function activate(context: vscode.ExtensionContext) {
   try {
@@ -19,6 +20,7 @@ export function activate(context: vscode.ExtensionContext) {
     const starlister = new Starlister(config, context);
     const summarizer = new Summarizer(starlister.starmap);
     const speedrunner = new Speedrunner(context.extensionUri);
+    const liveblogger = new Liveblogger(context.extensionUri);
 
     vscode.commands.executeCommand(
       "setContext",
@@ -74,6 +76,10 @@ export function activate(context: vscode.ExtensionContext) {
         Speedrunner.viewType,
         speedrunner,
       ),
+      vscode.window.registerWebviewViewProvider(
+        Liveblogger.viewType,
+        liveblogger,
+      ),
 
       vscode.workspace.onDidChangeConfiguration(() => {
         const exConfig = getConfig();
@@ -100,8 +106,11 @@ export function activate(context: vscode.ExtensionContext) {
 
                 showInformationMessage(unlockedStar, diagnostic);
                 setStarmap(context, starlister.starmap);
+
                 starlister.update(unlockedStar);
                 summarizer.update(starlister.starmap);
+                liveblogger.update(unlockedStar);
+
                 starlister.refresh();
                 summarizer.refresh();
               }

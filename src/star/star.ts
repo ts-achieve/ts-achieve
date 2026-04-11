@@ -79,7 +79,7 @@ export const unlock = (
 ): UnlockedStar => {
   return {
     ...star,
-    time: Date.now(),
+    time: isUnlocked(star) ? star.time : Date.now(),
     triggerText: sequence(5, (n) => {
       const lineNumber = diagnostic.range.start.line - 2 + n;
       if (0 <= lineNumber && lineNumber < document.lineCount) {
