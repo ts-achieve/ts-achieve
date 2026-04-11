@@ -15,10 +15,10 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v4
       - name: Install packages
-        run: npm i
+        run: pnpm i
       - name: Test (Linux)
-        run: xvfb-run -a npm t
+        run: xvfb-run -a pnpm t
         if: runner.os == 'Linux'
       - name: Test (non-Linux)
-        run: npm t
+        run: pnpm t
         if: runner.os != 'Linux'
