@@ -4,7 +4,6 @@ body {
 }
 
 div {
-  border: 0.1rem solid white;
   padding: 0.5rem;
 }
 
@@ -27,6 +26,25 @@ h2 {
 h1 {
   font-family: monospace;
   text-align: right;
+}
+
+h1.running {
+  color: var(--vscode-icon-foreground);
+}
+
+h1:not(.running) {
+  color: var(--vscode-disabledForeground);
+}
+
+dt,
+dd {
+  margin: 0;
+  padding: 0;
+  display: inline-block;
+}
+
+dd {
+  float: right;
 }
 
 #log {

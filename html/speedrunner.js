@@ -9,9 +9,14 @@ window.onload = () => {
         starmap: undefined,
         vscode: vscode,
         isRunning: false,
+        history: [],
+        startTime: -1,
+        elapsedTime: -1,
       },
       dom: {
-        latestUl: document.getElementById("latest-ul"),
+        h1: document.getElementsByTagName("h1")[0],
+        latestUl: document.querySelector("#latest ul"),
+        historyUl: document.querySelector("#history ul"),
         buttons: {
           begin: document.getElementById("begin-run"),
           end: document.getElementById("end-run"),
@@ -81,20 +86,23 @@ const beginRun = (event, everything) => {
     });
     everything.dom.buttons.begin.style.display = "none";
     everything.dom.buttons.end.style.display = "block";
+    everything.dom.h1.classList.add("running");
 
     const timeH1 = document
       .getElementById("time")
       .getElementsByTagName("h1")[0];
-    const startTime = Date.now();
+    everything.state.startTime = performance.now();
+
+    document.getElementsByTagName("dd")[0].innerHTML =
+      "0 of " + everything.state.starmap.values().toArray().length;
 
     log("run begun!");
 
     const tick = () => {
-      const elapsedTime = Date.now() - startTime;
-      timeH1.innerHTML =
-        new Date(elapsedTime).toLocaleTimeString() +
-        "." +
-        (elapsedTime % 1000).toString().padStart(3, "0");
+      everything.state.elapsedTime = Math.round(
+        performance.now() - everything.state.startTime,
+      );
+      timeH1.innerHTML = pprint(everything.state.elapsedTime);
       if (everything.state.isRunning) {
         requestAnimationFrame(tick);
       }
@@ -103,6 +111,24 @@ const beginRun = (event, everything) => {
   } catch (error) {
     log(error, error.stack);
   }
+};
+
+const pprint = (time) => {
+  return (
+    mod(Math.floor(time / (60 * 60 * 1000)), 60)
+      .toString()
+      .padStart(2, "0") +
+    ":" +
+    mod(Math.floor(time / (60 * 1000)), 60)
+      .toString()
+      .padStart(2, "0") +
+    ":" +
+    mod(Math.floor(time / 1000), 60)
+      .toString()
+      .padStart(2, "0") +
+    "." +
+    mod(time, 1000).toString().padStart(3, "0")
+  );
 };
 
 const endRun = (event, everything) => {
@@ -116,6 +142,19 @@ const endRun = (event, everything) => {
     });
     everything.dom.buttons.begin.style.display = "block";
     everything.dom.buttons.end.style.display = "none";
+    everything.dom.h1.classList.remove("running");
+
+    const achieved = everything.state.starmap
+      .values()
+      .toArray()
+      .filter((star) => "encounterCount" in star).length;
+    const total = everything.state.starmap.values().toArray().length;
+
+    everything.dom.historyUl.innerHTML =
+      `<li>Duration: ${pprint(everything.state.elapsedTime)}` +
+      "<br>" +
+      `Progress: ${((achieved / total) * 100).toFixed(2)}% (${achieved} of ${total})</li>` +
+      everything.dom.historyUl.innerHTML;
 
     log("run ended!");
   } catch (error) {
@@ -125,15 +164,14 @@ const endRun = (event, everything) => {
 
 const log = (...args) => {
   try {
-    args.forEach((arg) => {
-      try {
-        document.getElementById("log").innerHTML +=
-          `<p>${new Date().toLocaleTimeString()}: ${arg}</p>`;
-      } catch (error) {
-        log(error, error.stack);
-      }
-    });
+    document.getElementById("log").innerHTML =
+      `<p>${new Date().toLocaleTimeString()}: ${args.join(" ")}</p>` +
+      document.getElementById("log").innerHTML;
   } catch (error) {
     log(error, error.stack);
   }
+};
+
+const mod = (n, d) => {
+  return ((n % d) + d) % d;
 };
