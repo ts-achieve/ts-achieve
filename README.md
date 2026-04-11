@@ -20,7 +20,6 @@ pnpm i
 ```
 cd ts-achieve
 pnpm t
-
 ```
 
 ## building
