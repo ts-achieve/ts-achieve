@@ -6,7 +6,7 @@
   },
   "displayName": "ts-achieve",
   "description": "TypeScript errors as achievements: gamify the development experience",
-  "version": "0.0.41",
+  "version": "0.0.42",
   "license": "SEE LICENSE IN LICENSE",
   "engines": {
     "vscode": "^1.110.0"
