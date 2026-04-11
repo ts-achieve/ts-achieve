@@ -8,7 +8,7 @@
 
 # contributing
 
-## setting up
+## installing
 
 ```
 cd ts-achieve
