@@ -7,8 +7,8 @@ window.onload = () => {
 
     const everything = {
       state: {
-        emptymap: maybeGet(oldState.emptymap),
-        starmap: maybeGet(oldState.entries)
+        emptymap: maybeGet(oldState, "emptymap"),
+        starmap: maybeGet(oldState, "entries")
           ? new Map(oldState.entries)
           : undefined,
         vscode: vscode,
