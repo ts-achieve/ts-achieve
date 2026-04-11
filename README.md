@@ -1,3 +1,7 @@
+# `ts-achieve`
+
+[![.github/workflows/ci.yml](https://github.com/ts-achieve/ts-achieve/actions/workflows/ci.yml/badge.svg)](https://github.com/ts-achieve/ts-achieve/actions/workflows/ci.yml)
+
 `ts-achieve` is a VS Code extension by T.S. Achieve. It gamifies the TypeScript development experience by organizing diagnostic messages into unlockable achievements.
 
 # features
