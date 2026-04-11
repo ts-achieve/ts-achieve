@@ -7,9 +7,9 @@
     "types": ["node", "mocha"],
     "sourceMap": true,
     "rootDir": "src",
-    "strict": true,
     "skipLibCheck": true,
 
+    "strict": true,
     "erasableSyntaxOnly": true,
     "exactOptionalPropertyTypes": true,
 
