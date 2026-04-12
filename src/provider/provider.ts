@@ -43,29 +43,9 @@ export abstract class TreeProviderBase<
   }
 }
 
-const sortPriorities = [
-  "kind (errors first)",
-  "kind (errors last)",
-  "locked first",
-  "unlocked first",
-  "code (ascending)",
-  "code (descending)",
-  "alphabetic (forwards)",
-  "alphabetic (backwards)",
-];
+const replaceables = ["nonce", "cssUri", "jsUri", "cspSource"] as const;
 
-export type SortPriority = (typeof sortPriorities)[number];
-
-const rawReplaceables = [
-  "nonce",
-  "cssUri",
-  "jsUri",
-  "cspSource",
-  "startTime",
-  "currentTime",
-] as const;
-
-type Replaceable = `\${${(typeof rawReplaceables)[number]}}`;
+type Replaceable = `\${${(typeof replaceables)[number]}}`;
 
 const makeNonce = () => {
   let text = "";
@@ -134,11 +114,11 @@ export abstract class WebviewProviderBase
     const nonce = makeNonce();
 
     const htmlData = readFromUri(htmlUri)!.replace(
-      /\${(nonce|cssUri|jsUri|cspSource|currentTime|startTime)}/g,
+      /\${(nonce|cssUri|jsUri|cspSource)}/g,
       (substring: string) => {
-        const chop = slice(substring as Replaceable, 2, 1);
+        const sliced = slice(substring as Replaceable, 2, 1);
 
-        switch (chop) {
+        switch (sliced) {
           case "nonce":
             return nonce;
           case "cssUri":
@@ -147,13 +127,9 @@ export abstract class WebviewProviderBase
             return jsUri.toString();
           case "cspSource":
             return webview.cspSource;
-          case "currentTime":
-            return Date.now().toString();
-          case "startTime":
-            return Date.now().toString();
         }
 
-        chop satisfies never;
+        sliced satisfies never;
       },
     );
 

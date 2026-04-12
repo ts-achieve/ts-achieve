@@ -1,6 +1,6 @@
 import vscode from "vscode";
 
-import { makeStarmap, Star } from "../star/star";
+import { makeStarmap, Starmap } from "../star/star";
 import { names } from "../util/const";
 import { consoleErr, consoleLog } from "../util/console";
 import { WebviewProviderBase } from "./provider";
@@ -9,7 +9,10 @@ export type SpeedrunnerMessage =
   | { type: "running"; value: boolean }
   | { type: "request"; value: "map" }
   | { type: "star"; value: number }
-  | { type: "emptymap"; value: [number, Star][] };
+  | {
+      type: "emptymap";
+      value: ReturnType<ReturnType<Starmap["entries"]>["toArray"]>;
+    };
 
 export class Speedrunner extends WebviewProviderBase {
   static readonly viewType = names.views.speedrun;
@@ -36,7 +39,7 @@ export class Speedrunner extends WebviewProviderBase {
     switch (data.type) {
       case "running":
         this.isRunning = data.value;
-        consoleLog("running:", this.isRunning);
+        consoleLog("isRunning:", this.isRunning);
         break;
       case "request":
         switch (data.value) {

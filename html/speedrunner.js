@@ -13,6 +13,7 @@ window.onload = () => {
           : undefined,
         vscode: vscode,
         isRunning: maybeGet(oldState, "isRunning", false),
+        latest: maybeGet(oldState, "latest", []),
         history: maybeGet(oldState, "history", []),
         startTime: maybeGet(oldState, "startTime", -1),
         elapsedTime: maybeGet(oldState, "elapsedTime", 0),
@@ -79,11 +80,12 @@ const handleStar = (code, everything) => {
       } else {
         const stars = everything.state.starmap.values().toArray();
         maybeOldStar.encounterCount = 1;
-        everything.dom.latestUl.innerHTML += `<li>${code}: ${maybeOldStar.messageTemplate}</li>`;
+        everything.state.latest.push(maybeOldStar);
         document.getElementsByTagName("dd")[0].innerHTML =
           stars.filter((star) => "encounterCount" in star).length +
           " of " +
           stars.length;
+        renderLatestUl(everything);
       }
     }
   } catch (error) {
@@ -128,7 +130,7 @@ const beginRun = (event, everything) => {
   try {
     log("beginning run…");
 
-    resetDom(everything);
+    everything.state.latest = [];
 
     everything.state.starmap = new Map(
       everything.state.emptymap.map(([k, v]) => [
@@ -142,8 +144,6 @@ const beginRun = (event, everything) => {
       ]),
     );
 
-    everything.state.startTime = Date.now();
-
     everything.state.vscode.setState({
       entries: everything.state.starmap.entries().toArray(),
     });
@@ -151,7 +151,9 @@ const beginRun = (event, everything) => {
     everything.dom.buttons.begin.style.display = "none";
     everything.dom.buttons.end.style.display = "block";
     everything.dom.h1.classList.add("running");
+    resetDom(everything);
 
+    everything.state.startTime = Date.now();
     everything.state.isRunning = true;
     everything.state.vscode.postMessage({
       type: "running",
@@ -175,6 +177,7 @@ const tick = (t, everything) => {
     everything.state.vscode.setState({
       entries: everything.state.starmap.entries().toArray(),
       isRunning: everything.state.isRunning,
+      latest: everything.state.latest,
       history: everything.state.history,
       startTime: everything.state.startTime,
       elapsedTime: everything.state.elapsedTime,
@@ -245,7 +248,7 @@ const endRun = (event, everything) => {
   }
 };
 
-resetDom = (everything) => {
+const resetDom = (everything) => {
   log("resetting dom…");
 
   everything.dom.h1.innerHTML = "00:00:00.000";
@@ -253,22 +256,28 @@ resetDom = (everything) => {
     document.getElementsByTagName("dd")[0].innerHTML =
       "0 of " + everything.state.starmap.values().toArray().length;
   }
-  everything.dom.latestUl.innerHTML = "";
+  renderLatestUl(everything);
   renderHistoryUl(everything);
 
   log("dom reset!");
 };
 
+const renderLatestUl = (everything) => {
+  everything.dom.latestUl.innerHTML = everything.state.latest
+    .map((star) => `<li>${star.code}: ${star.messageTemplate}</li>`)
+    .join("");
+};
+
 const renderHistoryUl = (everything) => {
   everything.dom.historyUl.innerHTML = everything.state.history
     .map(
-      (item) =>
+      (run) =>
         "<li>" +
-        `Duration: ${pprint(item.duration)}` +
+        `Duration: ${pprint(run.duration)}` +
         "<br>" +
-        `Progress: ${((item.numberAchieved / item.numberTotal) * 100).toFixed(2)}%` +
+        `Progress: ${((run.numberAchieved / run.numberTotal) * 100).toFixed(2)}%` +
         " " +
-        `(${item.numberAchieved} of ${item.numberTotal})` +
+        `(${run.numberAchieved} of ${run.numberTotal})` +
         "</li>",
     )
     .join("");
