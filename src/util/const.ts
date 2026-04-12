@@ -27,6 +27,10 @@ export const sortPriorities = [
 
 // region names
 
+type ContributeName<S extends string, P extends string> = {
+  [K in S]: `${P}${K}`;
+};
+
 const ex = "tsAchieve" as const;
 
 const commands = {
@@ -38,24 +42,24 @@ const commands = {
   showUnlocked: `${ex}.command.showUnlocked`,
   showLocked: `${ex}.command.showLocked`,
   showAll: `${ex}.command.showAll`,
-} as const satisfies Record<string, `${typeof ex}.command.${any}`>;
+} as const satisfies ContributeName<any, `${typeof ex}.command.`>;
 
 const config = {
   revealDescription: `config.revealDescription`,
   notifyOnReachieve: `config.notifyOnReachieve`,
   subcategorize: `config.subcategorize`,
-} as const;
+} as const satisfies ContributeName<any, `config.`>;
 
 const context = {
   isRunStarted: `${ex}.context.isRunStarted`,
-} as const;
+} as const satisfies ContributeName<any, `${typeof ex}.context.`>;
 
 const views = {
   list: `${ex}.view.list`,
   summary: `${ex}.view.summary`,
   speedrun: `${ex}.view.speedrun`,
   liveblog: `${ex}.view.liveblog`,
-} as const;
+} as const satisfies ContributeName<any, `${typeof ex}.view.`>;
 
 const colors = {
   locked: "disabledForeground",

@@ -1,6 +1,6 @@
 import { alphabet, split } from "./type";
 
-const randomChoose = <T>(xs: readonly T[]): T =>
+export const choose = <T>(xs: readonly T[]): T =>
   xs[Math.floor(Math.random() * xs.length)]!;
 
 const primitiveNames = [
@@ -34,7 +34,7 @@ export type Primitive<K extends PrimitiveName = PrimitiveName> = K extends any
 const randomPrimitive = <T extends PrimitiveName>(
   ...types: T[]
 ): Primitive<T> => {
-  const randomType = randomChoose(types.length > 0 ? types : primitiveNames);
+  const randomType = choose(types.length > 0 ? types : primitiveNames);
   switch (randomType) {
     case "bigint":
       return randomBigint() as Primitive<T>;
@@ -55,12 +55,12 @@ const randomPrimitive = <T extends PrimitiveName>(
   randomType satisfies never;
 };
 
-const randomBoolean = () => {
+export const randomBoolean = () => {
   return Math.random() < 0.5 ? false : true;
 };
 
 const randomChar = () => {
-  return randomChoose(split(alphabet, ""));
+  return choose(split(alphabet, ""));
 };
 
 export const randomString = (): string => {

@@ -18,7 +18,8 @@ import { consoleLog } from "../util/console";
 
 type Showing = (typeof showing)[keyof typeof showing];
 
-export type Subcategorize = "none" | "achievements only" | "all";
+export const subcategorizations = ["none", "achievements only", "all"];
+export type Subcategorize = (typeof subcategorizations)[number];
 
 export class Starlister<T = never> extends TreeProviderBase<
   T | PathKind | StarKind | Star

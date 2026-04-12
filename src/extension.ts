@@ -1,7 +1,7 @@
 import vscode from "vscode";
 
 import { names, showing } from "./util/const";
-import { getConfig, getConfigSection } from "./config";
+import { getConfig } from "./config";
 import { getGlobalState, setStarmap } from "./globalState";
 import { unlock, UnlockedStar } from "./star/star";
 import { Decorator } from "./provider/decorator";
@@ -140,7 +140,9 @@ const showInformationMessage = (
 ) => {
   if (
     star.encounterCount > 1 &&
-    getConfigSection(names.config.notifyOnReachieve)
+    vscode.workspace
+      .getConfiguration(names.ex)
+      .get(names.config.notifyOnReachieve)
   ) {
     vscode.window.showInformationMessage(
       `Achievement found again! ${diagnostic.code}: ${diagnostic.message}`,

@@ -102,6 +102,23 @@ export const flat = <T extends readonly any[]>(xs: T): Flat<T> => {
 
 // region tuple
 
+/**
+ * case-insensitive
+ */
+export const includesAny = (haystack: string, ...needles: string[]) => {
+  for (const needle of needles) {
+    if (
+      haystack.includes(needle.slice(1)) &&
+      (haystack.includes(uncapitalize(needle)) ||
+        haystack.includes(capitalize(needle)))
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
 export type Tuple<N extends number = number, T = any> = number extends N
   ? T[]
   : N extends any
@@ -216,11 +233,13 @@ export const minus = <M extends number, N extends number>(m: M, n: N) => {
   return (m - n) as Minus<M, N>;
 };
 
-export type Modulo<M extends number, N extends number> = M extends any
-  ? Minus<M, N> extends never
-    ? M
-    : Modulo<Minus<M, N>, N>
-  : never;
+export type Modulo<M extends number, N extends number> = number extends N
+  ? number
+  : M extends any
+    ? Minus<M, N> extends never
+      ? M
+      : Modulo<Minus<M, N>, N>
+    : never;
 
 export const mod = <M extends number, N extends number>(n: M, d: N) => {
   return (((n % d) + d) % d) as Modulo<M, N>;

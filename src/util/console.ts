@@ -1,7 +1,7 @@
 import { biject, length, max, plus, rightpad } from "./type";
 
-const stampKinds = ["log", "err"] as const;
-type StampKind = (typeof stampKinds)[number];
+const printKinds = ["log", "err"] as const;
+type PrintKind = (typeof printKinds)[number];
 
 /**
  * Prints the arguments to {@linkcode console}, prepended with
@@ -10,7 +10,7 @@ type StampKind = (typeof stampKinds)[number];
  * @see {@linkcode consoleErr}
  */
 export const consoleLog = (...args: any[]) => {
-  stamp("log", args);
+  print("log", args);
 };
 
 /**
@@ -20,19 +20,19 @@ export const consoleLog = (...args: any[]) => {
  * @see {@linkcode consoleLog}
  */
 export const consoleErr = (...args: any[]) => {
-  stamp("err", args);
+  print("err", args);
 };
 
-const stamp = (kind: StampKind, args: any[]) => {
+const print = (kind: PrintKind, args: any[]) => {
   console.log(stampKind(kind), stampTime(), ...args);
 };
 
-type Kindstamp<K extends StampKind = StampKind> = ReturnType<
+type Kindstamp<K extends PrintKind = PrintKind> = ReturnType<
   typeof stampKind<K>
 >;
 
-const stampKind = <K extends StampKind>(kind: K) => {
-  return `${rightpad(`[${kind}]`, plus(max(...biject(stampKinds, length)), 2))}` as const;
+const stampKind = <K extends PrintKind>(kind: K) => {
+  return `${rightpad(`[${kind}]`, plus(max(...biject(printKinds, length)), 2))}` as const;
 };
 
 type Timestamp = ReturnType<typeof stampTime>;

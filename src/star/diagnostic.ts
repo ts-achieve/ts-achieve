@@ -1,5 +1,5 @@
 import { tsDiagnosticCategories } from "../util/const";
-import { capitalize, isObject, uncapitalize } from "../util/type";
+import { includesAny, isObject } from "../util/type";
 import { Star } from "./star";
 import { StarKind, taxonomy } from "./taxonomy";
 
@@ -170,21 +170,4 @@ export const computeKind = ({
   return (Object.keys(taxonomy).find((key) =>
     (taxonomy[key as keyof typeof taxonomy] as number[]).includes(code),
   ) ?? "error-other") as StarKind;
-};
-
-/**
- * case-insensitive
- */
-const includesAny = (haystack: string, ...needles: string[]) => {
-  for (const needle of needles) {
-    if (
-      haystack.includes(needle.slice(1)) &&
-      (haystack.includes(uncapitalize(needle)) ||
-        haystack.includes(capitalize(needle)))
-    ) {
-      return true;
-    }
-  }
-
-  return false;
 };
