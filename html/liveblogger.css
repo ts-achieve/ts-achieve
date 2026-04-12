@@ -3,6 +3,12 @@
   box-sizing: border-box;
 }
 
+#frame,
+#world {
+  border: 0.1rem solid var(--vscode-editor-foreground);
+  box-sizing: border-box;
+}
+
 html,
 body {
   height: 100%;
@@ -15,31 +21,31 @@ body {
   flex-direction: column;
 }
 
+#world {
+  flex-grow: 1;
+}
+
 #frame {
   flex-grow: 1;
-  border: 0.1rem solid black;
-  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
 }
 
 #combo-bg,
 #combo-fg {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
   height: 1rem;
   border-radius: 0.5rem;
   margin: 1rem;
-  overflow: hidden;
 }
 
 #combo-bg {
-  border: 0.1rem solid black;
-  background: lightgrey;
+  border: 0.1rem solid var(--vscode-editor-foreground);
+  background: var(--vscode-editor-background);
 }
 
 #combo-fg {
-  background: green;
+  position: absolute;
+  background: var(--vscode-editor-foreground);
 }
 
 #log {

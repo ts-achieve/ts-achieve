@@ -6,7 +6,7 @@ window.onload = () => {
       },
       dom: {
         frame: document.getElementById("frame"),
-        world: document.getElementById("frame"),
+        world: document.getElementById("world"),
         comboBg: document.getElementById("combo-bg"),
         comboFg: document.getElementById("combo-fg"),
       },
@@ -17,7 +17,7 @@ window.onload = () => {
         const message = event.data;
         switch (message.type) {
           case "star": {
-            makeH1(message.value[0], everything.dom.world);
+            makeH1(message.value[0], everything);
             everything.state.combo++;
             break;
           }
@@ -55,13 +55,21 @@ const tick = (now, last, everything) => {
   }
 };
 
-const makeH1 = (code, world) => {
+const makeH1 = (code, everything) => {
   try {
     const h1 = document.createElement("h1");
     h1.innerHTML = code.toString();
-    world.appendChild(h1);
+    everything.dom.world.appendChild(h1);
 
-    const worldStyle = getComputedStyle(world);
+    const comboStyle = getComputedStyle(everything.dom.comboBg);
+    const comboHeight =
+      unpx(comboStyle.height) +
+      unpx(comboStyle.marginTop) +
+      unpx(comboStyle.marginBottom) +
+      unpx(comboStyle.paddingTop) +
+      unpx(comboStyle.paddingBottom);
+
+    const worldStyle = getComputedStyle(everything.dom.world);
     const worldWidth = unpx(worldStyle.width);
     const worldHeight = unpx(worldStyle.height);
 
@@ -70,7 +78,7 @@ const makeH1 = (code, world) => {
     const h1Height = unpx(h1Style.height);
 
     h1.style.left = `${(worldWidth - h1Width) * Math.random()}px`;
-    h1.style.top = `${(worldHeight - h1Height) * Math.random()}px`;
+    h1.style.top = `${comboHeight + (worldHeight - h1Height) * Math.random()}px`;
     h1.style.rotate = `${30 * Math.random() - 15}deg`;
 
     h1.addEventListener("animationend", () => {
@@ -79,7 +87,7 @@ const makeH1 = (code, world) => {
         h1.classList.add("exiting");
       } else if (h1.classList.contains("exiting")) {
         h1.classList.remove("exiting");
-        world.removeChild(h1);
+        everything.dom.world.removeChild(h1);
       }
     });
 
