@@ -1,0 +1,89 @@
+* {
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+#frame {
+  flex-grow: 1;
+  border: 0.1rem solid black;
+  box-sizing: border-box;
+}
+
+#combo-bg,
+#combo-fg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1rem;
+  border-radius: 0.5rem;
+  margin: 1rem;
+  overflow: hidden;
+}
+
+#combo-bg {
+  border: 0.1rem solid black;
+  background: lightgrey;
+}
+
+#combo-fg {
+  background: green;
+}
+
+#log {
+  font-family: monospace;
+  overflow-y: scroll;
+  height: 8lh;
+}
+
+#log p {
+  margin: 0;
+}
+
+h1 {
+  position: absolute;
+  display: block;
+  margin: 0;
+  padding: 0;
+  text-align: center;
+  font-family: monospace;
+  box-sizing: border-box;
+}
+
+h1.entering {
+  animation: enter 0.5s ease-out;
+}
+
+h1.exiting {
+  animation: exit 4s ease-out;
+}
+
+@keyframes enter {
+  0% {
+    scale: 200%;
+  }
+  100% {
+    scale: 100%;
+  }
+}
+
+@keyframes exit {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
