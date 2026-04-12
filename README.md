@@ -32,3 +32,11 @@ pnpm t
 cd ts-achieve
 pnpm b
 ```
+
+# history
+
+- **v0.1.0** (2026 4 11) achieved `publisher` field in `package.json`
+
+  this is a breaking change. installations of v0.0.x must go
+  to `~/.vscode/extensions` (Unix) or `%USERPROFILE%\.vscode\extensions` (Windows)
+  and delete all folders that begin with `undefined_publisher.ts-achieve`.
