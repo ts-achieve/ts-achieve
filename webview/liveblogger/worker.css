@@ -33,9 +33,9 @@ body {
 
 #combo-bg,
 #combo-fg {
-  height: 1rem;
+  height: 1.5rem;
   border-radius: 0.5rem;
-  margin: 1rem;
+  margin: 0.5rem;
 }
 
 #combo-bg {
@@ -58,38 +58,50 @@ body {
   margin: 0;
 }
 
-h1 {
-  position: absolute;
-  display: block;
-  margin: 0;
-  padding: 0;
-  text-align: center;
-  font-family: monospace;
+.star {
+  padding: 0.5rem;
+  rx: 0.25rem;
+  ry: 0.25rem;
   box-sizing: border-box;
+  width: 2.5rem;
+  height: 1rem;
 }
 
-h1.entering {
-  animation: enter 0.5s ease-out;
+rect.star {
+  fill: transparent;
+  stroke: var(--vscode-editor-foreground);
+  width: 2.5rem;
+  height: 1rem;
 }
 
-h1.exiting {
-  animation: exit 4s ease-out;
+text.star {
+  fill: var(--vscode-editor-foreground);
+  font-family: monospace;
+  text-anchor: middle;
+  dominant-baseline: central;
 }
 
-@keyframes enter {
+.falling {
+  animation: fall 3s ease-in;
+}
+
+@keyframes fall {
   0% {
-    scale: 200%;
+    translate: 0 0;
   }
   100% {
-    scale: 100%;
+    translate: 0 100%;
   }
 }
 
-@keyframes exit {
-  0% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-  }
+polygon#achiever {
+  --achiever-s-x: 0;
+  --achiever-s-y: 0;
+  fill: var(--vscode-editor-foreground);
+  translate: var(--achiever-s-x) var(--achiever-s-y);
+}
+
+circle.bullet {
+  fill: var(--vscode-editor-foreground);
+  stroke: var(--vscode-editor-background);
 }

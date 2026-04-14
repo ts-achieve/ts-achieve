@@ -105,8 +105,9 @@ export abstract class WebviewProviderBase
         webview.asWebviewUri(
           vscode.Uri.joinPath(
             this._extensionUri,
-            "html",
-            `${this.name}.${ext}`,
+            "webview",
+            this.name,
+            `worker.${ext}`,
           ),
         ),
     );
