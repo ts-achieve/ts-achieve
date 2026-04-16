@@ -1,4 +1,5 @@
 {
+  "exclude": ["webview"],
   "compilerOptions": {
     "module": "nodenext",
     "target": "esnext",

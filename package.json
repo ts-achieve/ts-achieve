@@ -166,6 +166,7 @@
     "watch": "tsc -watch -p ./",
     "pretest": "rm -rf out && pnpm run compile",
     "test": "vscode-test run",
+    "w": "tsc webview/liveblogger/worker.ts --ignoreConfig --module esnext --sourceMap false && sed -i '' '$d' webview/liveblogger/worker.js",
     "p": "pnpm exec vsce-pnpm patch"
   },
   "devDependencies": {

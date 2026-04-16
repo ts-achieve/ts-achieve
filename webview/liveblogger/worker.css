@@ -3,12 +3,6 @@
   box-sizing: border-box;
 }
 
-#frame,
-#world {
-  border: 0.1rem solid var(--vscode-editor-foreground);
-  box-sizing: border-box;
-}
-
 html,
 body {
   height: 100%;
@@ -23,6 +17,8 @@ body {
 
 #world {
   flex-grow: 1;
+  border: 0.1rem solid var(--vscode-editor-foreground);
+  box-sizing: border-box;
 }
 
 #frame {
@@ -59,49 +55,42 @@ body {
 }
 
 .star {
-  padding: 0.5rem;
-  rx: 0.25rem;
-  ry: 0.25rem;
   box-sizing: border-box;
-  width: 2.5rem;
-  height: 1rem;
 }
 
 rect.star {
-  fill: transparent;
+  fill: none;
   stroke: var(--vscode-editor-foreground);
-  width: 2.5rem;
-  height: 1rem;
+  rx: 5;
+  ry: 5;
+}
+
+text {
+  fill: var(--vscode-editor-foreground);
+  stroke: none;
+  font-family: monospace;
 }
 
 text.star {
-  fill: var(--vscode-editor-foreground);
-  font-family: monospace;
   text-anchor: middle;
   dominant-baseline: central;
 }
 
-.falling {
-  animation: fall 3s ease-in;
-}
-
-@keyframes fall {
-  0% {
-    translate: 0 0;
-  }
-  100% {
-    translate: 0 100%;
-  }
-}
-
 polygon#achiever {
-  --achiever-s-x: 0;
-  --achiever-s-y: 0;
   fill: var(--vscode-editor-foreground);
-  translate: var(--achiever-s-x) var(--achiever-s-y);
+  stroke: none;
 }
 
 circle.bullet {
   fill: var(--vscode-editor-foreground);
-  stroke: var(--vscode-editor-background);
+  stroke: none;
+}
+
+circle.point {
+  fill: var(--vscode-editor-foreground);
+  stroke: none;
+}
+
+text#fps {
+  text-anchor: end;
 }
