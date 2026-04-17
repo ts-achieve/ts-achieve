@@ -1,5 +1,25 @@
-import type { WebviewApi } from "vscode-webview";
-import type { Writable, Z, W, Maybe, WindowZ, WorldZ, Message } from "./type";
+import type {
+  Writable,
+  WorldZ,
+  WindowZ,
+  WorldW,
+  Message,
+  Dom,
+  Drawable,
+  Everything,
+  Sful,
+  State,
+  Achiever,
+  Bullet,
+  Directional,
+  ShooterId,
+  Star,
+  Tamed,
+  Tamer,
+  Vful,
+  Movable,
+  Behave,
+} from "./type";
 
 // region constants
 
@@ -21,54 +41,9 @@ const constants = {
   },
 } as const;
 
-// region types
-
-interface Everything {
-  vscode: WebviewApi<State>;
-  state: State;
-  dom: Dom;
-}
-
-interface State {
-  combo: number;
-  achiever: Achiever;
-  startamer: Tamer<Star>;
-}
-
-interface Sful {
-  s: Z;
-}
-
-interface Vful {
-  v: Z;
-}
-
-interface Movable extends Sful, Vful {
-  move: (everything: Everything) => void;
-}
-
-interface Drawable<T extends readonly SVGElement[] = readonly SVGElement[]> {
-  svgs: Maybe<T>;
-}
-
 const isDrawable = (x: unknown): x is Drawable => {
   return typeof x === "object" && !!x && "svgs" in x;
 };
-
-interface Collidable extends Sful {
-  contains: (z: Z) => boolean;
-}
-
-interface Dom {
-  worldSvg: SVGSVGElement;
-  fps: SVGTextElement;
-  comboBar: ComboBar;
-}
-
-interface ComboBar {
-  fg: HTMLDivElement;
-  bg: HTMLDivElement;
-}
 
 // region make
 
@@ -83,9 +58,11 @@ const makeEverything = (): Everything => {
 
 const makeState = (): State => {
   return {
+    now: undefined,
     combo: 0,
     achiever: makeAchiever(),
     startamer: makeStartamer(),
+    bullettamer: makeBullettamer(),
   };
 };
 
@@ -108,16 +85,10 @@ const makeDom = (): Dom => {
 
 // region achiever
 
-interface Achiever extends Movable, Drawable<[SVGPolygonElement]>, Shooting {
-  tamer: Tamer<Bullet>;
-  turn: (everything: Everything) => void;
-}
-
 const makeAchiever = (): Achiever => {
-  const achiever: Pick<Achiever, "s" | "v" | "tamer"> = {
+  const achiever: Sful & Vful = {
     s: [constants.world.w / 2, constants.world.h / 2],
     v: [0, 0],
-    tamer: makeBullettamer(),
   };
 
   const move = (): void => {
@@ -128,8 +99,10 @@ const makeAchiever = (): Achiever => {
     achiever.v = toZ([1, rangle()]);
   };
 
-  const shoot = (): Bullet => {
-    return achiever.tamer.make("achiever", achiever.s);
+  const shoot = (tamer: Tamer<Bullet>): Bullet => {
+    return tamer.make("achiever", achiever.s, (bullet: Bullet) => {
+      bullet.s = [bullet.s[0] + bullet.v[0], bullet.s[1] + bullet.v[1]];
+    });
   };
 
   return Object.assign(achiever, { move, turn, shoot, svgs: undefined });
@@ -147,18 +120,7 @@ const makeAchieverSvg = ({
   return achieverSvg;
 };
 
-// region shooting, bullet
-
-type ShooterId = "achiever" | number;
-
-interface Shooting {
-  shoot: (everything: Everything) => Bullet;
-}
-
-interface Bullet
-  extends Movable, Drawable<[SVGCircleElement]>, Tamed, Collidable {
-  shooterId: ShooterId;
-}
+// region  bullet
 
 const isBullet = (x: unknown): x is Bullet => {
   return isDrawable(x) && !!x.svgs && x.svgs[0].tagName === "circle";
@@ -166,17 +128,22 @@ const isBullet = (x: unknown): x is Bullet => {
 
 const makeBullettamer = (): Tamer<Bullet> => {
   return makeTamerWith(
-    (id: number, shooterId: ShooterId, [x, y]: Z): Bullet => {
+    (
+      id: number,
+      shooterId: ShooterId,
+      [x, y]: WorldZ,
+      behave: Behave,
+    ): Bullet => {
       const bullet: Pick<Bullet, "s" | "v"> = {
         s: [x, y - 20],
-        v: [0, -10],
+        v: [0, -20],
       };
 
-      const move = (): void => {
-        bullet.s = [bullet.s[0] + bullet.v[0], bullet.s[1] + bullet.v[1]];
+      const move = (now: number): void => {
+        behave(bullet, now);
       };
 
-      const contains = (z: Z) => {
+      const contains = (z: WorldZ) => {
         return (
           Math.sqrt((x - z[0]) ** 2 + (y - z[1]) ** 2) < constants.bullet.r
         );
@@ -207,17 +174,6 @@ const makeBulletSvg = ({ dom: { worldSvg } }: Everything) => {
 };
 
 // region taming
-
-interface Tamed {
-  id: number;
-}
-
-interface Tamer<T> {
-  list: T[];
-  peek: () => number;
-  make: (...args: any[]) => T;
-  unmake: (star: T) => number;
-}
 
 const untameDrawable = <T extends Tamed & Drawable>(drawable: T) => {
   if (drawable.svgs) {
@@ -257,15 +213,6 @@ const makeTamerWith = <T>(
 
 // region star
 
-interface Star
-  extends
-    Drawable<[SVGRectElement, SVGTextElement]>,
-    Movable,
-    Tamed,
-    Collidable {
-  code: number;
-}
-
 const isStar = (x: unknown): x is Star => {
   return (
     isDrawable(x) &&
@@ -277,7 +224,7 @@ const isStar = (x: unknown): x is Star => {
 
 const makeStartamer = (): Tamer<Star> => {
   return makeTamerWith(
-    (id: number, code: number): Star => {
+    (id: number, code: number, startTime: number): Star => {
       const s: WorldZ = [
         constants.world.minx + constants.world.w * Math.random(),
         -constants.star.h,
@@ -291,7 +238,7 @@ const makeStartamer = (): Tamer<Star> => {
         s[1] += v[1];
       };
 
-      const contains = (z: Z) => {
+      const contains = (z: WorldZ) => {
         return (
           s[0] - constants.star.w / 2 < z[0] &&
           z[0] < s[0] + constants.star.w / 2 &&
@@ -300,7 +247,23 @@ const makeStartamer = (): Tamer<Star> => {
         );
       };
 
-      return { id, code, s, v, move, contains, svgs: undefined };
+      const shoot = (tamer: Tamer<Bullet>): Bullet => {
+        return tamer.make(id, s, (bullet: Bullet) => {
+          bullet.s = [bullet.s[0] + bullet.v[0], bullet.s[1] + bullet.v[1]];
+        });
+      };
+
+      return {
+        id,
+        code,
+        startTime,
+        s,
+        v,
+        move,
+        contains,
+        shoot,
+        svgs: undefined,
+      };
     },
     (star) => untameDrawable(star),
   );
@@ -362,13 +325,6 @@ const windowToWorld = ([x, y]: WindowZ): WorldZ => {
     relerp(0, clientH)(constants.world.miny, constants.world.maxy)(y),
   ];
 };
-
-interface Directional {
-  top: number;
-  bottom: number;
-  left: number;
-  right: number;
-}
 
 const checkBounds = (thing: Sful, margin?: Partial<Directional>) => {
   if (thing.s[0] < constants.world.minx - (margin?.left ?? 0)) {
@@ -444,8 +400,11 @@ const makeSvgElement = <K extends keyof SVGElementTagNameMap>(
 
 const rangle = () => 2 * Math.PI * Math.random();
 
-const toZ = ([r, a]: W): Z => [r * Math.cos(a), r * Math.sin(a)];
-const toW = ([x, y]: Z): W => [Math.sqrt(x ** 2 + y ** 2), Math.atan2(y, x)];
+const toZ = ([r, a]: WorldW): WorldZ => [r * Math.cos(a), r * Math.sin(a)];
+const toW = ([x, y]: WorldZ): WorldW => [
+  Math.sqrt(x ** 2 + y ** 2),
+  Math.atan2(y, x),
+];
 
 const lerp = (start: number, end: number) => (t: number) =>
   start + (end - start) * t;
@@ -463,35 +422,42 @@ const relerp =
 
 const tick = (now: number, last: number, everything: Everything): void => {
   try {
-    const achiever = everything.state.achiever;
+    everything.state.now = now;
+
+    const { achiever, bullettamer } = everything.state;
 
     if (now % 20 < now - last) {
-      achiever.shoot(everything);
+      achiever.shoot(bullettamer);
     }
 
     if (now % 500 < now - last) {
       achiever.turn(everything);
     }
 
-    achiever.move(everything);
+    achiever.move(now);
 
-    for (const bullet of achiever.tamer.list) {
-      bullet.move(everything);
+    for (const bullet of bullettamer.list) {
+      bullet.move(now);
 
       if (checkBounds(bullet, { top: 10 }) !== undefined) {
-        achiever.tamer.unmake(bullet);
+        bullettamer.unmake(bullet);
       }
     }
 
     for (const star of everything.state.startamer.list) {
-      star.move(everything);
+      star.move(now);
+
+      if ((now - star.startTime) % 50 < now - last) {
+        star.shoot(bullettamer);
+      }
 
       if (checkBounds(star) === "bottom") {
         everything.state.startamer.unmake(star);
       }
-      for (const bullet of achiever.tamer.list) {
-        if (star.contains(bullet.s)) {
-          achiever.tamer.unmake(bullet);
+
+      for (const bullet of bullettamer.list) {
+        if (bullet.shooterId === "achiever" && star.contains(bullet.s)) {
+          bullettamer.unmake(bullet);
           everything.state.startamer.unmake(star);
         }
       }
@@ -518,7 +484,7 @@ const redraw = (everything: Everything, fps?: number): void => {
   const achieverSvg = everything.state.achiever.svgs[0];
   drawSvgAt(achieverSvg, everything.state.achiever.s);
 
-  for (const bullet of everything.state.achiever.tamer.list) {
+  for (const bullet of everything.state.bullettamer.list) {
     bullet.svgs ??= [makeBulletSvg(everything)];
     drawSvgAt(bullet.svgs[0], bullet.s);
   }
@@ -550,7 +516,10 @@ const receiveMessage = (e: MessageEvent<Message>, everything: Everything) => {
     switch (message.type) {
       case "star": {
         everything.state.startamer.list.push(
-          everything.state.startamer.make(message.value[0]),
+          everything.state.startamer.make(
+            message.value[0],
+            everything.state.now,
+          ),
         );
         everything.state.combo++;
         break;
