@@ -12,13 +12,14 @@ import type {
   Achiever,
   Bullet,
   Directional,
-  ShooterId,
   Star,
   Tamed,
   Tamer,
   Vful,
-  Movable,
   Behave,
+  BulletOptions,
+  Bullettamer,
+  Startamer,
 } from "./type";
 
 // region constants
@@ -58,7 +59,7 @@ const makeEverything = (): Everything => {
 
 const makeState = (): State => {
   return {
-    now: undefined,
+    now: -1,
     combo: 0,
     achiever: makeAchiever(),
     startamer: makeStartamer(),
@@ -99,10 +100,16 @@ const makeAchiever = (): Achiever => {
     achiever.v = toZ([1, rangle()]);
   };
 
-  const shoot = (tamer: Tamer<Bullet>): Bullet => {
-    return tamer.make("achiever", achiever.s, (bullet: Bullet) => {
-      bullet.s = [bullet.s[0] + bullet.v[0], bullet.s[1] + bullet.v[1]];
-    });
+  const shoot = (tamer: Bullettamer): Bullet => {
+    return tamer.make(
+      (bullet) => {
+        bullet.s = [bullet.s[0] + bullet.v[0], bullet.s[1] + bullet.v[1]];
+      },
+      {
+        shooterId: "achiever",
+        s: achiever.s,
+      },
+    );
   };
 
   return Object.assign(achiever, { move, turn, shoot, svgs: undefined });
@@ -126,14 +133,12 @@ const isBullet = (x: unknown): x is Bullet => {
   return isDrawable(x) && !!x.svgs && x.svgs[0].tagName === "circle";
 };
 
-const makeBullettamer = (): Tamer<Bullet> => {
+const makeBullettamer = (): Bullettamer => {
   return makeTamerWith(
-    (
-      id: number,
-      shooterId: ShooterId,
-      [x, y]: WorldZ,
-      behave: Behave,
-    ): Bullet => {
+    (tamedId: number, behave: Behave, options: BulletOptions): Bullet => {
+      const [x, y] = options.s;
+      const shooterId = options.shooterId;
+
       const bullet: Pick<Bullet, "s" | "v"> = {
         s: [x, y - 20],
         v: [0, -20],
@@ -150,7 +155,7 @@ const makeBullettamer = (): Tamer<Bullet> => {
       };
 
       return Object.assign(bullet, {
-        id,
+        tamedId,
         shooterId,
         move,
         contains,
@@ -182,13 +187,17 @@ const untameDrawable = <T extends Tamed & Drawable>(drawable: T) => {
     }
   }
 
-  return drawable.id;
+  return drawable.tamedId;
 };
 
-const makeTamerWith = <T>(
-  make: Tamer<T>["make"],
-  unmake: Tamer<T>["unmake"],
-) => {
+type PrependParameter<P, F extends (...args: any[]) => any> = (
+  ...args: [P, ...Parameters<F>]
+) => ReturnType<F>;
+
+const makeTamerWith = <T, O>(
+  makelike: PrependParameter<number, Tamer<T, O>["make"]>,
+  unmakelike: Tamer<T, O>["unmake"],
+): Tamer<T, O> => {
   let id = 0;
 
   const list: T[] = [];
@@ -198,15 +207,15 @@ const makeTamerWith = <T>(
   return {
     list,
     peek,
-    make: (...args: Parameters<Tamer<T>["make"]>) => {
-      const tamed = make(id++, ...args);
+    make: (behave, options) => {
+      const tamed = makelike(id++, behave, options);
       list.push(tamed);
 
       return tamed;
     },
     unmake: (tame: T) => {
       list.splice(list.indexOf(tame), 1);
-      return unmake(tame);
+      return unmakelike(tame);
     },
   };
 };
@@ -222,9 +231,9 @@ const isStar = (x: unknown): x is Star => {
   );
 };
 
-const makeStartamer = (): Tamer<Star> => {
+const makeStartamer = (): Startamer => {
   return makeTamerWith(
-    (id: number, code: number, startTime: number): Star => {
+    (tamedId, behave, { code, startTime }): Star => {
       const s: WorldZ = [
         constants.world.minx + constants.world.w * Math.random(),
         -constants.star.h,
@@ -247,14 +256,17 @@ const makeStartamer = (): Tamer<Star> => {
         );
       };
 
-      const shoot = (tamer: Tamer<Bullet>): Bullet => {
-        return tamer.make(id, s, (bullet: Bullet) => {
-          bullet.s = [bullet.s[0] + bullet.v[0], bullet.s[1] + bullet.v[1]];
-        });
+      const shoot = (tamer: Bullettamer): Bullet => {
+        return tamer.make(
+          (bullet) => {
+            bullet.s = [bullet.s[0] + bullet.v[0], bullet.s[1] + bullet.v[1]];
+          },
+          { s, shooterId: tamedId },
+        );
       };
 
       return {
-        id,
+        tamedId: tamedId,
         code,
         startTime,
         s,
@@ -514,19 +526,17 @@ const receiveMessage = (e: MessageEvent<Message>, everything: Everything) => {
   try {
     const message = e.data;
     switch (message.type) {
-      case "star": {
+      case "star":
         everything.state.startamer.list.push(
-          everything.state.startamer.make(
-            message.value[0],
-            everything.state.now,
-          ),
+          everything.state.startamer.make(() => {}, {
+            code: message.value[0],
+            startTime: everything.state.now,
+          }),
         );
         everything.state.combo++;
         break;
-      }
-      default: {
+      default:
         log("implement me");
-      }
     }
   } catch (error: any) {
     log(error, error.stack);

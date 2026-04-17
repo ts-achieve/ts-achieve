@@ -30,7 +30,7 @@ const makeEverything = () => {
 };
 const makeState = () => {
     return {
-        now: undefined,
+        now: -1,
         combo: 0,
         achiever: makeAchiever(),
         startamer: makeStartamer(),
@@ -63,8 +63,11 @@ const makeAchiever = () => {
         achiever.v = toZ([1, rangle()]);
     };
     const shoot = (tamer) => {
-        return tamer.make("achiever", achiever.s, (bullet) => {
+        return tamer.make((bullet) => {
             bullet.s = [bullet.s[0] + bullet.v[0], bullet.s[1] + bullet.v[1]];
+        }, {
+            shooterId: "achiever",
+            s: achiever.s,
         });
     };
     return Object.assign(achiever, { move, turn, shoot, svgs: undefined });
@@ -81,7 +84,9 @@ const isBullet = (x) => {
     return isDrawable(x) && !!x.svgs && x.svgs[0].tagName === "circle";
 };
 const makeBullettamer = () => {
-    return makeTamerWith((id, shooterId, [x, y], behave) => {
+    return makeTamerWith((tamedId, behave, options) => {
+        const [x, y] = options.s;
+        const shooterId = options.shooterId;
         const bullet = {
             s: [x, y - 20],
             v: [0, -20],
@@ -93,7 +98,7 @@ const makeBullettamer = () => {
             return (Math.sqrt((x - z[0]) ** 2 + (y - z[1]) ** 2) < constants.bullet.r);
         };
         return Object.assign(bullet, {
-            id,
+            tamedId,
             shooterId,
             move,
             contains,
@@ -117,23 +122,23 @@ const untameDrawable = (drawable) => {
             svg.remove();
         }
     }
-    return drawable.id;
+    return drawable.tamedId;
 };
-const makeTamerWith = (make, unmake) => {
+const makeTamerWith = (makelike, unmakelike) => {
     let id = 0;
     const list = [];
     const peek = () => id;
     return {
         list,
         peek,
-        make: (...args) => {
-            const tamed = make(id++, ...args);
+        make: (behave, options) => {
+            const tamed = makelike(id++, behave, options);
             list.push(tamed);
             return tamed;
         },
         unmake: (tame) => {
             list.splice(list.indexOf(tame), 1);
-            return unmake(tame);
+            return unmakelike(tame);
         },
     };
 };
@@ -145,7 +150,7 @@ const isStar = (x) => {
         x.svgs[1].tagName === "text");
 };
 const makeStartamer = () => {
-    return makeTamerWith((id, code, startTime) => {
+    return makeTamerWith((tamedId, behave, { code, startTime }) => {
         const s = [
             constants.world.minx + constants.world.w * Math.random(),
             -constants.star.h,
@@ -165,12 +170,12 @@ const makeStartamer = () => {
                 z[1] < s[1] + constants.star.h / 2);
         };
         const shoot = (tamer) => {
-            return tamer.make(id, s, (bullet) => {
+            return tamer.make((bullet) => {
                 bullet.s = [bullet.s[0] + bullet.v[0], bullet.s[1] + bullet.v[1]];
-            });
+            }, { s, shooterId: tamedId });
         };
         return {
-            id,
+            tamedId: tamedId,
             code,
             startTime,
             s,
@@ -361,14 +366,15 @@ const receiveMessage = (e, everything) => {
     try {
         const message = e.data;
         switch (message.type) {
-            case "star": {
-                everything.state.startamer.list.push(everything.state.startamer.make(message.value[0], everything.state.now));
+            case "star":
+                everything.state.startamer.list.push(everything.state.startamer.make(() => { }, {
+                    code: message.value[0],
+                    startTime: everything.state.now,
+                }));
                 everything.state.combo++;
                 break;
-            }
-            default: {
+            default:
                 log("implement me");
-            }
         }
     }
     catch (error) {

@@ -32,11 +32,11 @@ export interface Everything {
 }
 
 export interface State {
-  now: Maybe<number>;
+  now: number;
   combo: number;
   achiever: Achiever;
-  startamer: Tamer<Star>;
-  bullettamer: Tamer<Bullet>;
+  startamer: Startamer;
+  bullettamer: Bullettamer;
 }
 
 export interface Sful {
@@ -51,7 +51,7 @@ export interface Movable extends Sful, Vful {
   move: (now: number) => void;
 }
 
-export type Behave = (bullet: Sful & Vful, now: number) => void;
+export type Behave = (behaver: Sful & Vful, now: number) => void;
 
 export interface Drawable<
   T extends readonly SVGElement[] = readonly SVGElement[],
@@ -90,7 +90,7 @@ export interface Achiever
 export type ShooterId = "achiever" | number;
 
 export interface Shooting {
-  shoot: (tamer: Tamer<Bullet>) => Bullet;
+  shoot: (tamer: Bullettamer) => Bullet;
 }
 
 export interface Bullet
@@ -98,18 +98,23 @@ export interface Bullet
   shooterId: ShooterId;
 }
 
+export interface BulletOptions extends Sful, Pick<Bullet, "shooterId"> {}
+
 // region taming
 
 export interface Tamed {
-  id: number;
+  tamedId: number;
 }
 
-export interface Tamer<T> {
+export interface Tamer<T, O> {
   list: T[];
   peek: () => number;
-  make: (...args: any[]) => T;
-  unmake: (star: T) => number;
+  make: (behave: Behave, options: O) => T;
+  unmake: (tamed: T) => number;
 }
+
+export type Bullettamer = Tamer<Bullet, BulletOptions>;
+export type Startamer = Tamer<Star, StarOptions>;
 
 // region star
 
@@ -123,3 +128,5 @@ export interface Star
     Drawable<[SVGRectElement, SVGTextElement]> {
   code: number;
 }
+
+export interface StarOptions extends Created, Pick<Star, "code"> {}
