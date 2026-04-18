@@ -54,26 +54,49 @@ body {
   margin: 0;
 }
 
-.star {
-  box-sizing: border-box;
-}
-
-rect.star {
-  fill: none;
-  stroke: var(--vscode-editor-foreground);
-  rx: 5;
-  ry: 5;
-}
-
 text {
   fill: var(--vscode-editor-foreground);
   stroke: none;
   font-family: monospace;
 }
 
+.star {
+  box-sizing: border-box;
+}
+
+rect.star {
+  fill: var(--vscode-editor-background);
+  stroke: var(--vscode-editor-foreground);
+  rx: 5;
+  ry: 5;
+}
+
 text.star {
   text-anchor: middle;
   dominant-baseline: central;
+}
+
+text.star.dying {
+  fill: red;
+}
+
+rect.star.dying {
+  stroke: red;
+}
+
+.star.dying {
+  animation: bullet-death 0.5s linear;
+}
+
+@keyframes bullet-death {
+  0% {
+    opacity: 1;
+    scale: 1;
+  }
+  100% {
+    opacity: 0;
+    scale: 1.5;
+  }
 }
 
 polygon#achiever {
@@ -84,6 +107,7 @@ polygon#achiever {
 circle.bullet {
   fill: var(--vscode-editor-foreground);
   stroke: none;
+  /* filter: drop-shadow(0px 0px 2px var(--vscode-editor-foreground)); */
 }
 
 circle.point {

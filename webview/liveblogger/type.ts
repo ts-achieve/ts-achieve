@@ -5,6 +5,10 @@ import type { WebviewApi } from "vscode-webview";
 export type Maybe<T> = T | undefined;
 export type Writable<T> = { -readonly [K in keyof T]: T[K] };
 
+export type PrependParameter<P, F extends (...args: any[]) => any> = (
+  ...args: [P, ...Parameters<F>]
+) => ReturnType<F>;
+
 type Z = [number, number];
 export type WorldW = [number, number];
 
@@ -70,6 +74,7 @@ export interface Collidable extends Sful {
 export interface Dom {
   worldSvg: SVGSVGElement;
   fps: SVGTextElement;
+  tell: SVGTextElement;
   comboBar: ComboBar;
 }
 
@@ -98,7 +103,9 @@ export interface Bullet
   shooterId: ShooterId;
 }
 
-export interface BulletOptions extends Sful, Pick<Bullet, "shooterId"> {}
+export interface BulletOptions extends TameOptions<
+  Sful & Vful & Pick<Bullet, "shooterId">
+> {}
 
 // region taming
 
@@ -109,12 +116,16 @@ export interface Tamed {
 export interface Tamer<T, O> {
   list: T[];
   peek: () => number;
-  make: (behave: Behave, options: O) => T;
+  make: (options: O) => T;
   unmake: (tamed: T) => number;
 }
 
-export type Bullettamer = Tamer<Bullet, BulletOptions>;
-export type Startamer = Tamer<Star, StarOptions>;
+type TameOptions<T> = {
+  [P in keyof T]: T[P];
+};
+
+export interface Bullettamer extends Tamer<Bullet, BulletOptions> {}
+export interface Startamer extends Tamer<Star, StarOptions> {}
 
 // region star
 
@@ -129,4 +140,9 @@ export interface Star
   code: number;
 }
 
-export interface StarOptions extends Created, Pick<Star, "code"> {}
+export interface StarOptions extends TameOptions<
+  Created &
+    Pick<Star, "code"> & {
+      achiever: Achiever;
+    }
+> {}
