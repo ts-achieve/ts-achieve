@@ -1,5 +1,4 @@
 import type {
-  Writable,
   WorldZ,
   WindowZ,
   WorldW,
@@ -15,13 +14,15 @@ import type {
   Star,
   Tamed,
   Tamer,
-  Vful,
-  Behave,
   BulletOptions,
   Bullettamer,
   Startamer,
   PrependParameter,
   Maybe,
+  Methodless,
+  ReloadSettings,
+  Radian,
+  V,
 } from "./type";
 
 // region constants
@@ -40,6 +41,9 @@ const constants = {
     h: 20,
   },
   bullet: {
+    r: 2.5,
+  },
+  hitbox: {
     r: 2.5,
   },
 } as const;
@@ -90,17 +94,18 @@ const makeDom = (): Dom => {
 // region achiever
 
 const makeAchiever = (): Achiever => {
-  const achiever: Sful & Vful = {
+  const achiever: Methodless<Achiever> = {
     s: [0, constants.world.h / (4 / 3)],
     v: [0, 0],
+    svgs: undefined,
   };
 
   const move = (): void => {
     achiever.s = [achiever.s[0] + achiever.v[0], achiever.s[1] + achiever.v[1]];
   };
 
-  const turn = (): void => {
-    achiever.v = toZ([1, rangle()]);
+  const turn = (v?: WorldZ): void => {
+    achiever.v = v ?? toZ([1, rangle()]);
   };
 
   const shoot = (tamer: Bullettamer): Bullet => {
@@ -111,19 +116,44 @@ const makeAchiever = (): Achiever => {
     });
   };
 
-  return Object.assign(achiever, { move, turn, shoot, svgs: undefined });
+  const contains = (z: WorldZ) => {
+    return (
+      Math.sqrt((achiever.s[0] - z[0]) ** 2 + (achiever.s[1] - z[1]) ** 2) < 10
+    );
+  };
+
+  return Object.assign(achiever, {
+    move,
+    turn,
+    shoot,
+    contains,
+    isReloaded: isReloaded(100),
+    suffer: () => {
+      if (achiever.svgs?.[0]) {
+        const svg = achiever.svgs[0];
+        svg.classList.add("suffering");
+        svg.onanimationend = () => svg.classList.remove("suffering");
+      }
+    },
+  });
 };
 
-const makeAchieverSvg = ({
+const makeAchieverSvgs = ({
   dom: { worldSvg },
-}: Everything): SVGPolygonElement => {
+}: Everything): [SVGPolygonElement, SVGCircleElement] => {
   const achieverSvg = makeSvgElement("polygon");
   achieverSvg.setAttribute("id", "achiever");
   achieverSvg.setAttribute("points", "0,-20 -20,20 0,10 20,20");
 
-  worldSvg.getElementById("g-achiever")!.appendChild(achieverSvg);
+  const hitboxSvg = makeSvgElement("circle");
+  hitboxSvg.setAttribute("id", "hitbox");
+  hitboxSvg.setAttribute("r", constants.hitbox.r.toString());
+  hitboxSvg.setAttribute("cx", "0");
+  hitboxSvg.setAttribute("cy", "0");
 
-  return achieverSvg;
+  worldSvg.getElementById("g-achiever")!.append(achieverSvg, hitboxSvg);
+
+  return [achieverSvg, hitboxSvg];
 };
 
 // region bullet
@@ -132,12 +162,21 @@ const isBullet = (x: unknown): x is Bullet => {
   return isDrawable(x) && !!x.svgs && x.svgs[0].tagName === "circle";
 };
 
+const isReloaded = (reloadTime: number, settings?: Partial<ReloadSettings>) => {
+  const startTime = settings?.startTime ?? 0;
+  const capacity = settings?.capacity ?? 1;
+  const fireRate = settings?.fireGap ?? 1;
+
+  return (now: number, last: number) =>
+    ((now - startTime) % reloadTime) / (now - last) < capacity * fireRate;
+};
+
 const makeBullettamer = (): Bullettamer => {
   return makeTamerWith(
     (tamedId: number, { s, v, shooterId }: BulletOptions): Bullet => {
       const bullet: Pick<Bullet, "s" | "v"> = {
         s: [...s],
-        v: [...v],
+        v,
       };
 
       const move = (_now: number): void => {
@@ -178,23 +217,6 @@ const makeBulletSvg = ({ dom: { worldSvg } }: Everything) => {
 
 // region taming
 
-const removeDrawable = <T extends Tamed & Drawable>(drawable: T) => {
-  if (drawable.svgs) {
-    for (const svg of drawable.svgs) {
-      svg.classList.add("dying");
-      if (svg.getAnimations().length) {
-        const [x, y] = extractZFromTranslate(svg)!;
-        svg.style.transformOrigin = `${x}px ${y}px`;
-        svg.onanimationend = () => svg.remove();
-      } else {
-        svg.remove();
-      }
-    }
-  }
-
-  return drawable.tamedId;
-};
-
 const makeTamerWith = <T, O>(
   makelike: PrependParameter<number, Tamer<T, O>["make"]>,
   unmakelike: Tamer<T, O>["unmake"],
@@ -221,16 +243,6 @@ const makeTamerWith = <T, O>(
 
 // region star
 
-const normedDistance = (
-  [x0, y0]: WorldZ,
-  [x1, y1]: WorldZ,
-  norm: number = 1,
-): WorldZ => {
-  const [zx, zy] = [x1 - x0, y1 - y0];
-  const d = Math.sqrt(zx ** 2 + zy ** 2);
-  return [(zx * norm) / d, (zy * norm) / d];
-};
-
 const isStar = (x: unknown): x is Star => {
   return (
     isDrawable(x) &&
@@ -244,12 +256,16 @@ const makeStartamer = (): Startamer => {
   try {
     return makeTamerWith(
       (tamedId, { code, startTime, achiever }): Star => {
-        const star: Pick<Star, "s" | "v"> = {
+        const star: Methodless<Star> = {
           s: [
             constants.world.minx + constants.world.w * Math.random(),
             -constants.star.h,
           ],
           v: [0, 0.5],
+          tamedId,
+          code,
+          startTime,
+          svgs: undefined,
         };
 
         const contains = (z: WorldZ) => {
@@ -264,15 +280,12 @@ const makeStartamer = (): Startamer => {
         const shoot = (tamer: Bullettamer): Bullet => {
           return tamer.make({
             s: star.s,
-            v: normedDistance(star.s, achiever.s, 4),
+            v: normedDifference(star.s, achiever.s, 4),
             shooterId: tamedId,
           });
         };
 
         return Object.assign(star, {
-          tamedId: tamedId,
-          code: code,
-          startTime: startTime,
           move: (_now: number) => {
             if (star.s[1] >= 150) {
               star.v[1] = 0;
@@ -281,8 +294,8 @@ const makeStartamer = (): Startamer => {
             star.s[1] += star.v[1];
           },
           contains,
+          isReloaded: isReloaded(250, { startTime: star.startTime }),
           shoot,
-          svgs: undefined,
         });
       },
       (star) => removeDrawable(star),
@@ -319,6 +332,23 @@ const makeStarSvgs = (
 
 // region draw
 
+const removeDrawable = <T extends Tamed & Drawable>(drawable: T) => {
+  if (drawable.svgs) {
+    for (const svg of drawable.svgs) {
+      svg.classList.add("dying");
+      if (svg.getAnimations().length) {
+        const [x, y] = extractZFromTranslate(svg)!;
+        svg.style.transformOrigin = `${x}px ${y}px`;
+        svg.onanimationend = () => svg.remove();
+      } else {
+        svg.remove();
+      }
+    }
+  }
+
+  return drawable.tamedId;
+};
+
 const extractArgumentFromTranslate = (svg: SVGElement): Maybe<string> => {
   const transform = getComputedStyle(svg).transform;
   if (transform.startsWith("matrix(") && transform.endsWith(")")) {
@@ -329,7 +359,7 @@ const extractArgumentFromTranslate = (svg: SVGElement): Maybe<string> => {
 const extractZFromTranslate = (svg: SVGElement): Maybe<WorldZ> => {
   const argument = extractArgumentFromTranslate(svg);
   if (argument) {
-    const [xpx, ypx] = argument.split(" ");
+    const [xpx, ypx] = argument.split(" ").slice(-2);
     return [unpx(xpx), unpx(ypx)];
   }
 };
@@ -383,7 +413,32 @@ const clampToWorld = (thing: Sful) => {
   ];
 };
 
+// region vector
+
+const normedDifference = (
+  [x0, y0]: WorldZ,
+  [x1, y1]: WorldZ,
+  norm: number = 1,
+): WorldZ => {
+  const [zx, zy] = [x1 - x0, y1 - y0];
+  const d = Math.sqrt(zx ** 2 + zy ** 2);
+  return [(zx * norm) / d, (zy * norm) / d];
+};
+
+const angleTo = ([x0, y0]: WorldZ, [x1, y1]: WorldZ) => {
+  return Math.atan2(y1 - y0, x1 - x0);
+};
+
 // region general util
+
+const using = <T>(f: (x: T) => any) => {
+  return (x: T) => {
+    f(x);
+    return x;
+  };
+};
+
+const ly = using(<T>(x: T) => log(x));
 
 const log = (...args: any[]): void => {
   try {
@@ -422,14 +477,6 @@ const clamp = (min: number, max: number) => (n: number) =>
 const unpx = (x: string) =>
   parseFloat(x.slice(-2) === "px" ? x.slice(0, -2) : x);
 
-const clone = <T extends readonly any[]>(xs: T) => {
-  const ys = [];
-  for (let i = 0; i < xs.length; i++) {
-    ys.push(xs[i]);
-  }
-  return ys as unknown as Writable<T>;
-};
-
 const makeSvgElement = <K extends keyof SVGElementTagNameMap>(
   qualifiedName: K,
 ): SVGElementTagNameMap[K] => {
@@ -458,18 +505,67 @@ const relerp =
 
 // region tick
 
+const computeNearbyBulletAngles = (
+  achiever: Achiever,
+  bullettamer: Bullettamer,
+  radius: number = 25,
+): Radian[] => {
+  const nearbys = [];
+  const [ax, ay] = achiever.s;
+
+  for (let i = 0; i < bullettamer.list.length; i++) {
+    const bullet = bullettamer.list[i]!;
+
+    if (bullet.shooterId !== "achiever") {
+      const [bx, by] = bullet.s;
+      const dx = bx - ax;
+      const dy = by - ay;
+
+      if (Math.hypot(dy, dy) < radius) {
+        nearbys.push(Math.atan2(dy, dx));
+      }
+    }
+  }
+
+  return nearbys;
+};
+
+const computeAngleOfGreatestBulletGap = (angles: Radian[]): V => {
+  const sortedAngles = angles.sort();
+  const greatestGap = [0, -1];
+
+  for (let i = 0; i < sortedAngles.length; i++) {
+    const thisAngle = sortedAngles[i]!;
+    const nextAngle = sortedAngles[(i + 1) % sortedAngles.length]!;
+    const gap = nextAngle - thisAngle;
+
+    if (gap > greatestGap[1] - greatestGap[0]) {
+      greatestGap[0] = thisAngle;
+      greatestGap[1] = nextAngle;
+    }
+  }
+
+  const gapAngle = greatestGap[1] - greatestGap[0];
+
+  return [Math.cos(gapAngle), Math.sin(gapAngle)];
+};
+
 const tick = (now: number, last: number, everything: Everything): void => {
   try {
     everything.state.now = now;
 
-    const { achiever, bullettamer } = everything.state;
+    const { achiever, startamer, bullettamer } = everything.state;
 
-    if (now % 20 < now - last) {
+    if (achiever.isReloaded(now, last)) {
       achiever.shoot(bullettamer);
     }
 
-    if (now % 500 < now - last) {
-      achiever.turn(everything);
+    const nearbyBullets = computeNearbyBulletAngles(achiever, bullettamer);
+
+    if (nearbyBullets.length > 1) {
+      achiever.turn(computeAngleOfGreatestBulletGap(nearbyBullets));
+    } else if (now % 500 < now - last) {
+      achiever.turn();
     }
 
     achiever.move(now);
@@ -480,23 +576,28 @@ const tick = (now: number, last: number, everything: Everything): void => {
       if (checkBounds(bullet, { top: 10 }) !== undefined) {
         bullettamer.unmake(bullet);
       }
+
+      if (bullet.shooterId !== "achiever" && achiever.contains(bullet.s)) {
+        achiever.suffer();
+        bullettamer.unmake(bullet);
+      }
     }
 
     for (const star of everything.state.startamer.list) {
       star.move(now);
 
-      if ((now - star.startTime) % 250 < now - last) {
+      if (star.isReloaded(now, last)) {
         star.shoot(bullettamer);
       }
 
       if (checkBounds(star) === "bottom") {
-        everything.state.startamer.unmake(star);
+        startamer.unmake(star);
       }
 
       for (const bullet of bullettamer.list) {
         if (bullet.shooterId === "achiever" && star.contains(bullet.s)) {
           bullettamer.unmake(bullet);
-          everything.state.startamer.unmake(star);
+          startamer.unmake(star);
         }
       }
     }
@@ -521,9 +622,9 @@ const tick = (now: number, last: number, everything: Everything): void => {
 
 const redraw = (everything: Everything, fps?: number): void => {
   try {
-    everything.state.achiever.svgs ??= [makeAchieverSvg(everything)];
-    const achieverSvg = everything.state.achiever.svgs[0];
-    drawSvgAt(achieverSvg, everything.state.achiever.s);
+    everything.state.achiever.svgs ??= makeAchieverSvgs(everything);
+    drawSvgAt(everything.state.achiever.svgs[0], everything.state.achiever.s);
+    drawSvgAt(everything.state.achiever.svgs[1], everything.state.achiever.s);
 
     for (const bullet of everything.state.bullettamer.list) {
       bullet.svgs ??= [makeBulletSvg(everything)];

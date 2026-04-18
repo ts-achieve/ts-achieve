@@ -9,11 +9,20 @@ export type PrependParameter<P, F extends (...args: any[]) => any> = (
   ...args: [P, ...Parameters<F>]
 ) => ReturnType<F>;
 
+export type Methodless<T> = {
+  [K in keyof T as T[K] extends (...args: any[]) => any ? never : K]: T[K];
+};
+
 type Z = [number, number];
 export type WorldW = [number, number];
 
 export type WorldZ = Z;
 export type WindowZ = Z;
+
+export type S = WorldZ;
+export type V = WorldZ;
+
+export type Radian = number;
 
 export type Message = {
   type: "star";
@@ -86,9 +95,34 @@ export interface ComboBar {
 // region achiever
 
 export interface Achiever
-  extends Movable, Shooting, Drawable<[SVGPolygonElement]> {
-  turn: (everything: Everything) => void;
+  extends
+    Movable,
+    Collidable,
+    Shooting,
+    Drawable<[SVGPolygonElement, SVGCircleElement]> {
+  turn: (v?: WorldZ) => void;
+  suffer: () => void;
 }
+
+// region star
+
+export interface Star
+  extends
+    Movable,
+    Tamed,
+    Collidable,
+    Shooting,
+    Created,
+    Drawable<[SVGRectElement, SVGTextElement]> {
+  code: number;
+}
+
+export interface StarOptions extends TameOptions<
+  Created &
+    Pick<Star, "code"> & {
+      achiever: Achiever;
+    }
+> {}
 
 // region shooting, bullet
 
@@ -96,7 +130,14 @@ export type ShooterId = "achiever" | number;
 
 export interface Shooting {
   shoot: (tamer: Bullettamer) => Bullet;
+  isReloaded: (now: number, last: number) => boolean;
 }
+
+export type ReloadSettings = {
+  startTime: number;
+  capacity: number;
+  fireGap: number;
+};
 
 export interface Bullet
   extends Movable, Tamed, Collidable, Drawable<[SVGCircleElement]> {
@@ -126,23 +167,3 @@ type TameOptions<T> = {
 
 export interface Bullettamer extends Tamer<Bullet, BulletOptions> {}
 export interface Startamer extends Tamer<Star, StarOptions> {}
-
-// region star
-
-export interface Star
-  extends
-    Movable,
-    Tamed,
-    Collidable,
-    Shooting,
-    Created,
-    Drawable<[SVGRectElement, SVGTextElement]> {
-  code: number;
-}
-
-export interface StarOptions extends TameOptions<
-  Created &
-    Pick<Star, "code"> & {
-      achiever: Achiever;
-    }
-> {}
