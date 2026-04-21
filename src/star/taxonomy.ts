@@ -60,23 +60,56 @@ export const hierarchy = {
       branches: {},
     },
     error: {
-      leaves: ["async", "react", "reference"],
+      leaves: ["react", "reference"],
       branches: {
-        oop: {
-          leaves: [
-            "class",
-            "abstract",
-            "constructor",
-            "accessor",
-            "accessibility",
-            "decorator",
-            "this",
-          ],
+        javascript: {
+          leaves: ["jsdoc"],
           branches: {},
         },
-        type: {
-          leaves: ["interface", "assertion", "generic", "primitive", "array"],
+        asynchronous: {
+          leaves: ["async/await", "promise"],
           branches: {},
+        },
+        oop: {
+          leaves: [
+            "abstract",
+            "constructor",
+            "decorator",
+            "static",
+            "accessibility",
+          ],
+          branches: {
+            inheritance: {
+              leaves: ["override"],
+              branches: {},
+            },
+            accessor: {
+              leaves: ["getter", "setter"],
+              branches: {},
+            },
+            instance: {
+              leaves: ["this", "super"],
+              branches: {},
+            },
+          },
+        },
+        type: {
+          leaves: [
+            "interface",
+            "assertion",
+            "assignment",
+            "enum",
+            "generic",
+            "array",
+            "recursion",
+            "inference",
+          ],
+          branches: {
+            primitive: {
+              leaves: ["string", "symbol", "function", "object", "falsy"],
+              branches: {},
+            },
+          },
         },
         syntax: {
           leaves: [
@@ -122,13 +155,15 @@ export const taxonomy = {
     1035, 1036, 1038, 1039, 1040, 1042, 1044, 1046, 1104, 1105, 1107, 1108,
     1113, 1115, 1116, 1128, 1129, 1130, 1134, 1136, 1138, 1139, 1142, 1144,
     1145, 1146, 1472, 1163, 1185, 1188, 1189, 1190, 1196, 1197, 1221, 1313,
-    1344, 2410,
+    1344, 2410, 2734,
   ],
   "error-syntax-function": [
     1013, 1014, 1015, 1016, 1017, 1018, 1019, 1020, 1021, 1022, 1024, 1025,
     2349,
   ],
   "error-reference": [2339, 2551],
+  "error-type-recursion": [2502],
+  "error-other": [6202, 18000],
 } as const satisfies Partial<Record<VerboseStarName, number[]>>;
 
 export const getAllKinds = (

@@ -44,14 +44,17 @@ const makeDom = () => {
     const worldSvg = document.getElementById("world");
     const fps = document.getElementById("fps");
     fps.setAttribute("transform", `translate(${constants.world.maxx - 5} ${constants.world.maxy - 5})`);
+    const tell = document.getElementById("tell");
+    tell.setAttribute("transform", `translate(${constants.world.minx + 5} ${constants.world.maxy - 5})`);
     return {
-        worldSvg,
-        fps: document.getElementById("fps"),
-        tell: document.getElementById("tell"),
         comboBar: {
             fg: document.getElementById("combo-fg"),
             bg: document.getElementById("combo-bg"),
         },
+        worldSvg,
+        fps,
+        tell,
+        logDiv: document.getElementById("log"),
     };
 };
 // region achiever
@@ -104,48 +107,6 @@ const makeAchieverSvgs = ({ dom: { worldSvg }, }) => {
     worldSvg.getElementById("g-achiever").append(achieverSvg, hitboxSvg);
     return [achieverSvg, hitboxSvg];
 };
-// region bullet
-const isBullet = (x) => {
-    return isDrawable(x) && !!x.svgs && x.svgs[0].tagName === "circle";
-};
-const isReloaded = (reloadTime, settings) => {
-    const startTime = settings?.startTime ?? 0;
-    const capacity = settings?.capacity ?? 1;
-    const fireRate = settings?.fireGap ?? 1;
-    return (now, last) => ((now - startTime) % reloadTime) / (now - last) < capacity * fireRate;
-};
-const makeBullettamer = () => {
-    return makeTamerWith((tamedId, { s, v, shooterId }) => {
-        const bullet = {
-            s: [...s],
-            v,
-        };
-        const move = (_now) => {
-            bullet.s[0] += bullet.v[0];
-            bullet.s[1] += bullet.v[1];
-        };
-        const contains = (z) => {
-            return (Math.sqrt((bullet.s[0] - z[0]) ** 2 + (bullet.s[1] - z[1]) ** 2) <
-                constants.bullet.r);
-        };
-        return Object.assign(bullet, {
-            tamedId,
-            shooterId: shooterId,
-            move,
-            contains,
-            svgs: undefined,
-        });
-    }, (bullet) => removeDrawable(bullet));
-};
-const makeBulletSvg = ({ dom: { worldSvg } }) => {
-    const bulletSvg = makeSvgElement("circle");
-    bulletSvg.classList.add("bullet");
-    bulletSvg.setAttribute("r", constants.bullet.r.toString());
-    bulletSvg.setAttribute("cx", "0");
-    bulletSvg.setAttribute("cy", "0");
-    worldSvg.getElementById("g-bullet").appendChild(bulletSvg);
-    return bulletSvg;
-};
 // region taming
 const makeTamerWith = (makelike, unmakelike) => {
     let id = 0;
@@ -163,6 +124,53 @@ const makeTamerWith = (makelike, unmakelike) => {
             return unmakelike(tamed);
         },
     };
+};
+// region bullet
+const isBullet = (x) => {
+    return isDrawable(x) && !!x.svgs && x.svgs[0].tagName === "circle";
+};
+const isReloaded = (reloadTime, settings) => {
+    const startTime = settings?.startTime ?? 0;
+    const capacity = settings?.capacity ?? 1;
+    const fireRate = settings?.fireGap ?? 1;
+    return (now, last) => ((now - startTime) % reloadTime) / (now - last) < capacity * fireRate;
+};
+const makeBullettamer = () => {
+    return makeTamerWith((tamedId, { s, v, shooterId }) => {
+        const bullet = {
+            s: [...s],
+            v,
+            tamedId,
+            shooterId: shooterId,
+            svgs: undefined,
+        };
+        const move = (_now) => {
+            bullet.s[0] += bullet.v[0];
+            bullet.s[1] += bullet.v[1];
+            if (Math.hypot(...bullet.v) < 1) {
+                log("unmoves");
+                bullet.svgs?.forEach((bulletSvg) => {
+                    log("unmoving");
+                    bulletSvg.classList.add("unmoving");
+                });
+            }
+        };
+        const contains = (z) => {
+            return (Math.sqrt((bullet.s[0] - z[0]) ** 2 + (bullet.s[1] - z[1]) ** 2) <
+                constants.bullet.r);
+        };
+        return Object.assign(bullet, { move, contains });
+    }, (bullet) => removeDrawable(bullet));
+};
+const makeBulletSvgs = ({ dom: { worldSvg }, }) => {
+    const bulletSvg = makeSvgElement("circle");
+    bulletSvg.classList.add("bullet");
+    bulletSvg.setAttribute("r", constants.bullet.r.toString());
+    bulletSvg.setAttribute("cx", "0");
+    bulletSvg.setAttribute("cy", "0");
+    const vSvg = makeSvgElement("text");
+    worldSvg.getElementById("g-bullet").append(bulletSvg, vSvg);
+    return [bulletSvg, vSvg];
 };
 // region star
 const isStar = (x) => {
@@ -313,6 +321,37 @@ const normedDifference = ([x0, y0], [x1, y1], norm = 1) => {
 const angleTo = ([x0, y0], [x1, y1]) => {
     return Math.atan2(y1 - y0, x1 - x0);
 };
+const computeNearbyBulletAngles = (achiever, bullettamer, radius = 25) => {
+    const nearbys = [];
+    const [ax, ay] = achiever.s;
+    for (let i = 0; i < bullettamer.list.length; i++) {
+        const bullet = bullettamer.list[i];
+        if (bullet.shooterId !== "achiever") {
+            const [bx, by] = bullet.s;
+            const dx = bx - ax;
+            const dy = by - ay;
+            if (Math.hypot(dx, dy) < radius) {
+                nearbys.push(Math.atan2(dy, dx));
+            }
+        }
+    }
+    return nearbys;
+};
+const computeAngleOfGreatestBulletGap = (angles) => {
+    const sortedAngles = angles.sort();
+    const greatestGap = [0, -1];
+    for (let i = 0; i < sortedAngles.length; i++) {
+        const thisAngle = sortedAngles[i];
+        const nextAngle = sortedAngles[(i + 1) % sortedAngles.length];
+        const gap = nextAngle - thisAngle;
+        if (gap > greatestGap[1] - greatestGap[0]) {
+            greatestGap[0] = thisAngle;
+            greatestGap[1] = nextAngle;
+        }
+    }
+    const gapAngle = greatestGap[1] - greatestGap[0];
+    return [Math.cos(gapAngle), Math.sin(gapAngle)];
+};
 // region general util
 const using = (f) => {
     return (x) => {
@@ -339,7 +378,7 @@ const log = (...args) => {
 const err = (...args) => {
     const logDiv = document.getElementById("log");
     logDiv.innerHTML =
-        `<p>${new Date().toLocaleTimeString()}: FATAL ERROR ${args.join(" ")}</p>` +
+        `<p>${new Date().toLocaleTimeString()}: FATAL ${args.join(" ")}</p>` +
             logDiv.innerHTML;
     throw new Error();
 };
@@ -361,37 +400,6 @@ const lerp = (start, end) => (t) => start + (end - start) * t;
 const unlerp = (start, end) => (value) => (value - start) / (end - start);
 const relerp = (start0, end0) => (start1, end1) => (value0) => start1 + (value0 - start0) * ((end1 - start1) / (end0 - start0));
 // region tick
-const computeNearbyBulletAngles = (achiever, bullettamer, radius = 25) => {
-    const nearbys = [];
-    const [ax, ay] = achiever.s;
-    for (let i = 0; i < bullettamer.list.length; i++) {
-        const bullet = bullettamer.list[i];
-        if (bullet.shooterId !== "achiever") {
-            const [bx, by] = bullet.s;
-            const dx = bx - ax;
-            const dy = by - ay;
-            if (Math.hypot(dy, dy) < radius) {
-                nearbys.push(Math.atan2(dy, dx));
-            }
-        }
-    }
-    return nearbys;
-};
-const computeAngleOfGreatestBulletGap = (angles) => {
-    const sortedAngles = angles.sort();
-    const greatestGap = [0, -1];
-    for (let i = 0; i < sortedAngles.length; i++) {
-        const thisAngle = sortedAngles[i];
-        const nextAngle = sortedAngles[(i + 1) % sortedAngles.length];
-        const gap = nextAngle - thisAngle;
-        if (gap > greatestGap[1] - greatestGap[0]) {
-            greatestGap[0] = thisAngle;
-            greatestGap[1] = nextAngle;
-        }
-    }
-    const gapAngle = greatestGap[1] - greatestGap[0];
-    return [Math.cos(gapAngle), Math.sin(gapAngle)];
-};
 const tick = (now, last, everything) => {
     try {
         everything.state.now = now;
@@ -400,7 +408,7 @@ const tick = (now, last, everything) => {
             achiever.shoot(bullettamer);
         }
         const nearbyBullets = computeNearbyBulletAngles(achiever, bullettamer);
-        if (nearbyBullets.length > 1) {
+        if (false && nearbyBullets.length > 1) {
             achiever.turn(computeAngleOfGreatestBulletGap(nearbyBullets));
         }
         else if (now % 500 < now - last) {
@@ -453,8 +461,10 @@ const redraw = (everything, fps) => {
         drawSvgAt(everything.state.achiever.svgs[0], everything.state.achiever.s);
         drawSvgAt(everything.state.achiever.svgs[1], everything.state.achiever.s);
         for (const bullet of everything.state.bullettamer.list) {
-            bullet.svgs ??= [makeBulletSvg(everything)];
+            bullet.svgs ??= makeBulletSvgs(everything);
             drawSvgAt(bullet.svgs[0], bullet.s);
+            bullet.svgs[1].innerHTML = `(${bullet.v[0].toFixed(2)},${bullet.v[1].toFixed(2)})`;
+            drawSvgAt(bullet.svgs[1], bullet.s);
         }
         for (const star of everything.state.startamer.list) {
             star.svgs ??= makeStarSvgs(everything.dom.worldSvg, star.code);

@@ -24,10 +24,10 @@ export type V = WorldZ;
 
 export type Radian = number;
 
-export type Message = {
+export interface Message {
   type: "star";
   value: [number, string];
-};
+}
 
 export interface Directional {
   top: number;
@@ -81,10 +81,11 @@ export interface Collidable extends Sful {
 }
 
 export interface Dom {
+  comboBar: ComboBar;
   worldSvg: SVGSVGElement;
   fps: SVGTextElement;
   tell: SVGTextElement;
-  comboBar: ComboBar;
+  logDiv: HTMLDivElement;
 }
 
 export interface ComboBar {
@@ -133,14 +134,18 @@ export interface Shooting {
   isReloaded: (now: number, last: number) => boolean;
 }
 
-export type ReloadSettings = {
+export interface ReloadSettings {
   startTime: number;
   capacity: number;
   fireGap: number;
-};
+}
 
 export interface Bullet
-  extends Movable, Tamed, Collidable, Drawable<[SVGCircleElement]> {
+  extends
+    Movable,
+    Tamed,
+    Collidable,
+    Drawable<[SVGCircleElement, SVGTextElement]> {
   shooterId: ShooterId;
 }
 

@@ -71,7 +71,7 @@ rect.star {
   ry: 5;
 }
 
-text.star {
+text {
   text-anchor: middle;
   dominant-baseline: central;
 }
@@ -124,6 +124,16 @@ circle.point {
   stroke: none;
 }
 
+text#tell {
+  text-anchor: start;
+  dominant-baseline: auto;
+}
+
 text#fps {
   text-anchor: end;
+  dominant-baseline: auto;
+}
+
+.unmoving {
+  fill: green;
 }
