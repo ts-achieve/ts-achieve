@@ -6,9 +6,10 @@
 
 # ⭐ features
 
-- **achievement tracker:** a list of all 1372 warnings, suggestions, and errors in TypeScript, including information about where and how each achievement was unlocked
+- **achievement tracker:** a list of all 1372 TypeScript diagnostics, with information about when, where, and how each achievement was unlocked
 - **summary view:** an overview of your achievement progress, milestones, and other fun facts
-- **speedrun mode:** unlock all achievements as fast as you can!
+- **speedrun mode:** unlock all achievements as fast as you can
+- **liveblog mode:** defeat the achiever by triggering errors to spawn enemies
 
 # 👬 contributing
 
@@ -34,6 +35,8 @@ pnpm b
 ```
 
 # 📜 history
+
+- **v0.1.3** (2026 4 21) achieved [publication](https://marketplace.visualstudio.com/items?itemName=ts-achieve.ts-achieve)
 
 - **v0.1.0** (2026 4 11) achieved `publisher: "ts-achieve"` in `package.json`
 

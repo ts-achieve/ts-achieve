@@ -161,10 +161,10 @@
   "scripts": {
     "r": "rm -rf .vscode-test && rm -rf out && rm -f pnpm-lock.yaml && rm -rf node_modules",
     "ri": "pnpm r && pnpm i",
-    "vscode:prepublish": "pnpm run compile",
-    "compile": "tsc -p ./",
+    "vscode:prepublish": "pnpm b",
+    "b": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "pretest": "rm -rf out && pnpm run compile",
+    "pretest": "rm -rf out && pnpm b",
     "test": "vscode-test run",
     "w": "tsc webview/liveblogger/worker.ts --ignoreConfig --module esnext --sourceMap false && sed -i '' '$d' webview/liveblogger/worker.js",
     "to:npm": "rm -rf node_modules && rm -f pnpm-lock.yml && npm install",
