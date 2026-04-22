@@ -4,6 +4,11 @@
 
 `ts-achieve` is a VS Code extension by T.S. Achieve. It gamifies the TypeScript development experience by organizing diagnostic messages into unlockable achievements.
 
+## 🙏 acknowledgements
+
+- achieve
+- fish
+
 # ⭐ features
 
 - **achievement tracker:** a list of all 1372 TypeScript diagnostics, with information about when, where, and how each achievement was unlocked
