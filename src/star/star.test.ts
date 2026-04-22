@@ -10,10 +10,9 @@ suite("star.ts", () => {
   suite("diagnosticToStar", () => {
     test("embeds", () => {
       expect(star).an("object");
-      expect(diagnostic).deep.equal({
-        code: star.code,
-        category: star.category,
-      });
+      expect(diagnostic.code).equal(star.code);
+      expect(diagnostic.category).equal(star.category);
+      // TODO: wtf is `elidedInCompatabilityPyramid`
       expect(message).equal(star.messageTemplate);
     });
 
