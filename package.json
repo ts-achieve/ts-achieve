@@ -167,10 +167,12 @@
     "pretest": "rm -rf out && pnpm run compile",
     "test": "vscode-test run",
     "w": "tsc webview/liveblogger/worker.ts --ignoreConfig --module esnext --sourceMap false && sed -i '' '$d' webview/liveblogger/worker.js",
+    "to:npm": "rm -rf node_modules && npm install",
+    "to:pnpm": "rm -rf node_modules && pnpm i",
     "pp": "pnpm exec vsce-pnpm patch",
     "pm": "pnpm exec vsce-pnpm minor",
     "pM": "pnpm exec vsce-pnpm major",
-    "pu": "pnpm exec vsce-pnpm publish"
+    "pu": "pnpm to:npm && vsce publish && pnpm to:pnpm"
   },
   "devDependencies": {
     "@types/chai": "^5.2.3",
@@ -178,7 +180,7 @@
     "@types/node": "^25.6.0",
     "@types/vscode": "^1.110.0",
     "@types/vscode-webview": "^1.57.5",
-    "@vscode/test-cli": "^0.0.12",
+    "@vscode/test-cli": "^0.0.11",
     "@vscode/test-electron": "^2.5.2",
     "@vscode/vsce": "^3.7.1",
     "typescript": "^6.0.2",
