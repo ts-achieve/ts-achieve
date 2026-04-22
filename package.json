@@ -170,6 +170,7 @@
     "pp": "pnpm vsce package patch --no-dependencies",
     "pm": "pnpm vsce package minor --no-dependencies",
     "pM": "pnpm vsce package major --no-dependencies",
+    "u": "vsce publish --no-dependencies",
     "ppu": "vsce publish patch --no-dependencies"
   },
   "devDependencies": {
