@@ -7,13 +7,6 @@ settings:
 importers:
 
   .:
-    dependencies:
-      chai:
-        specifier: ^6.2.2
-        version: 6.2.2
-      expect-type:
-        specifier: ^1.3.0
-        version: 1.3.0
     devDependencies:
       '@types/chai':
         specifier: ^5.2.3
@@ -39,6 +32,12 @@ importers:
       '@vscode/vsce':
         specifier: ^3.7.1
         version: 3.9.1
+      chai:
+        specifier: ^6.2.2
+        version: 6.2.2
+      expect-type:
+        specifier: ^1.3.0
+        version: 1.3.0
       typescript:
         specifier: ^6.0.2
         version: 6.0.3
