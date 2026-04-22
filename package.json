@@ -169,10 +169,10 @@
     "w": "tsc webview/liveblogger/worker.ts --ignoreConfig --module esnext --sourceMap false && sed -i '' '$d' webview/liveblogger/worker.js",
     "to:npm": "rm -rf node_modules && rm -f pnpm-lock.yml && npm install",
     "to:pnpm": "rm -rf node_modules && rm -f package-lock.json && pnpm i",
-    "pp": "pnpm exec vsce-pnpm patch",
-    "pm": "pnpm exec vsce-pnpm minor",
-    "pM": "pnpm exec vsce-pnpm major",
-    "pu": "pnpm to:npm && vsce publish && pnpm to:pnpm"
+    "pp": "pnpm vsce package patch --no-dependencies",
+    "pm": "pnpm vsce package minor --no-dependencies",
+    "pM": "pnpm vsce package major --no-dependencies",
+    "pu": "vsce publish --no-dependencies"
   },
   "devDependencies": {
     "@types/chai": "^5.2.3",
@@ -185,8 +185,7 @@
     "@vscode/vsce": "^3.7.1",
     "typescript": "^6.0.2",
     "chai": "^6.2.2",
-    "expect-type": "^1.3.0",
-    "vsce-pnpm": "^0.1.0"
+    "expect-type": "^1.3.0"
   },
   "packageManager": "pnpm@9.12.2"
 }
