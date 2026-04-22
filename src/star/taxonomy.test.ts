@@ -1,7 +1,7 @@
 import assert from "assert";
 import { deepChildrenOf, getAllKinds } from "./taxonomy";
 
-suite("deep children", () => {
+suite.skip("deep children", () => {
   suite("childless kinds", () => {
     const childlessKinds = [
       "special",

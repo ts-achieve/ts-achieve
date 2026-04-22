@@ -13,3 +13,5 @@ pnpm-debug.log*
 lib/git.json
 TODO.md
 *.vsix
+
+secrets
