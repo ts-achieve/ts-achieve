@@ -167,8 +167,6 @@
     "pretest": "rm -rf out && pnpm b",
     "test": "vscode-test run",
     "w": "tsc webview/liveblogger/worker.ts --ignoreConfig --module esnext --sourceMap false && sed -i '' '$d' webview/liveblogger/worker.js",
-    "to:npm": "rm -rf node_modules && rm -f pnpm-lock.yml && npm install",
-    "to:pnpm": "rm -rf node_modules && rm -f package-lock.json && pnpm i",
     "pp": "pnpm vsce package patch --no-dependencies",
     "pm": "pnpm vsce package minor --no-dependencies",
     "pM": "pnpm vsce package major --no-dependencies",
@@ -183,9 +181,9 @@
     "@vscode/test-cli": "^0.0.11",
     "@vscode/test-electron": "^2.5.2",
     "@vscode/vsce": "^3.7.1",
-    "typescript": "^6.0.2",
     "chai": "^6.2.2",
-    "expect-type": "^1.3.0"
+    "expect-type": "^1.3.0",
+    "typescript": "^6.0.2"
   },
   "packageManager": "pnpm@9.12.2"
 }
