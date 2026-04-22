@@ -1,17 +1,9 @@
-lib
-out
-old
-logs
-node_modules
-
 .vscode-test
+node_modules
+old
+out
 
-*.log
-pnpm-debug.log*
-
-.DS_Store
-lib/git.json
-TODO.md
 *.vsix
 
 secrets
+.DS_Store
