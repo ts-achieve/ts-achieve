@@ -176,7 +176,7 @@
     "@types/chai": "^5.2.3",
     "@types/mocha": "^10.0.10",
     "@types/node": "^25.6.0",
-    "@types/vscode": "^1.116.0",
+    "@types/vscode": "^1.110.0",
     "@types/vscode-webview": "^1.57.5",
     "@vscode/test-cli": "^0.0.11",
     "@vscode/test-electron": "^2.5.2",
