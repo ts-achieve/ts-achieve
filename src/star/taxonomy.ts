@@ -1,7 +1,7 @@
 import {
   bijectPrefix,
   DeepKeys,
-  DeepValues,
+  LeafValues,
   join,
   not,
   safeConcat,
@@ -15,7 +15,7 @@ interface Level {
 }
 
 type VerboseStarName<
-  S extends string = DeepValues<typeof hierarchy>[number],
+  S extends string = LeafValues<typeof hierarchy>[number],
   T extends Level = typeof hierarchy,
   P extends string = "",
 > = S extends any
@@ -47,7 +47,7 @@ type VerbosePathName<
 
 export type ConciseName = {} & (
   | DeepKeys<typeof hierarchy>
-  | DeepValues<typeof hierarchy>[number]
+  | LeafValues<typeof hierarchy>[number]
 );
 
 export type VerboseName = VerbosePathName | VerboseStarName;

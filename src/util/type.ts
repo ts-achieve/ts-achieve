@@ -18,9 +18,16 @@ export type ReadWrite<T> = T | Readonly<T> | Writable<T>;
 
 export type DeepWritable<T> = { -readonly [K in keyof T]: DeepWritable<T[K]> };
 
-export const isObject = (x: unknown): x is Exclude<object, readonly any[]> => {
-  return typeof x === "object" && !!x && !Array.isArray(x);
-};
+/**
+ * guard for objects
+ *
+ * @example
+ * isObject(""); // false
+ * isObject([]); // true
+ * isObject({}); // true
+ */
+export const isObject = (x: unknown): x is object =>
+  typeof x === "object" && !!x;
 
 export const safeKeys = <T extends object>(x: T): UnionToTuple<keyof T> => {
   return Object.keys(x) as UnionToTuple<keyof T>;
@@ -29,6 +36,10 @@ export const safeKeys = <T extends object>(x: T): UnionToTuple<keyof T> => {
 export type RequiredBy<T, K extends keyof T> = Partial<Omit<T, K>> &
   Required<Pick<T, K>>;
 
+/**
+ * @todo simplify
+ * @todo test arrays
+ */
 export type DeepKeys<T = object, K extends keyof T = keyof T> =
   | keyof T
   | (K extends any
@@ -39,31 +50,10 @@ export type DeepKeys<T = object, K extends keyof T = keyof T> =
           : never
       : never);
 
-export type DeepValues<T, K extends keyof T = keyof T> = K extends any
-  ? T[K] extends readonly any[]
-    ? T[K]
-    : T[K] extends object
-      ? DeepValues<T[K]>
-      : T[K]
-  : never;
-
-export type TestObject = {
-  a: 1;
-  b: 2;
-  c: {
-    d: {
-      e: [3, 4];
-      f: 5;
-    };
-    g: 6;
-    h: {
-      i: 7;
-      j: [8];
-      k: {};
-    };
-  };
-};
-
+/**
+ * @todo simplify
+ * @todo test arrays
+ */
 export type LeafKeys<T, K extends keyof T = keyof T> = {} & (
   | (keyof T extends infer L extends keyof T
       ? L extends any
@@ -81,9 +71,21 @@ export type LeafKeys<T, K extends keyof T = keyof T> = {} & (
       : never)
 );
 
+/**
+ * @todo simplify
+ * @todo test arrays
+ */
+export type LeafValues<T, K extends keyof T = keyof T> = K extends any
+  ? T[K] extends readonly any[]
+    ? T[K]
+    : T[K] extends object
+      ? LeafValues<T[K]>
+      : T[K]
+  : never;
+
 // region array
 
-export const includes = <T>(xs: readonly T[], x: unknown): x is T => {
+export const safeIncludes = <T>(xs: readonly T[], x: unknown): x is T => {
   return xs.includes(x as any);
 };
 
@@ -102,10 +104,10 @@ export const flat = <T extends readonly any[]>(xs: T): Flat<T> => {
 
 // region tuple
 
-/**
- * @remark case-insensitive
- */
-export const includesAny = (haystack: string, ...needles: string[]) => {
+export const insensitivelyIncludesAny = (
+  haystack: string,
+  ...needles: string[]
+): boolean => {
   for (const needle of needles) {
     if (
       haystack.includes(needle.slice(1)) &&
@@ -131,7 +133,7 @@ type _Tuple<
   A extends readonly any[] = [],
 > = A["length"] extends N ? A : _Tuple<N, T, [T, ...A]>;
 
-export const sequence = <N extends number>(n: N) => {
+export const sequence = <N extends number>(n: N): Sequence<N> => {
   const xs = [];
   for (let i = 0; i < n; i++) {
     xs.push(i);
@@ -148,12 +150,12 @@ export type Biject<T, L extends readonly any[]> = Tuple<L["length"], T>;
 export const biject = <U, L extends readonly any[]>(
   xs: L,
   f: (x: L[number]) => U,
-) => {
+): Biject<U, Writable<L>> => {
   const ys = [];
   for (let i = 0; i < xs.length; i++) {
     ys.push(f(xs[i]));
   }
-  return ys as Biject<U, ReadWrite<L>>;
+  return ys as Biject<U, Writable<L>>;
 };
 
 export type BijectPrefix<
@@ -177,7 +179,14 @@ type Upto<N extends number, A extends number = never> = N extends 0
   ? N | A
   : Upto<Predecessor<N>, Predecessor<N> | A>;
 
-export const repeat = <N extends number, T>(n: N, f: (x: Upto<N>) => T) => {
+/**
+ * @overflow `N > 998`
+ * @see {@linkcode unsafeRepeat}
+ */
+export const repeat = <N extends number, T>(
+  n: N,
+  f: (x: Upto<N>) => T,
+): Tuple<N, T> => {
   const xs = [];
   for (let i = 0; i < n; i++) {
     xs.push(f(i as any));
@@ -185,6 +194,10 @@ export const repeat = <N extends number, T>(n: N, f: (x: Upto<N>) => T) => {
   return xs as Tuple<N, T>;
 };
 
+/**
+ * @underflow `N < 999`
+ * @see {@linkcode repeat}
+ */
 export const unsafeRepeat = <T>(n: number, f: (x: number) => T): T[] => {
   return repeat(n, f);
 };
@@ -205,7 +218,7 @@ export const safeConcat = <
 >(
   first: T,
   ...others: Us
-) => {
+): Concat<T, Us> => {
   return first.concat(...others) as Concat<T, Us>;
 };
 
@@ -218,7 +231,8 @@ export type Successor<N extends number> = [
   ? T
   : never;
 
-export const succeed = <N extends number>(n: N) => (n + 1) as Successor<N>;
+export const succeed = <N extends number>(n: N): Successor<N> =>
+  (n + 1) as Successor<N>;
 
 export type Predecessor<N extends number> =
   Tuple<N> extends [any, ...infer L] ? L["length"] : never;
