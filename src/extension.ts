@@ -1,13 +1,13 @@
 import vscode from "vscode";
 
 import { names, showing } from "./util/const";
+import { consoleLog, showInformationMessage } from "./util/console";
 import { getConfig } from "./config";
 import { getGlobalState, setStarmap } from "./globalState";
-import { unlock, UnlockedStar } from "./star/star";
+import { unlock } from "./star/star";
 import { Decorator } from "./provider/decorator";
 import { Summarizer } from "./provider/summarizer";
 import { Starlister } from "./provider/starlister";
-import { consoleLog } from "./util/console";
 import { Speedrunner } from "./provider/speedrunner";
 import { Liveblogger } from "./provider/liveblogger";
 
@@ -133,23 +133,3 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 export function deactivate() {}
-
-const showInformationMessage = (
-  star: UnlockedStar,
-  diagnostic: vscode.Diagnostic,
-) => {
-  if (
-    star.encounterCount > 1 &&
-    vscode.workspace
-      .getConfiguration(names.ex)
-      .get(names.config.notifyOnReachieve)
-  ) {
-    vscode.window.showInformationMessage(
-      `Achievement found again! ${diagnostic.code}: ${diagnostic.message}`,
-    );
-  } else if (star.encounterCount === 1) {
-    vscode.window.showInformationMessage(
-      `Achievement unlocked! ${diagnostic.code}: ${diagnostic.message}`,
-    );
-  }
-};

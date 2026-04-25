@@ -5,11 +5,11 @@ import { StarKind, taxonomy } from "./taxonomy";
 
 type TsDiagnosticCategory = (typeof tsDiagnosticCategories)[number];
 
-export type TsDiagnostic = {
+export interface TsDiagnostic {
   code: number;
   category: TsDiagnosticCategory;
   reportsUnnecessary?: boolean;
-};
+}
 
 export const isTsDiagnostic = (x: unknown): x is TsDiagnostic => {
   return (

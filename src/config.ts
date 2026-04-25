@@ -5,11 +5,11 @@ import { names } from "./util/const";
 import { Subcategorize } from "./provider/starlister";
 import { consoleLog } from "./util/console";
 
-export type ExtensionConfig = {
+export interface ExtensionConfig {
   revealDescription: boolean;
   notifyOnReachieve: boolean;
   subcategorize: Subcategorize;
-};
+}
 
 export const getConfigSection = <K extends keyof ExtensionConfig>(
   section: `config.${K}`,

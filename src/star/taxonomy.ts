@@ -9,10 +9,10 @@ import {
   split,
 } from "../util/type";
 
-type Level = {
+interface Level {
   leaves: string[];
   branches: Record<string, Level>;
-};
+}
 
 type VerboseStarName<
   S extends string = DeepValues<typeof hierarchy>[number],

@@ -1,6 +1,6 @@
 import vscode from "vscode";
 
-import { isObject, sequence } from "../util/type";
+import { isObject, repeat } from "../util/type";
 import { diagnosticMessages } from "../util/diagnosticMessages";
 import { StarKind } from "./taxonomy";
 import { computeKind, TsDiagnostic } from "./diagnostic";
@@ -28,19 +28,19 @@ export const makeStarmap = (): Starmap => {
   );
 };
 
-type LockedStar = TsDiagnostic & {
+interface LockedStar extends TsDiagnostic {
   kind: StarKind;
   messageTemplate: string;
-};
+}
 
-export type UnlockedStar = LockedStar & {
+export interface UnlockedStar extends LockedStar {
   time: number;
   triggerText: string;
   fileName: string;
   messageText: string;
   encounterCount: number;
   lastEncounter: number;
-};
+}
 
 export type Star = LockedStar | UnlockedStar;
 
@@ -80,7 +80,7 @@ export const unlock = (
   return {
     ...star,
     time: isUnlocked(star) ? star.time : Date.now(),
-    triggerText: sequence(5, (n) => {
+    triggerText: repeat(5, (n) => {
       const lineNumber = diagnostic.range.start.line - 2 + n;
       if (0 <= lineNumber && lineNumber < document.lineCount) {
         return (

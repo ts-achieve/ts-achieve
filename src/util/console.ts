@@ -1,4 +1,7 @@
+import vscode from "vscode";
+import { names } from "./const";
 import { biject, length, max, plus, rightpad } from "./type";
+import { UnlockedStar } from "../star/star";
 
 const printKinds = ["log", "err"] as const;
 type PrintKind = (typeof printKinds)[number];
@@ -39,4 +42,24 @@ type Timestamp = ReturnType<typeof stampTime>;
 
 const stampTime = () => {
   return `${new Date().toLocaleTimeString()}: achieved` as const;
+};
+
+export const showInformationMessage = (
+  star: UnlockedStar,
+  diagnostic: vscode.Diagnostic,
+) => {
+  if (
+    star.encounterCount > 1 &&
+    vscode.workspace
+      .getConfiguration(names.ex)
+      .get(names.config.notifyOnReachieve)
+  ) {
+    vscode.window.showInformationMessage(
+      `Achievement found again! ${diagnostic.code}: ${diagnostic.message}`,
+    );
+  } else if (star.encounterCount === 1) {
+    vscode.window.showInformationMessage(
+      `Achievement unlocked! ${diagnostic.code}: ${diagnostic.message}`,
+    );
+  }
 };

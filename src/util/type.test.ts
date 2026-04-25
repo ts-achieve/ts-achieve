@@ -16,9 +16,9 @@ import {
   succeed,
   Successor,
   Tuple,
-  tuple,
+  sequence,
 } from "./type";
-import assert from "assert";
+import { expect } from "chai";
 
 suite("`succeed`", () => {
   test("is well-typed", () => {
@@ -65,13 +65,18 @@ suite("`max`", () => {
 suite("`tuple`", () => {
   test("is well-typed", () => {
     expectTypeOf<[any, any, any, any]>().toEqualTypeOf<Tuple<4>>();
-    expectTypeOf<[number, number, number, number]>().toEqualTypeOf(tuple(4));
+  });
+});
+
+suite("`sequence`", () => {
+  test("is well-typed", () => {
+    expectTypeOf<[0, 1, 2, 3]>().toEqualTypeOf(sequence(4));
   });
   test("is well-valued", () => {
-    assert.deepStrictEqual(tuple(0), []);
-    assert.deepStrictEqual(tuple(1), [0]);
-    assert.deepStrictEqual(tuple(2), [0, 1]);
-    assert.deepStrictEqual(tuple(3), [0, 1, 2]);
+    expect(sequence(0)).deep.equal([]);
+    expect(sequence(1)).deep.equal([0]);
+    expect(sequence(2)).deep.equal([0, 1]);
+    expect(sequence(3)).deep.equal([0, 1, 2]);
   });
 });
 
@@ -82,15 +87,9 @@ suite("`biject`", () => {
     >();
   });
   test("is well-valued", () => {
-    assert.deepStrictEqual(
-      biject([], (x) => x),
-      [],
-    );
-    assert.deepStrictEqual(
-      biject([0, 1, 2, 3], (x) => x),
-      [0, 1, 2, 3],
-    );
-    assert.deepStrictEqual(biject([0, 1, 2, 3], literal), ["0", "1", "2", "3"]);
+    expect(biject([], (x) => x)).deep.equal([]);
+    expect(biject([0, 1, 2, 3], (x) => x)).deep.equal([0, 1, 2, 3]);
+    expect(biject([0, 1, 2, 3], literal)).deep.equal(["0", "1", "2", "3"]);
   });
 });
 
@@ -101,7 +100,7 @@ suite("`bijectPrefix`", () => {
     >();
   });
   test("is well-valued", () => {
-    assert.deepStrictEqual(bijectPrefix("a", ["0", "1", "2", "3"]), [
+    expect(bijectPrefix("a", ["0", "1", "2", "3"])).deep.equal([
       "a0",
       "a1",
       "a2",

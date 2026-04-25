@@ -1,4 +1,4 @@
-import { powerOfTen, safeConcat, sequence, Tuple } from "../util/type";
+import { powerOfTen, safeConcat, repeat, Tuple } from "../util/type";
 import { isUnlocked, Starmap } from "./star";
 
 type SpecialStar = {
@@ -12,7 +12,7 @@ export const loadSpecialStars = () => {
 };
 
 const encounterStars = (): Tuple<7, SpecialStar> =>
-  sequence(7, (n) => {
+  repeat(7, (n) => {
     const milestone = powerOfTen(n);
     return {
       name: `${milestone} encounters`,
@@ -32,7 +32,7 @@ const encounterStars = (): Tuple<7, SpecialStar> =>
   });
 
 const milestoneStars = (): Tuple<7, SpecialStar> =>
-  sequence(7, (n) => {
+  repeat(7, (n) => {
     const milestone = powerOfTen(n);
     return {
       name: `${milestone} stars`,

@@ -6,10 +6,10 @@ import { UnlockedStar } from "../star/star";
 import { WebviewProviderBase } from "./provider";
 import { StarKind } from "../star/taxonomy";
 
-type LivebloggerMessage = {
+interface LivebloggerMessage {
   type: "star";
   value: [number, StarKind];
-};
+}
 
 export class Liveblogger extends WebviewProviderBase {
   static readonly viewType = names.views.liveblog;

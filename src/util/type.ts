@@ -103,7 +103,7 @@ export const flat = <T extends readonly any[]>(xs: T): Flat<T> => {
 // region tuple
 
 /**
- * case-insensitive
+ * @remark case-insensitive
  */
 export const includesAny = (haystack: string, ...needles: string[]) => {
   for (const needle of needles) {
@@ -131,9 +131,17 @@ type _Tuple<
   A extends readonly any[] = [],
 > = A["length"] extends N ? A : _Tuple<N, T, [T, ...A]>;
 
-export const tuple = <N extends number>(n: N) => {
-  return Array(n).keys().toArray() as Tuple<N, number>;
+export const sequence = <N extends number>(n: N) => {
+  const xs = [];
+  for (let i = 0; i < n; i++) {
+    xs.push(i);
+  }
+  return xs as Sequence<N>;
 };
+
+type Sequence<N extends number, A extends number[] = []> = N extends 0
+  ? A
+  : Sequence<Predecessor<N>, [Predecessor<N>, ...A]>;
 
 export type Biject<T, L extends readonly any[]> = Tuple<L["length"], T>;
 
@@ -169,7 +177,7 @@ type Upto<N extends number, A extends number = never> = N extends 0
   ? N | A
   : Upto<Predecessor<N>, Predecessor<N> | A>;
 
-export const sequence = <N extends number, T>(n: N, f: (x: Upto<N>) => T) => {
+export const repeat = <N extends number, T>(n: N, f: (x: Upto<N>) => T) => {
   const xs = [];
   for (let i = 0; i < n; i++) {
     xs.push(f(i as any));
@@ -177,8 +185,8 @@ export const sequence = <N extends number, T>(n: N, f: (x: Upto<N>) => T) => {
   return xs as Tuple<N, T>;
 };
 
-export const unsafeSequence = <T>(n: number, f: (x: number) => T): T[] => {
-  return sequence(n, f);
+export const unsafeRepeat = <T>(n: number, f: (x: number) => T): T[] => {
+  return repeat(n, f);
 };
 
 export type Concat<

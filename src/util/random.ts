@@ -14,7 +14,7 @@ const primitiveNames = [
   "void",
 ] as const;
 
-export type PrimitiveMap = {
+export interface PrimitiveMap {
   string: string;
   number: number;
   boolean: boolean;
@@ -23,7 +23,7 @@ export type PrimitiveMap = {
   null: null;
   undefined: undefined;
   void: void;
-};
+}
 
 type PrimitiveName = keyof PrimitiveMap & {};
 
